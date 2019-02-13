@@ -1,3 +1,8 @@
+.idea/
+*autosave
+cmake-build-debug/
+*pro.user
+
 # Prerequisites
 *.d
 
@@ -30,3 +35,5 @@
 *.exe
 *.out
 *.app
+
+
