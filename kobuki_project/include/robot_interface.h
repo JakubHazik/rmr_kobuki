@@ -18,10 +18,21 @@
 #include<stdlib.h>
 #include <thread>
 #include <mutex>
+#include <cmath>
+#include <chrono>
 
 
-#define IP_ADDRESS "192.168.1.12"
+#define ROBOT_IP_ADDRESS "192.168.1.12"
+#define ROBOT_TICK_TO_METER 0.000085292090497737556558
+#define ROBOT_TICK_TO_RAD 0.002436916871363930187454
+#define ROBOT_ENCODER_LIMIT 0xFFFF                // max of unsigned short
+#define ROBOT_GYRO_LIMIT 0x7FFF
 
+#define ROBOT_WHEEL_REG_P 1
+#define ROBOT_WHEEL_REG_I 1
+#define ROBOT_WHEEL_REG_D 0
+#define ROBOT_WHEEL_RADIUS 0.035 //m
+#define ROBOT_WHEEL_BASE 0.23   //m
 
 typedef struct {
 
@@ -104,17 +115,6 @@ typedef struct {
     TExtraRequestData extraInfo;
 } TKobukiData;
 
-//
-//class CKobuki {
-//public:
-//    CKobuki() = default;;
-//
-//    virtual ~CKobuki() = default;;
-//
-//
-//
-////    std::vector<unsigned char> setDefaultPID();
-//};
 
 typedef struct {
     int scanQuality;
@@ -127,8 +127,14 @@ typedef struct {
     LaserData Data[1000];
 } LaserMeasurement;
 
+typedef struct {
+    double x;
+    double y;
+    double fi;
+} Odometry;
 
 class RobotInterface {
+public:
     RobotInterface();
     
     void sendTranslationSpeed(double mmPerSec);
@@ -139,12 +145,22 @@ class RobotInterface {
 
     LaserMeasurement getLaserData();
 
+    Odometry getOdomData();
+
 private:
-    TKobukiData robotdata;
+    std::thread robot;
+    std::thread laser;
+    std::thread processRobotData;
+
+    TKobukiData robotData;
     LaserMeasurement laserData;
     std::mutex laserDataMutex;
+    std::mutex robotDataMutex;
+    std::mutex odomDataMutex;
 
-    const std::string ipaddress = IP_ADDRESS;
+    Odometry odom;
+
+    const std::string ipAddress = ROBOT_IP_ADDRESS;
 
     //veci na broadcast laser
     struct sockaddr_in las_si_me, las_si_other, las_si_posli;
@@ -157,10 +173,11 @@ private:
     int rob_s, rob_recv_len;
     unsigned int rob_slen;
 
+    void t_readRobotData();
+
+    void t_readLaserData();
 
     void t_processRobotData();
-
-    void t_processLaserData();
 
     std::vector<unsigned char> setTranslationSpeed(int mmpersec);
 
@@ -180,7 +197,9 @@ private:
         return parseKobukiMessage(output, message);
     }
 
-};
+    double Ki, Kp, Kd;
 
+    double wheelPID(double w, double y);
+};
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H

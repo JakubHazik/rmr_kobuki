@@ -8,15 +8,22 @@
 
 using namespace std;
 
-RobotInterface::RobotInterface() {
-    thread robot(&RobotInterface::t_processRobotData, this);
-    thread laser(&RobotInterface::t_processLaserData, this);
-
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
 }
 
-void RobotInterface::t_processRobotData() {
-    if ((rob_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+RobotInterface::RobotInterface() {
+    Ki = ROBOT_WHEEL_REG_I;
+    Kp = ROBOT_WHEEL_REG_P;
+    Kd = ROBOT_WHEEL_REG_D;
+    odom = {};
 
+    robot = thread(&RobotInterface::t_readRobotData, this);
+    laser = thread(&RobotInterface::t_readLaserData, this);
+}
+
+void RobotInterface::t_readRobotData() {
+    if ((rob_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
     }
 
     char rob_broadcastene = 1;
@@ -30,7 +37,7 @@ void RobotInterface::t_processRobotData() {
 
     rob_si_posli.sin_family = AF_INET;
     rob_si_posli.sin_port = htons(5300);
-    rob_si_posli.sin_addr.s_addr = inet_addr(ipaddress.data());//inet_addr("10.0.0.1");// htonl(INADDR_BROADCAST);
+    rob_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());//inet_addr("10.0.0.1");// htonl(INADDR_BROADCAST);
     rob_slen = sizeof(rob_si_me);
     bind(rob_s, (struct sockaddr *) &rob_si_me, sizeof(rob_si_me));
 
@@ -48,8 +55,7 @@ void RobotInterface::t_processRobotData() {
     unsigned char buff[50000];
     while (1) {
         memset(buff, 0, 50000 * sizeof(char));
-        if ((rob_recv_len = recvfrom(rob_s, (char *) &buff, sizeof(char) * 50000, 0, (struct sockaddr *) &rob_si_other,
-                                     &rob_slen)) == -1) {
+        if ((rob_recv_len = recvfrom(rob_s, (char *) &buff, sizeof(char) * 50000, 0, (struct sockaddr *) &rob_si_other, &rob_slen)) == -1) {
 
             continue;
         }
@@ -60,23 +66,83 @@ void RobotInterface::t_processRobotData() {
         //      struct timespec t;
         //      clock_gettime(CLOCK_REALTIME,&t);
 
-        int returnval = fillData(robotdata, (unsigned char *) buff);
+        robotDataMutex.lock();
+        int returnval = fillData(robotData, (unsigned char *) buff);
+        robotDataMutex.unlock();
+
         if (returnval == 0) {
-            //TODO signal ze data su prijate, alebo lepsie vytvorit tu thread na spracovanie dat (odometria)
-//            processThisRobot();
+            processRobotData = thread(&RobotInterface::t_processRobotData, this);
         }
-
-
     }
 }
 
-void RobotInterface::t_processLaserData() {
+void RobotInterface::t_processRobotData() {
+    //TODO ak je polomer otacania robota mensi ak nieco tak ber uhol otocenia z gyra
+    static unsigned short encoderLeftOld, encoderRightOld;
+
+    robotDataMutex.lock();
+    unsigned short encoderRight = robotData.EncoderRight;
+    unsigned short encoderLeft = robotData.EncoderLeft;
+    //int gyroAngle = robotData.GyroAngle;
+    robotDataMutex.unlock();
+
+    int encoderLeftDelta;
+    int encoderRightDelta;
+
+    // detekcia pretecenia encodera,
+    if (abs(encoderLeft - encoderLeftOld) > ROBOT_ENCODER_LIMIT / 2) {
+        if (encoderLeft < encoderLeftOld) {
+            encoderLeftDelta = ROBOT_ENCODER_LIMIT - encoderLeftOld + encoderLeft;
+        } else {
+            encoderLeftDelta = -(ROBOT_ENCODER_LIMIT - encoderLeft + encoderLeftOld);
+        }
+    } else {
+        // v pripade bez pretecenia
+        encoderLeftDelta = encoderLeft - encoderLeftOld;
+    }
+
+    if (abs(encoderRight - encoderRightOld) > ROBOT_ENCODER_LIMIT / 2) {
+        if (encoderRight < encoderRightOld) {
+            encoderRightDelta = ROBOT_ENCODER_LIMIT - encoderRightOld + encoderRight;
+        } else {
+            encoderRightDelta = -(ROBOT_ENCODER_LIMIT - encoderRight + encoderRightOld);
+        }
+    } else {
+        // v pripade bez pretecenia
+        encoderRightDelta = encoderRight - encoderRightOld;
+    }
+
+//    // TODO detekcia pretecenie gyra
+//    if (abs(gyroAngleOld - gyroAngle) > ROBOT_GYRO_LIMIT) {
+//
+//    }
+
+
+    double distanceLeft = encoderLeftDelta * ROBOT_TICK_TO_METER;
+    double distanceRight = encoderRightDelta * ROBOT_TICK_TO_METER;
+    //double distanceCenter = (distanceLeft + distanceRight)/2;
+
+    odomDataMutex.lock();
+    // vypocet odvodeny pohybom robota po kruznici
+    double fiOld = odom.fi;
+    odom.fi = odom.fi + (distanceRight - distanceLeft) * ROBOT_WHEEL_RADIUS / ROBOT_WHEEL_BASE;
+    odom.x = odom.x - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (cos(odom.fi) - cos(fiOld));
+    odom.y = odom.y - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (sin(odom.fi) - sin(fiOld));
+    odomDataMutex.unlock();
+
+    //TODO treba urobit nejaky signal ktory da info UI o zmene premennej
+    //TODO ? https://en.cppreference.com/w/cpp/thread/condition_variable
+
+    encoderLeftOld = encoderLeft;
+    encoderRightOld = encoderRight;
+}
+
+void RobotInterface::t_readLaserData() {
 
     // Initialize Winsock
 
     las_slen = sizeof(las_si_other);
     if ((las_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-
     }
 
     int las_broadcastene = 1;
@@ -90,7 +156,7 @@ void RobotInterface::t_processLaserData() {
 
     las_si_posli.sin_family = AF_INET;
     las_si_posli.sin_port = htons(5299);//toto je port na ktory posielame
-    las_si_posli.sin_addr.s_addr = inet_addr(ipaddress.data());//htonl(INADDR_BROADCAST);
+    las_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());//htonl(INADDR_BROADCAST);
     bind(las_s, (struct sockaddr *) &las_si_me, sizeof(las_si_me));
     char command = 0x00;
     //najskor posleme prazdny prikaz
@@ -103,7 +169,6 @@ void RobotInterface::t_processLaserData() {
     }
 //    LaserMeasurement measure;
     while (1) {
-
         laserDataMutex.lock();
         if ((las_recv_len = recvfrom(las_s, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &las_si_other, &las_slen)) == -1) {
             laserDataMutex.unlock();
@@ -111,7 +176,6 @@ void RobotInterface::t_processLaserData() {
         }
         laserData.numberOfScans = las_recv_len / sizeof(LaserData);
         laserDataMutex.unlock();
-
     }
 }
 
@@ -204,17 +268,13 @@ void RobotInterface::sendTranslationSpeed(double mmPerSec) {
 void RobotInterface::sendRotationSpeed(double radPerSec) {
     std::vector<unsigned char> mess = setRotationSpeed((int) round(radPerSec));
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {
-
-    }
+               rob_slen) == -1) {  }
 }
 
 void RobotInterface::sendArcSpeed(double mmPerSec, double radius) {
     std::vector<unsigned char> mess = setArcSpeed((int) round(mmPerSec), (int) round(radius));
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {
-
-    }
+               rob_slen) == -1) {  }
 }
 
 int RobotInterface::checkChecksum(unsigned char *data) {//najprv hlavicku
@@ -396,13 +456,31 @@ int RobotInterface::parseKobukiMessage(TKobukiData &output, unsigned char *data)
 }
 
 LaserMeasurement RobotInterface::getLaserData() {
-    LaserMeasurement data;
-
-    laserDataMutex.lock();
-    memcpy(&data, &laserData, sizeof(LaserMeasurement));
-    laserDataMutex.unlock();
-
-    return data;
+    lock_guard<mutex> lockGuard(laserDataMutex);
+    return laserData;
 }
 
+Odometry RobotInterface::getOdomData() {
+    lock_guard<mutex> lockGuard(odomDataMutex);
+    return odom;
+}
 
+double RobotInterface::wheelPID(double w, double y) {
+    static double previousError = 0, integral = 0;
+    static auto start = std::chrono::system_clock::now();
+
+    auto end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_time = end - start;
+    double dt = elapsed_time.count();
+
+    double error = w - y;
+    integral = integral + error * dt;
+    double derivative = (error - previousError)/dt;
+    double output = Kp*error + Ki*integral + Kd*derivative;
+
+    previousError = error;
+    start = end;
+
+    return output;
+}
