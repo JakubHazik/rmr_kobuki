@@ -6,33 +6,36 @@
 #define KOBUKI_PROJECT_ROBOT_INTERFACE_H
 
 #include <vector>
-#include <cmath>
-
-#include<iostream>
-#include<arpa/inet.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<sys/types.h>
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
+#include <iostream>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <thread>
 #include <mutex>
 #include <cmath>
-#include <chrono>
 
 
 #define ROBOT_IP_ADDRESS "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.000085292090497737556558
 #define ROBOT_TICK_TO_RAD 0.002436916871363930187454
-#define ROBOT_ENCODER_LIMIT 0xFFFF                // max of unsigned short
-#define ROBOT_GYRO_LIMIT 0x7FFF
+#define ROBOT_ENCODER_MAX 0xFFFF                // max of unsigned short
+#define ROBOT_GYRO_MAX 0x7FFF
 
-#define ROBOT_WHEEL_REG_P 1
-#define ROBOT_WHEEL_REG_I 1
-#define ROBOT_WHEEL_REG_D 0
+#define ROBOT_REG_P 1
+#define ROBOT_REG_I 1
+#define ROBOT_REG_D 0
 #define ROBOT_WHEEL_RADIUS 0.035 //m
 #define ROBOT_WHEEL_BASE 0.23   //m
+#define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 //mm
+
+#define RAD2DEG (180.0/M_PI)
+#define DEG2RAD (M_PI/180.0)
+
+
 
 typedef struct {
 
@@ -131,53 +134,67 @@ typedef struct {
     double x;
     double y;
     double fi;
-} Odometry;
+} RobotPose;
 
 class RobotInterface {
 public:
     RobotInterface();
+
+    ~RobotInterface();
+
+    void goToPosition(RobotPose position);
     
-    void sendTranslationSpeed(double mmPerSec);
+    void sendTranslationSpeed(int mmPerSec);
 
-    void sendRotationSpeed(double radPerSec);
+    void sendRotationSpeed(int radPerSec);
 
-    void sendArcSpeed(double mmPerSec, double radius);
+    void sendArcSpeed(int mmPerSec, int mmRadius);
 
     LaserMeasurement getLaserData();
 
-    Odometry getOdomData();
+    RobotPose getOdomData();
 
+    bool forOdomUseGyro;
 private:
+    /*
+    * ========================================
+    * Premenne
+    */
+
     std::thread robot;
     std::thread laser;
-    std::thread processRobotData;
+//    std::thread processRobotData;
 
     TKobukiData robotData;
     LaserMeasurement laserData;
     std::mutex laserDataMutex;
-    std::mutex robotDataMutex;
+//    std::mutex robotDataMutex;
     std::mutex odomDataMutex;
 
-    Odometry odom;
+    RobotPose odom;
 
     const std::string ipAddress = ROBOT_IP_ADDRESS;
 
     //veci na broadcast laser
     struct sockaddr_in las_si_me, las_si_other, las_si_posli;
-
     int las_s, las_recv_len;
     unsigned int las_slen;
+
     //veci na broadcast robot
     struct sockaddr_in rob_si_me, rob_si_other, rob_si_posli;
-
     int rob_s, rob_recv_len;
     unsigned int rob_slen;
 
+
+    /*
+     * ========================================
+     * Funkcie
+     */
     void t_readRobotData();
 
     void t_readLaserData();
 
-    void t_processRobotData();
+    void computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle);
 
     std::vector<unsigned char> setTranslationSpeed(int mmpersec);
 

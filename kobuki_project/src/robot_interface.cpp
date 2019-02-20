@@ -4,23 +4,27 @@
 
 #include <include/robot_interface.h>
 
-#include "../include/robot_interface.h"
-
 using namespace std;
 
-template <typename T> int sgn(T val) {
+// vracia znamienko, -1, 1
+template <typename T> int signum(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
 RobotInterface::RobotInterface() {
-    Ki = ROBOT_WHEEL_REG_I;
-    Kp = ROBOT_WHEEL_REG_P;
-    Kd = ROBOT_WHEEL_REG_D;
+    Ki = ROBOT_REG_I;
+    Kp = ROBOT_REG_P;
+    Kd = ROBOT_REG_D;
     odom = {};
 
     robot = thread(&RobotInterface::t_readRobotData, this);
-    laser = thread(&RobotInterface::t_readLaserData, this);
+//    laser = thread(&RobotInterface::t_readLaserData, this);
 }
+
+RobotInterface::~RobotInterface() {
+//    std::terminate();
+}
+
 
 void RobotInterface::t_readRobotData() {
     if ((rob_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
@@ -42,14 +46,12 @@ void RobotInterface::t_readRobotData() {
     bind(rob_s, (struct sockaddr *) &rob_si_me, sizeof(rob_si_me));
 
     std::vector<unsigned char> mess = setDefaultPID();
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
 
     }
     usleep(100 * 1000);
     mess = setSound(440, 1000);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
 
     }
     unsigned char buff[50000];
@@ -66,73 +68,103 @@ void RobotInterface::t_readRobotData() {
         //      struct timespec t;
         //      clock_gettime(CLOCK_REALTIME,&t);
 
-        robotDataMutex.lock();
+//        robotDataMutex.lock();
         int returnval = fillData(robotData, (unsigned char *) buff);
-        robotDataMutex.unlock();
-
         if (returnval == 0) {
-            processRobotData = thread(&RobotInterface::t_processRobotData, this);
+            computeOdometry(robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
+//            processRobotData = thread(&RobotInterface::t_computeOdometry, this, robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
+//            processRobotData.join(); // TODO treba domysliet lebo ak vyjde z toho scopu tak thread je terminated
         }
+//        robotDataMutex.unlock();
     }
 }
 
-void RobotInterface::t_processRobotData() {
+void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle) {
     //TODO ak je polomer otacania robota mensi ak nieco tak ber uhol otocenia z gyra
     static unsigned short encoderLeftOld, encoderRightOld;
-
-    robotDataMutex.lock();
-    unsigned short encoderRight = robotData.EncoderRight;
-    unsigned short encoderLeft = robotData.EncoderLeft;
-    //int gyroAngle = robotData.GyroAngle;
-    robotDataMutex.unlock();
+    static signed short gyroAngleOld;
 
     int encoderLeftDelta;
     int encoderRightDelta;
 
     // detekcia pretecenia encodera,
-    if (abs(encoderLeft - encoderLeftOld) > ROBOT_ENCODER_LIMIT / 2) {
+    if (abs(encoderLeft - encoderLeftOld) > ROBOT_ENCODER_MAX / 2) {
         if (encoderLeft < encoderLeftOld) {
-            encoderLeftDelta = ROBOT_ENCODER_LIMIT - encoderLeftOld + encoderLeft;
+            encoderLeftDelta = ROBOT_ENCODER_MAX - encoderLeftOld + encoderLeft;
         } else {
-            encoderLeftDelta = -(ROBOT_ENCODER_LIMIT - encoderLeft + encoderLeftOld);
+            encoderLeftDelta = -(ROBOT_ENCODER_MAX - encoderLeft + encoderLeftOld);
         }
     } else {
         // v pripade bez pretecenia
         encoderLeftDelta = encoderLeft - encoderLeftOld;
     }
 
-    if (abs(encoderRight - encoderRightOld) > ROBOT_ENCODER_LIMIT / 2) {
+    if (abs(encoderRight - encoderRightOld) > ROBOT_ENCODER_MAX / 2) {
         if (encoderRight < encoderRightOld) {
-            encoderRightDelta = ROBOT_ENCODER_LIMIT - encoderRightOld + encoderRight;
+            encoderRightDelta = ROBOT_ENCODER_MAX - encoderRightOld + encoderRight;
         } else {
-            encoderRightDelta = -(ROBOT_ENCODER_LIMIT - encoderRight + encoderRightOld);
+            encoderRightDelta = -(ROBOT_ENCODER_MAX - encoderRight + encoderRightOld);
         }
     } else {
         // v pripade bez pretecenia
         encoderRightDelta = encoderRight - encoderRightOld;
     }
 
-//    // TODO detekcia pretecenie gyra
-//    if (abs(gyroAngleOld - gyroAngle) > ROBOT_GYRO_LIMIT) {
-//
-//    }
+    // detekcia pretecenie gyra
+    double gyroAngleDelta = 0;
 
+    if (forOdomUseGyro) {
+        if (abs(gyroAngleOld - gyroAngle) > ROBOT_GYRO_MAX) {
+            //detekuj smer pretecenia
+            if (gyroAngleOld < gyroAngle) {
+                gyroAngleDelta = -ROBOT_GYRO_MAX - gyroAngleOld - (ROBOT_GYRO_MAX - gyroAngle);
+            } else {
+                gyroAngleDelta = ROBOT_GYRO_MAX - gyroAngleOld + (ROBOT_GYRO_MAX + gyroAngle);
+            }
+        } else {
+            gyroAngleDelta = gyroAngle - gyroAngleOld;
+        }
+        gyroAngleDelta = gyroAngleDelta / 100 * DEG2RAD;     // prichadza to ako int s tym ze je desatina ciarka posunuta o 2 miesta
+    }
 
     double distanceLeft = encoderLeftDelta * ROBOT_TICK_TO_METER;
     double distanceRight = encoderRightDelta * ROBOT_TICK_TO_METER;
-    //double distanceCenter = (distanceLeft + distanceRight)/2;
+    double distanceCenter = (distanceLeft + distanceRight)/2;
 
     odomDataMutex.lock();
-    // vypocet odvodeny pohybom robota po kruznici
+
     double fiOld = odom.fi;
-    odom.fi = odom.fi + (distanceRight - distanceLeft) * ROBOT_WHEEL_RADIUS / ROBOT_WHEEL_BASE;
-    odom.x = odom.x - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (cos(odom.fi) - cos(fiOld));
-    odom.y = odom.y - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (sin(odom.fi) - sin(fiOld));
+
+    // vypocet natocenia
+    if (forOdomUseGyro) {
+        odom.fi = odom.fi + gyroAngleDelta;
+    } else {
+        odom.fi = odom.fi + (distanceRight - distanceLeft) / ROBOT_WHEEL_BASE;
+    }
+
+    // osetrit pretocenie robota o 2pi
+    if (odom.fi > M_PI) {
+        odom.fi -= M_PI * 2;
+    } else if (odom.fi < -M_PI) {
+        odom.fi += M_PI * 2;
+    }
+
+    if (distanceRight - distanceLeft == 0) {
+        // ked robot ide priamo
+        odom.x = odom.x + distanceCenter;
+        odom.y = odom.y + distanceCenter;
+    } else {
+        // ked robot ide po krivke
+        odom.x = odom.x + (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (sin(odom.fi) - sin(fiOld));
+        odom.y = odom.y - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (cos(odom.fi) - cos(fiOld));
+    }
+
     odomDataMutex.unlock();
 
     //TODO treba urobit nejaky signal ktory da info UI o zmene premennej
     //TODO ? https://en.cppreference.com/w/cpp/thread/condition_variable
 
+    gyroAngleOld = gyroAngle;
     encoderLeftOld = encoderLeft;
     encoderRightOld = encoderRight;
 }
@@ -162,8 +194,7 @@ void RobotInterface::t_readLaserData() {
     //najskor posleme prazdny prikaz
     //preco?
     //https://ih0.redbubble.net/image.74126234.5567/raf,750x1000,075,t,heather_grey_lightweight_raglan_sweatshirt.u3.jpg
-    if (sendto(las_s, &command, sizeof(command), 0, (struct sockaddr *) &las_si_posli, las_slen) ==
-        -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
+    if (sendto(las_s, &command, sizeof(command), 0, (struct sockaddr *) &las_si_posli, las_slen) == -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
     {
 
     }
@@ -259,22 +290,22 @@ std::vector<unsigned char> RobotInterface::setDefaultPID() {
     return vystup;
 }
 
-void RobotInterface::sendTranslationSpeed(double mmPerSec) {
-    std::vector<unsigned char> mess = setTranslationSpeed((int) round(mmPerSec));
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {}
+void RobotInterface::sendTranslationSpeed(int mmPerSec) {
+    std::vector<unsigned char> mess = setTranslationSpeed(mmPerSec);
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    forOdomUseGyro = false;
 }
 
-void RobotInterface::sendRotationSpeed(double radPerSec) {
-    std::vector<unsigned char> mess = setRotationSpeed((int) round(radPerSec));
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {  }
+void RobotInterface::sendRotationSpeed(int radPerSec) {
+    std::vector<unsigned char> mess = setRotationSpeed(radPerSec);
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    forOdomUseGyro = true;
 }
 
-void RobotInterface::sendArcSpeed(double mmPerSec, double radius) {
-    std::vector<unsigned char> mess = setArcSpeed((int) round(mmPerSec), (int) round(radius));
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli,
-               rob_slen) == -1) {  }
+void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
+    std::vector<unsigned char> mess = setArcSpeed(mmPerSec, mmRadius);
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    forOdomUseGyro = mmRadius < ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION;
 }
 
 int RobotInterface::checkChecksum(unsigned char *data) {//najprv hlavicku
@@ -303,16 +334,16 @@ int RobotInterface::parseKobukiMessage(TKobukiData &output, unsigned char *data)
             checkedValue++;
             output.timestamp = data[checkedValue + 1] * 256 + data[checkedValue];
             checkedValue += 2;
-            output.BumperCenter = data[checkedValue] && 0x02;
-            output.BumperLeft = data[checkedValue] && 0x04;
-            output.BumperRight = data[checkedValue] && 0x01;
+            output.BumperCenter = data[checkedValue] & 0x02;
+            output.BumperLeft = data[checkedValue] & 0x04;
+            output.BumperRight = data[checkedValue] & 0x01;
             checkedValue++;
-            output.WheelDropLeft = data[checkedValue] && 0x02;
-            output.WheelDropRight = data[checkedValue] && 0x01;
+            output.WheelDropLeft = data[checkedValue] & 0x02;
+            output.WheelDropRight = data[checkedValue] & 0x01;
             checkedValue++;
-            output.CliffCenter = data[checkedValue] && 0x02;
-            output.CliffLeft = data[checkedValue] && 0x04;
-            output.CliffRight = data[checkedValue] && 0x01;
+            output.CliffCenter = data[checkedValue] & 0x02;
+            output.CliffLeft = data[checkedValue] & 0x04;
+            output.CliffRight = data[checkedValue] & 0x01;
             checkedValue++;
             output.EncoderLeft = data[checkedValue + 1] * 256 + data[checkedValue];
             checkedValue += 2;
@@ -460,7 +491,7 @@ LaserMeasurement RobotInterface::getLaserData() {
     return laserData;
 }
 
-Odometry RobotInterface::getOdomData() {
+RobotPose RobotInterface::getOdomData() {
     lock_guard<mutex> lockGuard(odomDataMutex);
     return odom;
 }
@@ -484,3 +515,8 @@ double RobotInterface::wheelPID(double w, double y) {
 
     return output;
 }
+
+void RobotInterface::goToPosition(RobotPose position) {
+    //TODO tuto bude regulator e = odom - position
+}
+

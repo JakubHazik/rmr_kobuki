@@ -18,15 +18,24 @@ int main(int argc, char *argv[]) {
 
     RobotInterface robot;
 
-    robot.sendTranslationSpeed(10);
+    usleep(1000*1000*3);
+
+//    robot.sendTranslationSpeed(10);
+
+    auto data = robot.getOdomData();
 
     while(1) {
-        auto data = robot.getOdomData();
+//        robot.sendTranslationSpeed(40);
+//        robot.sendRotationSpeed(1);
+
+        data = robot.getOdomData();
         cout<<"=================="<<endl
             <<"X: "<<data.x<<endl
             <<"Y: "<<data.y<<endl
-            <<"Fi: "<<data.fi<<endl;
-        usleep(1000*500);
+            <<"Fi: "<<data.fi<<endl
+            <<"G: "<<robot.forOdomUseGyro<<endl;
+
+        usleep(1000*1000*0.5);
     }
 
     return 0;

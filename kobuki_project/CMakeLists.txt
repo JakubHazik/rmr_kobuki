@@ -9,7 +9,7 @@ find_package(Qt5 REQUIRED COMPONENTS Gui Core Widgets)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
-add_compile_options(-O2)
+#add_compile_options(-O2)
 
 # set source files
 set(INCLUDE_FILES
