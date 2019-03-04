@@ -245,8 +245,6 @@ std::vector<unsigned char> RobotInterface::setArcSpeed(int mmpersec, int radius)
     }
     //viac o prikaze a jeho tvorbe si mozete precitat napriklad tu
     //http://yujinrobot.github.io/kobuki/enAppendixProtocolSpecification.html
-    //alebo tu
-    //https://bit.ly/2MWSbcx
 
     int speedvalue = mmpersec * ((radius + (radius > 0 ? 230 : -230)) / 2) / radius;
 
@@ -516,36 +514,34 @@ double RobotInterface::wheelPID(double w, double y, double saturation) {
     return (output < saturation) ? output : saturation;
 }
 
-void RobotInterface::goToPosition(RobotPose position) {
+void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
     RobotPose odomPosition = getOdomData();
 
-    double translationError = position.x - odomPosition.x;//= getAbsoluteDistance(odomPosition, position);
-    double currentSpeed = 0;
-
-    int speedLimit = ROBOT_MIN_SPEED_FORWARD;
-    int speedStep = 20;
+    double translationError = position.x - odomPosition.x;// TODO = getAbsoluteDistance(odomPosition, position);
+    int currentSpeed = 0;
+    int currentRadius = 0;
     bool braking = false;
 
-    cout << "Going to position x, y, z: {" << position.x << ", " << position.y << ", " << position.fi << "}, distance: " << translationError << "mm." << endl;
+    /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
+    int speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
+
+    /// Calculate speed stepping according to sampling period
+    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_REG_SAMPLING);
+
+    syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", position.x, position.y, position.fi, translationError);
 
     while (translationError > ROBOT_REG_ACCURACY){
         odomPosition = getOdomData();
-        cout<<"=================="<<endl
-            <<"X: "<<odomPosition.x<<endl
-            <<"Y: "<<odomPosition.y<<endl
-            <<"Fi: "<<odomPosition.fi<<endl;
 
-        currentSpeed = wheelPID(translationError, 0, speedLimit);
-        //pohyb dopredu
-        cout << "Error: " << translationError << ", Calculated speed: " << currentSpeed << endl;
+        currentSpeed  = (int) wheelPID(translationError, 0, speedLimit);
+        currentRadius = (int) fitRotationRadius(position.fi - odomPosition.fi);
 
-//        Send speed to robot
-        std::vector<unsigned char> mess = setTranslationSpeed((int) std::round(currentSpeed));
+        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentRadius, currentRadius);
 
-        if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-        {
+        /// Set arc speed from calculated speed and radius
+        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
+        sendDataToRobot(msg);
 
-        }
         translationError = position.x - odomPosition.x;//= getAbsoluteDistance(odomPosition, position);
 
         if(translationError < currentSpeed * 3){

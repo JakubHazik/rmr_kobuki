@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
 #include <thread>

@@ -10,6 +10,8 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    openlog("kobuki", LOG_PERROR, LOG_DAEMON);
+    syslog(LOG_INFO, "Kobuki started!");
 //    QApplication a(argc, argv);
 //    MainWindow w;
 //    w.show();
