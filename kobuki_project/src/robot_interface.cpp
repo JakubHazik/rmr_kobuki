@@ -496,7 +496,7 @@ RobotPose RobotInterface::getOdomData() {
     return odom;
 }
 
-double RobotInterface::wheelPID(double w, double y) {
+double RobotInterface::wheelPID(double w, double y, double saturation) {
     static double previousError = 0, integral = 0;
     static auto start = std::chrono::system_clock::now();
 
@@ -513,10 +513,67 @@ double RobotInterface::wheelPID(double w, double y) {
     previousError = error;
     start = end;
 
-    return output;
+    return (output < saturation) ? output : saturation;
 }
 
 void RobotInterface::goToPosition(RobotPose position) {
-    //TODO tuto bude regulator e = odom - position
+    RobotPose odomPosition = getOdomData();
+
+    double translationError = position.x - odomPosition.x;//= getAbsoluteDistance(odomPosition, position);
+    double currentSpeed = 0;
+
+    int speedLimit = ROBOT_MIN_SPEED_FORWARD;
+    int speedStep = 20;
+    bool braking = false;
+
+    cout << "Going to position x, y, z: {" << position.x << ", " << position.y << ", " << position.fi << "}, distance: " << translationError << "mm." << endl;
+
+    while (translationError > ROBOT_REG_ACCURACY){
+        odomPosition = getOdomData();
+        cout<<"=================="<<endl
+            <<"X: "<<odomPosition.x<<endl
+            <<"Y: "<<odomPosition.y<<endl
+            <<"Fi: "<<odomPosition.fi<<endl;
+
+        currentSpeed = wheelPID(translationError, 0, speedLimit);
+        //pohyb dopredu
+        cout << "Error: " << translationError << ", Calculated speed: " << currentSpeed << endl;
+
+//        Send speed to robot
+        std::vector<unsigned char> mess = setTranslationSpeed((int) std::round(currentSpeed));
+
+        if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+        {
+
+        }
+        translationError = position.x - odomPosition.x;//= getAbsoluteDistance(odomPosition, position);
+
+        if(translationError < currentSpeed * 3){
+            // TODO implementovat nejaku lepsiu podmienku na brzdenie
+            cout << "!!!!!!!!!!!!!!!!!!!!!!!! BRAKING !!!!!!!!!!!!!!!!!!!!!!!!" << endl << endl;
+            braking = true;
+        }
+
+        if (speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
+            speedLimit += speedStep;
+        } else if (speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
+            speedLimit -= speedStep;
+        }
+        usleep(1000*1000*0.5);
+    }
+
+    std::vector<unsigned char> mess = setTranslationSpeed(0);
+
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
+
+    }
+
+    cout << "Reached position with accuracy " << translationError << endl;
+
 }
 
+double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB)
+{
+    return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
+}

@@ -163,7 +163,7 @@ public:
 
     RobotPose getOdomData();
 
-    bool forOdomUseGyro;
+    bool forOdomUseGyro =false;
 private:
     /*
     * ========================================
@@ -225,7 +225,16 @@ private:
 
     double Ki, Kp, Kd;
 
-    double wheelPID(double w, double y);
+    /**
+     * PID regulator
+     * @param w requested value
+     * @param y current value
+     * @param saturation saturation of maximal output
+     * @return
+     */
+    double wheelPID(double w, double y, double saturation);
+
+    double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H
