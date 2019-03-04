@@ -580,3 +580,13 @@ double RobotInterface::fitRotationRadius(double angle)
 
     return coef_a * exp(coef_b * angle) + coef_c * exp(coef_d * angle);
 }
+
+bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
+{
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return false;
+    }
+    return true;
+}

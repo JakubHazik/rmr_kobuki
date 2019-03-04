@@ -174,6 +174,13 @@ public:
 
     RobotPose getOdomData();
 
+    /**
+     * Util function sends created data to robot via socket
+     * @param data Data to be sent
+     * @return Success of sending
+     */
+    bool sendDataToRobot(std::vector<unsigned char> data);
+
     bool forOdomUseGyro =false;
 private:
     /*
