@@ -17,10 +17,11 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
+#include <math.h>       /* pow */
 
 
 #define ROBOT_IP_ADDRESS "192.168.1.12"
-#define ROBOT_TICK_TO_METER 0.000085292090497737556558
+#define ROBOT_TICK_TO_METER 0.085292090497737556558
 #define ROBOT_TICK_TO_RAD 0.002436916871363930187454
 #define ROBOT_ENCODER_MAX 0xFFFF                // max of unsigned short
 #define ROBOT_GYRO_MAX 0x7FFF
@@ -28,9 +29,14 @@
 #define ROBOT_REG_P 1
 #define ROBOT_REG_I 1
 #define ROBOT_REG_D 0
-#define ROBOT_WHEEL_RADIUS 0.035 //m
-#define ROBOT_WHEEL_BASE 0.23   //m
-#define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 //mm
+#define ROBOT_WHEEL_RADIUS 35 // [mm]
+#define ROBOT_WHEEL_BASE 230   // [mm]
+#define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 // [mm]
+
+#define ROBOT_MAX_SPEED_FORWARD 250 // [mm / s]
+#define ROBOT_MIN_SPEED_FORWARD 30 // [mm / s]
+
+#define ROBOT_REG_ACCURACY 10 // [mm] accuracy of positioning
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
@@ -130,6 +136,9 @@ typedef struct {
     LaserData Data[1000];
 } LaserMeasurement;
 
+/**
+ * Nech je pozicia x,y v jednotkach [mm]
+ */
 typedef struct {
     double x;
     double y;
