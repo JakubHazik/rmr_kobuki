@@ -555,17 +555,14 @@ void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool tra
         } else if (speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
             speedLimit -= speedStep;
         }
-        usleep(1000*1000*0.5);
+        usleep((__useconds_t) (1000 * 1000 * ROBOT_REG_SAMPLING));
     }
 
-    std::vector<unsigned char> mess = setTranslationSpeed(0);
+    std::vector<unsigned char> msg = setTranslationSpeed(0);
 
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
+    sendDataToRobot(msg);
 
-    }
-
-    cout << "Reached position with accuracy " << translationError << endl;
+    syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
 
 }
 

@@ -26,9 +26,8 @@ int main(int argc, char *argv[]) {
 
     auto data = robot.getOdomData();
 
-    robot.goToPosition({data.x + 2000, data.y + 100, 0});
-
-    while(1) {
+    robot.goToPosition({data.x + 1000, data.y + 0, 0 * DEG2RAD}, true, true);
+    while(1) {
 //        robot.sendTranslationSpeed(40);
 //        robot.sendRotationSpeed(1);
 

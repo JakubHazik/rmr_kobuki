@@ -156,7 +156,13 @@ public:
 
     ~RobotInterface();
 
-    void goToPosition(RobotPose position);
+    /**
+     * Go to requested position
+     * @param position RobotPose object - position of x[mm], y[mm] and fi[rad]
+     * @param leadingEdge - to create leading Edge (ramp start)
+     * @param trailingEdge - to create trailing Edge (ramp stop)
+     */
+    void goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge);
     
     void sendTranslationSpeed(int mmPerSec);
 
