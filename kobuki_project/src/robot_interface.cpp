@@ -577,3 +577,13 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB)
 {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
+
+double RobotInterface::fitRotationRadius(double angle)
+{
+    static const double coef_a = 1.022896253633420e+03;
+    static const double coef_b = - 2.943278473631116;
+    static const double coef_c = 1.897709639068426e+04;
+    static const double coef_d = - 26.057588318697285;
+
+    return coef_a * exp(coef_b * angle) + coef_c * exp(coef_d * angle);
+}

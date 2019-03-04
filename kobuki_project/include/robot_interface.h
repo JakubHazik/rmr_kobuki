@@ -235,6 +235,17 @@ private:
     double wheelPID(double w, double y, double saturation);
 
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
+
+    /**
+     * Angle fitting function to rotation radius
+     * Constants calculated with MATLAB-s fitting toolbox
+     *
+     * Source: $PROJECT_ROOT/research/angle_regulator_function.m
+     *
+     * @param angle Angle [rad] to fit to radius
+     * @return rotation radius according to angle
+     */
+    double fitRotationRadius(double angle);
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H
