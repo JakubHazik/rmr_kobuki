@@ -3,6 +3,7 @@
 //
 
 #include <include/robot_interface.h>
+#include <functional>
 
 using namespace std;
 
@@ -15,10 +16,13 @@ RobotInterface::RobotInterface() {
     Ki = ROBOT_REG_I;
     Kp = ROBOT_REG_P;
     Kd = ROBOT_REG_D;
-    odom = {};
+    odom = {0};
 
     robot = thread(&RobotInterface::t_readRobotData, this);
 //    laser = thread(&RobotInterface::t_readLaserData, this);
+
+    // start pose controller timer
+    std::thread(&RobotInterface::t_poseController, this).detach();
 }
 
 RobotInterface::~RobotInterface() {
@@ -131,7 +135,7 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
     double distanceRight = encoderRightDelta * ROBOT_TICK_TO_METER;
     double distanceCenter = (distanceLeft + distanceRight)/2;
 
-    odomDataMutex.lock();
+    odom_mtx.lock();
 
     double fiOld = odom.fi;
 
@@ -155,11 +159,11 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
         odom.y = odom.y + distanceCenter;
     } else {
         // ked robot ide po krivke
-        odom.x = odom.x + (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (sin(odom.fi) - sin(fiOld));
-        odom.y = odom.y - (ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft)) * (cos(odom.fi) - cos(fiOld));
+        odom.x = odom.x + ((ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (sin(odom.fi) - sin(fiOld));
+        odom.y = odom.y - ((ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (cos(odom.fi) - cos(fiOld));
     }
 
-    odomDataMutex.unlock();
+    odom_mtx.unlock();
 
     //TODO treba urobit nejaky signal ktory da info UI o zmene premennej
     //TODO ? https://en.cppreference.com/w/cpp/thread/condition_variable
@@ -200,17 +204,17 @@ void RobotInterface::t_readLaserData() {
     }
 //    LaserMeasurement measure;
     while (1) {
-        laserDataMutex.lock();
+        laserData_mtx.lock();
         if ((las_recv_len = recvfrom(las_s, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &las_si_other, &las_slen)) == -1) {
-            laserDataMutex.unlock();
+            laserData_mtx.unlock();
             continue;
         }
         laserData.numberOfScans = las_recv_len / sizeof(LaserData);
-        laserDataMutex.unlock();
+        laserData_mtx.unlock();
     }
 }
 
-
+//600
 std::vector<unsigned char> RobotInterface::setTranslationSpeed(int mmpersec) {
     unsigned char message[14] = {0xaa, 0x55, 0x0A, 0x0c, 0x02, 0xf0, 0x00, 0x01, 0x04, (unsigned char) (mmpersec % 256),
                                  (unsigned char) (mmpersec >> 8), 0x00, 0x00, 0x00};
@@ -224,6 +228,7 @@ std::vector<unsigned char> RobotInterface::setTranslationSpeed(int mmpersec) {
 
 }
 
+// 2pi
 std::vector<unsigned char> RobotInterface::setRotationSpeed(double radpersec) {
     int speedvalue = radpersec * 230.0f / 2.0f;
     unsigned char message[14] = {0xaa, 0x55, 0x0A, 0x0c, 0x02, 0xf0, 0x00, 0x01, 0x04,
@@ -238,10 +243,10 @@ std::vector<unsigned char> RobotInterface::setRotationSpeed(double radpersec) {
     return vystup;
 }
 
+//radius <short> -32000 32000 mm
 std::vector<unsigned char> RobotInterface::setArcSpeed(int mmpersec, int radius) {
     if (radius == 0) {
         return setTranslationSpeed(mmpersec);
-
     }
     //viac o prikaze a jeho tvorbe si mozete precitat napriklad tu
     //http://yujinrobot.github.io/kobuki/enAppendixProtocolSpecification.html
@@ -485,12 +490,12 @@ int RobotInterface::parseKobukiMessage(TKobukiData &output, unsigned char *data)
 }
 
 LaserMeasurement RobotInterface::getLaserData() {
-    lock_guard<mutex> lockGuard(laserDataMutex);
+    lock_guard<mutex> lockGuard(laserData_mtx);
     return laserData;
 }
 
 RobotPose RobotInterface::getOdomData() {
-    lock_guard<mutex> lockGuard(odomDataMutex);
+    lock_guard<mutex> lockGuard(odom_mtx);
     return odom;
 }
 
@@ -514,6 +519,7 @@ double RobotInterface::wheelPID(double w, double y, double saturation) {
     return (output < saturation) ? output : saturation;
 }
 
+//void RobotInterface::goToPosition(const RobotPose &position) {
 void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
     RobotPose odomPosition = getOdomData();
 
@@ -581,12 +587,50 @@ double RobotInterface::fitRotationRadius(double angle)
     return coef_a * exp(coef_b * angle) + coef_c * exp(coef_d * angle);
 }
 
-bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
-{
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
-        syslog(LOG_ERR, "Send data to robot failed!");
-        return false;
+void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
+    std::lock_guard<std::mutex> robotCmdPoints_lg(robotCmdPoints_mtx);
+    robotCmdPoints.push(cmd);
+}
+
+
+void RobotInterface::t_poseController() {
+    /*
+     * Stavy:
+     * - cakanie na bod
+     * - pohyb
+     * - obchadzanie prekazky
+     * - pauza vykonavania bodu
+     * - zrusenie vykonavania bodu
+     */
+    static int state = 0;
+
+    
+    // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
+    while (true) {
+        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(ROBOT_POSE_CONTROLLER_PERIOD);
+        // TIMER
+        {
+
+            switch (state) {
+                case 0:
+                    robotCmdPoints_mtx.lock();
+
+
+                    robotCmdPoints_mtx.unlock();
+                    break;
+                case 1:
+
+
+
+                default:
+                    break;
+            }
+
+            //TODO #include <condition_variable> na signalizovanie bllokacie
+
+
+        }
+        std::this_thread::sleep_until(startPeriodTime);
     }
-    return true;
+
 }

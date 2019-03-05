@@ -19,6 +19,7 @@
 #include <mutex>
 #include <cmath>
 #include <math.h>       /* pow */
+#include <queue>
 
 
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
@@ -45,6 +46,8 @@
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
+
+#define ROBOT_POSE_CONTROLLER_PERIOD 100
 
 
 
@@ -150,6 +153,18 @@ typedef struct {
     double fi;
 } RobotPose;
 
+typedef enum {
+    SPEED_UP,
+    WAY_POINT,
+    SPEED_DOWN
+} RobotCommands;
+
+typedef struct {
+    RobotPose pose;
+    RobotCommands cmd;
+} RobotCommand;
+
+
 class RobotInterface {
 public:
     RobotInterface();
@@ -163,6 +178,10 @@ public:
      * @param trailingEdge - to create trailing Edge (ramp stop)
      */
     void goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge);
+
+    void addCommandToQueue(const RobotPose &cmd);
+
+    void goToPosition(const RobotPose &position);
     
     void sendTranslationSpeed(int mmPerSec);
 
@@ -194,11 +213,10 @@ private:
 
     TKobukiData robotData;
     LaserMeasurement laserData;
-    std::mutex laserDataMutex;
-//    std::mutex robotDataMutex;
-    std::mutex odomDataMutex;
+    std::mutex laserData_mtx;
 
     RobotPose odom;
+    std::mutex odom_mtx;
 
     const std::string ipAddress = ROBOT_IP_ADDRESS;
 
@@ -212,6 +230,8 @@ private:
     int rob_s, rob_recv_len;
     unsigned int rob_slen;
 
+    std::queue<RobotPose> robotCmdPoints;
+    std::mutex robotCmdPoints_mtx;
 
     /*
      * ========================================
@@ -264,6 +284,8 @@ private:
      * @return rotation radius according to angle
      */
     double fitRotationRadius(double angle);
+
+    void t_poseController();
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H
