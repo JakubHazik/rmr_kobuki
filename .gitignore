@@ -37,3 +37,11 @@ cmake-build-debug/
 *.app
 
 
+
+build-kobuki_project-Desktop-Default/
+
+kobuki_build/CMakeFiles/3\.10\.2/
+
+kobuki_build/
+
+kobuki_project/CMakeLists\.txt\.user

@@ -591,35 +591,110 @@ void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
     robotCmdPoints.push(cmd);
 }
 
+bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
+{
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return false;
+    }
+    return true;
+}
 
-void RobotInterface::t_poseController() {
-    /*
-     * Stavy:
-     * - cakanie na bod
-     * - pohyb
-     * - obchadzanie prekazky
-     * - pauza vykonavania bodu
-     * - zrusenie vykonavania bodu
-     */
-    static int state = 0;
 
-    
+void RobotInterface::t_poseController()
+{
+    static RobotPose currentPoseToGo = {0};
+    static bool moving = false;
+    static bool leadingEdge = false, trailingEdge = false;
+
+    RobotPose odomPosition = getOdomData();
+
+    double translationError = 0;
+    int currentSpeed = 0;
+    int currentRadius = 0;
+    bool braking = false;
+
+    static int speedLimit, speedStep;
+
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
         auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(ROBOT_POSE_CONTROLLER_PERIOD);
         // TIMER
         {
+            switch (actualRobotState) {
+                case IDLE:
+                    if (!robotCmdPoints.empty()){
+                        setRobotStatus(PERFORM_COMMANDS);
+                    }
 
-            switch (state) {
-                case 0:
+                    break;
+
+                case PERFORM_COMMANDS:
                     robotCmdPoints_mtx.lock();
+                        if (!robotCmdPoints.empty()){
+                            leadingEdge = (!moving);
+                            trailingEdge = (robotCmdPoints.size() == 1);
 
+                            currentPoseToGo = robotCmdPoints.front();
 
+                            /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
+                            speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
+
+                            /// Calculate speed stepping according to sampling period
+                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_REG_SAMPLING);
+
+                            translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+
+                            syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", currentPoseToGo.x, currentPoseToGo.y, currentPoseToGo.fi, translationError);
+
+                            setRobotStatus(MOVING);
+                        } else {
+                            std::vector<unsigned char> msg = setTranslationSpeed(0);
+
+                            sendDataToRobot(msg);
+
+                            syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
+
+                            moving = false;
+                            setRobotStatus(IDLE);
+                        }
                     robotCmdPoints_mtx.unlock();
                     break;
-                case 1:
 
+                case MOVING:
+                    moving = true;
 
+                    if (translationError > ROBOT_REG_ACCURACY){
+                        odomPosition = getOdomData();
+
+                        currentSpeed  = (int) wheelPID(translationError, 0, speedLimit);
+                        currentRadius = (int) fitRotationRadius(currentPoseToGo.fi - odomPosition.fi);
+
+                        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
+
+                        /// Set arc speed from calculated speed and radius
+                        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
+                        sendDataToRobot(msg);
+
+                        translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+
+                        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
+                            syslog(LOG_NOTICE, "Braking started");
+                            braking = true;
+                        }
+
+                        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
+                            speedLimit += speedStep;
+                        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
+                            speedLimit -= speedStep;
+                        }
+                    } else {
+                        syslog(LOG_NOTICE, "Point has been reached out, poping from queue.");
+                        robotCmdPoints.pop();
+                        setRobotStatus(PERFORM_COMMANDS);
+                    }
+                    break;
 
                 default:
                     break;
@@ -632,4 +707,10 @@ void RobotInterface::t_poseController() {
         std::this_thread::sleep_until(startPeriodTime);
     }
 
+}
+
+void RobotInterface::setRobotStatus(RobotStates newStatus)
+{
+    syslog(LOG_INFO, "Changing robot state from: %d -> %d", actualRobotState, newStatus);
+    actualRobotState = newStatus;
 }

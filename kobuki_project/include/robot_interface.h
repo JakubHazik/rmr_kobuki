@@ -39,15 +39,15 @@
 
 #define ROBOT_MAX_SPEED_FORWARD 250 // [mm / s]
 #define ROBOT_MIN_SPEED_FORWARD 30  // [mm / s]
-#define ROBOT_ACCELERATION      20  // [mm / s^-2]
+#define ROBOT_ACCELERATION      40  // [mm / s^-2]
 
 
-#define ROBOT_REG_ACCURACY      10  // [mm] accuracy of positioning
+#define ROBOT_REG_ACCURACY      50  // [mm] accuracy of positioning
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
 
-#define ROBOT_POSE_CONTROLLER_PERIOD 100
+#define ROBOT_POSE_CONTROLLER_PERIOD 500
 
 
 
@@ -171,6 +171,9 @@ public:
 
     ~RobotInterface();
 
+    enum RobotStates {IDLE, START, STOP, MOVING, PERFORM_COMMANDS};
+    RobotStates actualRobotState = IDLE;
+
     /**
      * Go to requested position
      * @param position RobotPose object - position of x[mm], y[mm] and fi[rad]
@@ -286,6 +289,8 @@ private:
     double fitRotationRadius(double angle);
 
     void t_poseController();
+
+    void setRobotStatus(RobotStates newStatus);
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H
