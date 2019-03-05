@@ -523,7 +523,7 @@ double RobotInterface::wheelPID(double w, double y, double saturation) {
 void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
     RobotPose odomPosition = getOdomData();
 
-    double translationError = position.x - odomPosition.x;// TODO = getAbsoluteDistance(odomPosition, position);
+    double translationError = getAbsoluteDistance(odomPosition, position);
     int currentSpeed = 0;
     int currentRadius = 0;
     bool braking = false;
@@ -542,23 +542,22 @@ void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool tra
         currentSpeed  = (int) wheelPID(translationError, 0, speedLimit);
         currentRadius = (int) fitRotationRadius(position.fi - odomPosition.fi);
 
-        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentRadius, currentRadius);
+        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
 
         /// Set arc speed from calculated speed and radius
         std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
         sendDataToRobot(msg);
 
-        translationError = position.x - odomPosition.x;//= getAbsoluteDistance(odomPosition, position);
+        translationError = getAbsoluteDistance(odomPosition, position);
 
-        if(translationError < currentSpeed * 3){
-            // TODO implementovat nejaku lepsiu podmienku na brzdenie
-            cout << "!!!!!!!!!!!!!!!!!!!!!!!! BRAKING !!!!!!!!!!!!!!!!!!!!!!!!" << endl << endl;
+        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
+            syslog(LOG_NOTICE, "Braking started");
             braking = true;
         }
 
-        if (speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
+        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
             speedLimit += speedStep;
-        } else if (speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
+        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
             speedLimit -= speedStep;
         }
         usleep((__useconds_t) (1000 * 1000 * ROBOT_REG_SAMPLING));
