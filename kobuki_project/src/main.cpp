@@ -22,24 +22,20 @@ int main(int argc, char *argv[]) {
 
     usleep(1000*1000*3);
 
-//    robot.sendTranslationSpeed(10);
-
     auto data = robot.getOdomData();
 
 
     robot.addCommandToQueue({data.x + 1000, data.y + 0, 0 * DEG2RAD});
-    robot.addCommandToQueue({data.x + 2000, data.y + 0, 0 * DEG2RAD});
+    //robot.addCommandToQueue({data.x + 2000, data.y + 0, 0 * DEG2RAD});
 
     while(1) {
-//        robot.sendTranslationSpeed(40);
-//        robot.sendRotationSpeed(1);
 
-//        data = robot.getOdomData();
-////        cout<<"=================="<<endl
-////            <<"X: "<<data.x<<endl
-////            <<"Y: "<<data.y<<endl
-////            <<"Fi: "<<data.fi<<endl
-////            <<"G: "<<robot.forOdomUseGyro<<endl;
+        data = robot.getOdomData();
+        cout<<"=================="<<endl
+            <<"X: "<<data.x<<endl
+            <<"Y: "<<data.y<<endl
+            <<"Fi: "<<data.fi<<endl
+            <<"G: "<<robot.forOdomUseGyro<<endl;
 
         usleep(1000*1000*0.5);
     }

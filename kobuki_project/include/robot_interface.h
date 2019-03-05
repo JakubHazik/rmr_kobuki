@@ -31,7 +31,7 @@
 #define ROBOT_REG_P         1
 #define ROBOT_REG_I         1
 #define ROBOT_REG_D         0
-#define ROBOT_REG_SAMPLING  0.5     // [s]
+//#define ROBOT_REG_SAMPLING  0.5     // [s]
 
 #define ROBOT_WHEEL_RADIUS  35      // [mm]
 #define ROBOT_WHEEL_BASE    230     // [mm]
@@ -47,7 +47,8 @@
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
 
-#define ROBOT_POSE_CONTROLLER_PERIOD 500
+#define ROBOT_POSE_CONTROLLER_PERIOD 0.5 // [s]
+#define ROBOT_ARC_MOVE_RADIUS_LIMIT 32000
 
 
 
@@ -273,7 +274,7 @@ private:
      * @param saturation saturation of maximal output
      * @return
      */
-    double wheelPID(double w, double y, double saturation);
+    double wheelPID(double error, double saturation);
 
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 

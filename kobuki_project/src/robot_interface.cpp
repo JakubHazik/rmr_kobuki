@@ -155,8 +155,8 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
 
     if (distanceRight - distanceLeft == 0) {
         // ked robot ide priamo
-        odom.x = odom.x + distanceCenter;
-        odom.y = odom.y + distanceCenter;
+        odom.x = odom.x + distanceCenter * cos(odom.fi);
+        odom.y = odom.y + distanceCenter * sin(odom.fi);
     } else {
         // ked robot ide po krivke
         odom.x = odom.x + ((ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (sin(odom.fi) - sin(fiOld));
@@ -499,24 +499,30 @@ RobotPose RobotInterface::getOdomData() {
     return odom;
 }
 
-double RobotInterface::wheelPID(double w, double y, double saturation) {
-    static double previousError = 0, integral = 0;
-    static auto start = std::chrono::system_clock::now();
+double RobotInterface::wheelPID(double error, double saturation) {
+//    static double previousError = 0, integral = 0;
+//    static auto start = std::chrono::system_clock::now();
+//
+//    auto end = std::chrono::system_clock::now();
+//
+//    std::chrono::duration<double> elapsed_time = end - start;
+//    double dt = elapsed_time.count();
+//
+//    integral = integral + error * dt;
+//    double derivative = (error - previousError)/dt;
+//    double output = Kp*error + Ki*integral + Kd*derivative;
+//
+//    previousError = error;
+//    start = end;
+//
+//    return (output < saturation) ? output : saturation;
 
-    auto end = std::chrono::system_clock::now();
-
-    std::chrono::duration<double> elapsed_time = end - start;
-    double dt = elapsed_time.count();
-
-    double error = w - y;
-    integral = integral + error * dt;
-    double derivative = (error - previousError)/dt;
-    double output = Kp*error + Ki*integral + Kd*derivative;
-
-    previousError = error;
-    start = end;
-
-    return (output < saturation) ? output : saturation;
+    double output = error * ROBOT_REG_P;
+    if (abs(output) > saturation) {
+        return saturation * signum(error);
+    } else {
+        return output;
+    }
 }
 
 //void RobotInterface::goToPosition(const RobotPose &position) {
@@ -532,14 +538,14 @@ void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool tra
     int speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
 
     /// Calculate speed stepping according to sampling period
-    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_REG_SAMPLING);
+    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
 
     syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", position.x, position.y, position.fi, translationError);
 
     while (translationError > ROBOT_REG_ACCURACY){
         odomPosition = getOdomData();
 
-        currentSpeed  = (int) wheelPID(translationError, 0, speedLimit);
+        currentSpeed  = (int) wheelPID(translationError, speedLimit);
         currentRadius = (int) fitRotationRadius(position.fi - odomPosition.fi);
 
         syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
@@ -560,7 +566,7 @@ void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool tra
         } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
             speedLimit -= speedStep;
         }
-        usleep((__useconds_t) (1000 * 1000 * ROBOT_REG_SAMPLING));
+        usleep((__useconds_t) (1000 * 1000 * ROBOT_POSE_CONTROLLER_PERIOD));
     }
 
     std::vector<unsigned char> msg = setTranslationSpeed(0);
@@ -583,7 +589,9 @@ double RobotInterface::fitRotationRadius(double angle)
     static const double coef_c = 1.897709639068426e+04;
     static const double coef_d = - 26.057588318697285;
 
-    return coef_a * exp(coef_b * angle) + coef_c * exp(coef_d * angle);
+    double result = signum(angle) * (coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)));
+
+    return (abs(result) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : result;
 }
 
 void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
@@ -619,7 +627,8 @@ void RobotInterface::t_poseController()
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
-        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(ROBOT_POSE_CONTROLLER_PERIOD);
+        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int)(ROBOT_POSE_CONTROLLER_PERIOD*1000));
+
         // TIMER
         {
             switch (actualRobotState) {
@@ -642,7 +651,7 @@ void RobotInterface::t_poseController()
                             speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
 
                             /// Calculate speed stepping according to sampling period
-                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_REG_SAMPLING);
+                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
 
                             translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
 
@@ -668,7 +677,7 @@ void RobotInterface::t_poseController()
                     if (translationError > ROBOT_REG_ACCURACY){
                         odomPosition = getOdomData();
 
-                        currentSpeed  = (int) wheelPID(translationError, 0, speedLimit);
+                        currentSpeed  = (int) wheelPID(translationError, speedLimit);
                         currentRadius = (int) fitRotationRadius(currentPoseToGo.fi - odomPosition.fi);
 
                         syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
