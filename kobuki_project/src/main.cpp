@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
     RobotInterface robot;
 
     usleep(1000*1000*3);
+    robot.resetOdom();
 
     auto data = robot.getOdomData();
 

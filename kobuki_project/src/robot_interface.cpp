@@ -13,9 +13,6 @@ template <typename T> int signum(T val) {
 }
 
 RobotInterface::RobotInterface() {
-    Ki = ROBOT_REG_I;
-    Kp = ROBOT_REG_P;
-    Kd = ROBOT_REG_D;
     odom = {0};
 
     robot = thread(&RobotInterface::t_readRobotData, this);
@@ -246,8 +243,12 @@ std::vector<unsigned char> RobotInterface::setRotationSpeed(double radpersec) {
 //radius <short> -32000 32000 mm
 std::vector<unsigned char> RobotInterface::setArcSpeed(int mmpersec, int radius) {
     if (radius == 0) {
-        return setTranslationSpeed(mmpersec);
+//        double result = mmpersec * 2 * M_PI / 1200;
+//        syslog(LOG_NOTICE, "rotation speed:  %f", result);
+//        return setRotationSpeed(result);
+        radius = 1; // nastavime co najmensi radius 1 mm
     }
+
     //viac o prikaze a jeho tvorbe si mozete precitat napriklad tu
     //http://yujinrobot.github.io/kobuki/enAppendixProtocolSpecification.html
 
@@ -295,19 +296,28 @@ std::vector<unsigned char> RobotInterface::setDefaultPID() {
 
 void RobotInterface::sendTranslationSpeed(int mmPerSec) {
     std::vector<unsigned char> mess = setTranslationSpeed(mmPerSec);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return;
+    }
     forOdomUseGyro = false;
 }
 
 void RobotInterface::sendRotationSpeed(int radPerSec) {
     std::vector<unsigned char> mess = setRotationSpeed(radPerSec);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return;
+    }
     forOdomUseGyro = true;
 }
 
 void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
     std::vector<unsigned char> mess = setArcSpeed(mmPerSec, mmRadius);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {  }
+    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return;
+    }
     forOdomUseGyro = mmRadius < ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION;
 }
 
@@ -499,99 +509,107 @@ RobotPose RobotInterface::getOdomData() {
     return odom;
 }
 
-double RobotInterface::wheelPID(double error, double saturation) {
-//    static double previousError = 0, integral = 0;
-//    static auto start = std::chrono::system_clock::now();
+//double RobotInterface::wheelPID(double error, double saturation) {
+////    static double previousError = 0, integral = 0;
+////    static auto start = std::chrono::system_clock::now();
+////
+////    auto end = std::chrono::system_clock::now();
+////
+////    std::chrono::duration<double> elapsed_time = end - start;
+////    double dt = elapsed_time.count();
+////
+////    integral = integral + error * dt;
+////    double derivative = (error - previousError)/dt;
+////    double output = Kp*error + Ki*integral + Kd*derivative;
+////
+////    previousError = error;
+////    start = end;
+////
+////    return (output < saturation) ? output : saturation;
 //
-//    auto end = std::chrono::system_clock::now();
-//
-//    std::chrono::duration<double> elapsed_time = end - start;
-//    double dt = elapsed_time.count();
-//
-//    integral = integral + error * dt;
-//    double derivative = (error - previousError)/dt;
-//    double output = Kp*error + Ki*integral + Kd*derivative;
-//
-//    previousError = error;
-//    start = end;
-//
-//    return (output < saturation) ? output : saturation;
-
-    double output = error * ROBOT_REG_P;
-    if (abs(output) > saturation) {
-        return saturation * signum(error);
-    } else {
-        return output;
-    }
-}
+//    double output = error * ROBOT_REG_P;
+//    if (abs(output) > saturation) {
+//        return saturation * signum(error);
+//    } else {
+//        return output;
+//    }
+//}
 
 //void RobotInterface::goToPosition(const RobotPose &position) {
-void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
-    RobotPose odomPosition = getOdomData();
+//void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
+//    RobotPose odomPosition = getOdomData();
+//
+//    double translationError = getAbsoluteDistance(odomPosition, position);
+//    int currentSpeed = 0;
+//    int currentRadius = 0;
+//    bool braking = false;
+//
+//    /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
+//    int speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
+//
+//    /// Calculate speed stepping according to sampling period
+//    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
+//
+//    syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", position.x, position.y, position.fi, translationError);
+//
+//    while (translationError > ROBOT_REG_ACCURACY){
+//        odomPosition = getOdomData();
+//
+//        currentSpeed  = (int) wheelPID(translationError, speedLimit);
+//        currentRadius = (int) fitRotationRadius(position,  odomPosition); //TODO zle
+//
+//        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
+//
+//        /// Set arc speed from calculated speed and radius
+//        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
+//        sendDataToRobot(msg);
+//
+//        translationError = getAbsoluteDistance(odomPosition, position);
+//
+//        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
+//            syslog(LOG_NOTICE, "Braking started");
+//            braking = true;
+//        }
+//
+//        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
+//            speedLimit += speedStep;
+//        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
+//            speedLimit -= speedStep;
+//        }
+//        usleep((__useconds_t) (1000 * 1000 * ROBOT_POSE_CONTROLLER_PERIOD));
+//    }
+//
+//    std::vector<unsigned char> msg = setTranslationSpeed(0);
+//
+//    sendDataToRobot(msg);
+//
+//    syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
+//
+//}
 
-    double translationError = getAbsoluteDistance(odomPosition, position);
-    int currentSpeed = 0;
-    int currentRadius = 0;
-    bool braking = false;
-
-    /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
-    int speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
-
-    /// Calculate speed stepping according to sampling period
-    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
-
-    syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", position.x, position.y, position.fi, translationError);
-
-    while (translationError > ROBOT_REG_ACCURACY){
-        odomPosition = getOdomData();
-
-        currentSpeed  = (int) wheelPID(translationError, speedLimit);
-        currentRadius = (int) fitRotationRadius(position.fi - odomPosition.fi);
-
-        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
-
-        /// Set arc speed from calculated speed and radius
-        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
-        sendDataToRobot(msg);
-
-        translationError = getAbsoluteDistance(odomPosition, position);
-
-        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
-            syslog(LOG_NOTICE, "Braking started");
-            braking = true;
-        }
-
-        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
-            speedLimit += speedStep;
-        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
-            speedLimit -= speedStep;
-        }
-        usleep((__useconds_t) (1000 * 1000 * ROBOT_POSE_CONTROLLER_PERIOD));
-    }
-
-    std::vector<unsigned char> msg = setTranslationSpeed(0);
-
-    sendDataToRobot(msg);
-
-    syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
-
-}
-
-double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB)
-{
+double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
 
-double RobotInterface::fitRotationRadius(double angle)
-{
+int RobotInterface::fitRotationRadius(RobotPose robotPose, RobotPose goalPose) {
+    double angle = atan2(goalPose.y - robotPose.y, goalPose.x - robotPose.x);
+    angle = robotPose.fi - angle;
+
     static const double coef_a = 1.022896253633420e+03;
     static const double coef_b = - 2.943278473631116;
     static const double coef_c = 1.897709639068426e+04;
     static const double coef_d = - 26.057588318697285;
 
-    double result = signum(angle) * (coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)));
+    double radius;
 
-    return (abs(result) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : result;
+    // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
+    if (angle == 0) {
+        radius = coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)) + 1;
+    } else {
+        radius = signum(angle) * (coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)) + 1);
+    }
+
+    return int((abs(radius) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : radius);
 }
 
 void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
@@ -599,31 +617,23 @@ void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
     robotCmdPoints.push(cmd);
 }
 
-bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
-{
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
-        syslog(LOG_ERR, "Send data to robot failed!");
-        return false;
-    }
-    return true;
-}
+//bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
+//{
+//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+//    {
+//        syslog(LOG_ERR, "Send data to robot failed!");
+//        return false;
+//    }
+//    return true;
+//}
 
 
 void RobotInterface::t_poseController()
 {
     static RobotPose currentPoseToGo = {0};
-    static bool moving = false;
-    static bool leadingEdge = false, trailingEdge = false;
-
-    RobotPose odomPosition = getOdomData();
-
     double translationError = 0;
-    int currentSpeed = 0;
-    int currentRadius = 0;
-    bool braking = false;
 
-    static int speedLimit, speedStep;
+    setRobotStatus(READ_POINT);
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
@@ -632,85 +642,66 @@ void RobotInterface::t_poseController()
         // TIMER
         {
             switch (actualRobotState) {
-                case IDLE:
-                    if (!robotCmdPoints.empty()){
-                        setRobotStatus(PERFORM_COMMANDS);
-                    }
-
-                    break;
-
-                case PERFORM_COMMANDS:
+                case READ_POINT: {
+                    /*
+                     * read first point
+                     */
                     robotCmdPoints_mtx.lock();
-                        if (!robotCmdPoints.empty()){
-                            leadingEdge = (!moving);
-                            trailingEdge = (robotCmdPoints.size() == 1);
 
-                            currentPoseToGo = robotCmdPoints.front();
+                    if (robotCmdPoints.empty()) {
+                        robotCmdPoints_mtx.unlock();
+                        break;
+                    }
 
-                            /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
-                            speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
+                    currentPoseToGo = robotCmdPoints.front();
 
-                            /// Calculate speed stepping according to sampling period
-                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
-
-                            translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-
-                            syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", currentPoseToGo.x, currentPoseToGo.y, currentPoseToGo.fi, translationError);
-
-                            setRobotStatus(MOVING);
-                        } else {
-                            std::vector<unsigned char> msg = setTranslationSpeed(0);
-
-                            sendDataToRobot(msg);
-
-                            syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
-
-                            moving = false;
-                            setRobotStatus(IDLE);
-                        }
                     robotCmdPoints_mtx.unlock();
+
+                    setRobotStatus(MOVE);
+                    break;
+                }
+
+                case MOVE: {
+                    /*
+                     * Move the robot to a goal point
+                     */
+                    RobotPose odomPosition = getOdomData();
+                    translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+
+                    // zistovanie ci robot dosiahol bod
+                    if (translationError < ROBOT_REG_ACCURACY) {
+                        robotCmdPoints_mtx.lock();
+                        robotCmdPoints.pop();
+                        robotCmdPoints_mtx.unlock();
+
+                        setRobotStatus(READ_POINT);
+                        break;
+                    }
+
+                    int speed = speedRegulator(translationError);
+                    int radius = fitRotationRadius(odomPosition, currentPoseToGo);
+                    syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, speed, radius);
+                    sendArcSpeed(speed, radius);
+
+                    break;
+                }
+
+                case STOP:
+                    /*
+                     * Stop the robot
+                     */
+                    setTranslationSpeed(0);
                     break;
 
-                case MOVING:
-                    moving = true;
-
-                    if (translationError > ROBOT_REG_ACCURACY){
-                        odomPosition = getOdomData();
-
-                        currentSpeed  = (int) wheelPID(translationError, speedLimit);
-                        currentRadius = (int) fitRotationRadius(currentPoseToGo.fi - odomPosition.fi);
-
-                        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
-
-                        /// Set arc speed from calculated speed and radius
-                        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
-                        sendDataToRobot(msg);
-
-                        translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-
-                        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
-                            syslog(LOG_NOTICE, "Braking started");
-                            braking = true;
-                        }
-
-                        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
-                            speedLimit += speedStep;
-                        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
-                            speedLimit -= speedStep;
-                        }
-                    } else {
-                        syslog(LOG_NOTICE, "Point has been reached out, poping from queue.");
-                        robotCmdPoints.pop();
-                        setRobotStatus(PERFORM_COMMANDS);
-                    }
+                case ANOTHER_CONTROL:
+                    /*
+                     * Do nothing, another proces controll the robot
+                     */
                     break;
 
                 default:
                     break;
             }
-
-            //TODO #include <condition_variable> na signalizovanie bllokacie
-
 
         }
         std::this_thread::sleep_until(startPeriodTime);
@@ -718,8 +709,104 @@ void RobotInterface::t_poseController()
 
 }
 
-void RobotInterface::setRobotStatus(RobotStates newStatus)
-{
+void RobotInterface::setRobotStatus(RobotStates newStatus) {
     syslog(LOG_INFO, "Changing robot state from: %d -> %d", actualRobotState, newStatus);
     actualRobotState = newStatus;
 }
+
+void RobotInterface::resetOdom() {
+    std::lock_guard<std::mutex> odom_lg(odom_mtx);
+    odom.y = 0;
+    odom.x = 0;
+    odom.fi = 0;
+}
+
+int RobotInterface::speedRegulator(double error) {
+    static int lastOutput = 0;
+
+    double output = error * 2;
+
+    // saturation
+    if (output > ROBOT_MAX_SPEED_FORWARD) {
+        output = ROBOT_MAX_SPEED_FORWARD;
+
+        // ked plati tato podmienka tak robot chce zrychlovat, urobme to po rampe
+        if (lastOutput < output) {
+            output = lastOutput + ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD;
+            if (output < ROBOT_MIN_SPEED_FORWARD) {
+                output = ROBOT_MIN_SPEED_FORWARD;
+            }
+        }
+    }
+
+    lastOutput = int(output);
+    return int(output);
+}
+
+
+
+//                case PERFORM_COMMANDS:
+//                    robotCmdPoints_mtx.lock();
+//                        if (!robotCmdPoints.empty()){
+////                            leadingEdge = (!moving);
+////                            trailingEdge = (robotCmdPoints.size() == 1);
+//
+////                            currentPoseToGo = robotCmdPoints.front();
+//
+//                            /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
+////                            speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
+//
+//                            /// Calculate speed stepping according to sampling period
+////                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
+//
+////                            translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+//
+////                            syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", currentPoseToGo.x, currentPoseToGo.y, currentPoseToGo.fi, translationError);
+//
+////                            setRobotStatus(MOVING);
+//                        } else {
+//                            std::vector<unsigned char> msg = setTranslationSpeed(0);
+//
+//                            sendDataToRobot(msg);
+//
+//                            syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
+//
+//                            moving = false;
+//                            setRobotStatus(READ_POINT);
+//                        }
+//                    robotCmdPoints_mtx.unlock();
+//                    break;
+
+
+//moving = true;
+//
+//                    if (translationError > ROBOT_REG_ACCURACY){
+//                        odomPosition = getOdomData();
+//
+//                        currentSpeed  = (int) wheelPID(translationError, speedLimit);
+//                        currentRadius = (int) fitRotationRadius(odomPosition, currentPoseToGo);
+//
+//                        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
+//
+//                        /// Set arc speed from calculated speed and radius
+//                        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
+//                        sendDataToRobot(msg);
+//
+//                        translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+//
+//                        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
+//                            syslog(LOG_NOTICE, "Braking started");
+//                            braking = true;
+//                        }
+//
+//                        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
+//                            speedLimit += speedStep;
+//                        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
+//                            speedLimit -= speedStep;
+//                        }
+//                    } else {
+//                        syslog(LOG_NOTICE, "Point has been reached out, poping from queue.");
+//                        robotCmdPoints.pop();
+//                        setRobotStatus(PERFORM_COMMANDS);
+//                    }
+//                    break;

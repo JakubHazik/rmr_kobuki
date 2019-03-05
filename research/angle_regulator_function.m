@@ -22,7 +22,7 @@ d=f.d;
 angle_fit = 0:180;
 angle_fit = angle_fit.*(pi/180);
 
-result = a*exp(b*angle_fit) + c*exp(d*angle_fit);
+result = a*exp(b*angle_fit) + c*exp(d*angle_fit) + 1; % ak chceme pouzit setArcSpeed tak nehceme aby bol radius 0
 plot(angle_fit, result) 
 
 

@@ -18,7 +18,7 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
-#include <math.h>       /* pow */
+#include <math.h>
 #include <queue>
 
 
@@ -26,12 +26,7 @@
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
 #define ROBOT_TICK_TO_RAD   0.002436916871363930187454
 #define ROBOT_ENCODER_MAX   0xFFFF  // max of unsigned short
-#define ROBOT_GYRO_MAX      0x7FFF
-
-#define ROBOT_REG_P         1
-#define ROBOT_REG_I         1
-#define ROBOT_REG_D         0
-//#define ROBOT_REG_SAMPLING  0.5     // [s]
+#define ROBOT_GYRO_MAX      0x7FFF  // TODO toto je zle
 
 #define ROBOT_WHEEL_RADIUS  35      // [mm]
 #define ROBOT_WHEEL_BASE    230     // [mm]
@@ -53,11 +48,9 @@
 
 
 typedef struct {
-
     unsigned short x;
     unsigned short y;
     unsigned short z;
-
 } TRawGyroData;
 
 typedef struct {
@@ -154,17 +147,6 @@ typedef struct {
     double fi;
 } RobotPose;
 
-typedef enum {
-    SPEED_UP,
-    WAY_POINT,
-    SPEED_DOWN
-} RobotCommands;
-
-typedef struct {
-    RobotPose pose;
-    RobotCommands cmd;
-} RobotCommand;
-
 
 class RobotInterface {
 public:
@@ -172,26 +154,26 @@ public:
 
     ~RobotInterface();
 
-    enum RobotStates {IDLE, START, STOP, MOVING, PERFORM_COMMANDS};
-    RobotStates actualRobotState = IDLE;
+    enum RobotStates {READ_POINT, STOP, MOVE, ANOTHER_CONTROL};
+    RobotStates actualRobotState = READ_POINT;
 
-    /**
-     * Go to requested position
-     * @param position RobotPose object - position of x[mm], y[mm] and fi[rad]
-     * @param leadingEdge - to create leading Edge (ramp start)
-     * @param trailingEdge - to create trailing Edge (ramp stop)
-     */
-    void goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge);
+//    /**
+//     * Go to requested position
+//     * @param position RobotPose object - position of x[mm], y[mm] and fi[rad]
+//     * @param leadingEdge - to create leading Edge (ramp start)
+//     * @param trailingEdge - to create trailing Edge (ramp stop)
+//     */
+//    void goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge);
 
     void addCommandToQueue(const RobotPose &cmd);
-
-    void goToPosition(const RobotPose &position);
     
     void sendTranslationSpeed(int mmPerSec);
 
     void sendRotationSpeed(int radPerSec);
 
     void sendArcSpeed(int mmPerSec, int mmRadius);
+
+    void resetOdom();
 
     LaserMeasurement getLaserData();
 
@@ -202,7 +184,7 @@ public:
      * @param data Data to be sent
      * @return Success of sending
      */
-    bool sendDataToRobot(std::vector<unsigned char> data);
+//    bool sendDataToRobot(std::vector<unsigned char> data);
 
     bool forOdomUseGyro =false;
 private:
@@ -265,16 +247,14 @@ private:
         return parseKobukiMessage(output, message);
     }
 
-    double Ki, Kp, Kd;
-
-    /**
-     * PID regulator
-     * @param w requested value
-     * @param y current value
-     * @param saturation saturation of maximal output
-     * @return
-     */
-    double wheelPID(double error, double saturation);
+//    /**
+//     * PID regulator
+//     * @param w requested value
+//     * @param y current value
+//     * @param saturation saturation of maximal output
+//     * @return
+//     */
+//    double wheelPID(double error, double saturation);
 
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
@@ -287,11 +267,13 @@ private:
      * @param angle Angle [rad] to fit to radius
      * @return rotation radius according to angle
      */
-    double fitRotationRadius(double angle);
+    int fitRotationRadius(RobotPose robotPose, RobotPose goalPose);
 
     void t_poseController();
 
     void setRobotStatus(RobotStates newStatus);
+
+    int speedRegulator(double error);
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H
