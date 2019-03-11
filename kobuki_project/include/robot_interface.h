@@ -33,16 +33,17 @@
 #define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 // [mm]
 
 #define ROBOT_MAX_SPEED_FORWARD 250 // [mm / s]
-#define ROBOT_MIN_SPEED_FORWARD 30  // [mm / s]
-#define ROBOT_ACCELERATION      40  // [mm / s^-2]
+#define ROBOT_MIN_SPEED_FORWARD 40  // [mm / s]
+#define ROBOT_ACCELERATION      50  // [mm / s^-2]
+#define ROBOT_REG_P 0.7
 
 
-#define ROBOT_REG_ACCURACY      50  // [mm] accuracy of positioning
+#define ROBOT_REG_ACCURACY      25  // [mm] accuracy of positioning
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
 
-#define ROBOT_POSE_CONTROLLER_PERIOD 0.5 // [s]
+#define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
 #define ROBOT_ARC_MOVE_RADIUS_LIMIT 32000
 
 
@@ -258,6 +259,8 @@ private:
 
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
+    double getRotationError(RobotPose robotPose, RobotPose goalPose);
+
     /**
      * Angle fitting function to rotation radius
      * Constants calculated with MATLAB-s fitting toolbox
@@ -267,13 +270,15 @@ private:
      * @param angle Angle [rad] to fit to radius
      * @return rotation radius according to angle
      */
-    int fitRotationRadius(RobotPose robotPose, RobotPose goalPose);
+    int fitRotationRadius(double rotationError);
 
     void t_poseController();
 
     void setRobotStatus(RobotStates newStatus);
 
     int speedRegulator(double error);
+
+    int speedRadiusCorrection(int requiredSpeed, int radius);
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H

@@ -309,16 +309,24 @@ void RobotInterface::sendRotationSpeed(int radPerSec) {
         syslog(LOG_ERR, "Send data to robot failed!");
         return;
     }
-    forOdomUseGyro = true;
+    forOdomUseGyro = false;
 }
 
 void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
+    /*
+     * zaporny radius znamena ze bod otacania je napravo od robota
+     */
+    if (mmRadius == 0) {
+        syslog(LOG_ERR, "Radius have so low value: 0");
+    }
+
     std::vector<unsigned char> mess = setArcSpeed(mmPerSec, mmRadius);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
         syslog(LOG_ERR, "Send data to robot failed!");
         return;
     }
-    forOdomUseGyro = mmRadius < ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION;
+    forOdomUseGyro = false;
+//    forOdomUseGyro = mmRadius < ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION;
 }
 
 int RobotInterface::checkChecksum(unsigned char *data) {//najprv hlavicku
@@ -591,25 +599,60 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
 
-int RobotInterface::fitRotationRadius(RobotPose robotPose, RobotPose goalPose) {
-    double angle = atan2(goalPose.y - robotPose.y, goalPose.x - robotPose.x);
-    angle = robotPose.fi - angle;
+double RobotInterface::getRotationError(RobotPose robotPose, RobotPose goalPose) {
+    double goalAngle = atan2(goalPose.y - robotPose.y, goalPose.x - robotPose.x);
+    //syslog(LOG_NOTICE, "atan2: Y: %f; X: %f; %f[%f]", goalPose.y - robotPose.y, goalPose.x - robotPose.x, goalAngle*RAD2DEG,goalAngle);
 
-    static const double coef_a = 1.022896253633420e+03;
+    double robotAngle = robotPose.fi;
+
+    double result;
+
+    if (signum(robotAngle) == signum(goalAngle)) {
+        // uhly patria do jednej polroviny
+        return goalAngle - robotAngle;
+    }
+
+    if (robotAngle > 0) {
+        result = -1 * (abs(goalAngle) + abs(robotAngle));
+    } else {
+        result = abs(goalAngle) + abs(robotAngle);
+    }
+
+    if (result > 180) {
+        result = -360 + abs(robotAngle) + abs(goalAngle);
+    }
+
+    if (result < -180) {
+        result = 360 - abs(robotAngle) - abs(goalAngle);
+    }
+
+    return result;
+}
+
+
+
+int RobotInterface::fitRotationRadius(double rotationError) {
+
+    static const double coef_a = - 1.022896253633420e+03;
     static const double coef_b = - 2.943278473631116;
-    static const double coef_c = 1.897709639068426e+04;
+    static const double coef_c = - 1.897709639068426e+04;
     static const double coef_d = - 26.057588318697285;
 
     double radius;
 
     // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
-    if (angle == 0) {
-        radius = coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)) + 1;
+    if (rotationError == 0) {
+        radius = coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) + 2;
     } else {
-        radius = signum(angle) * (coef_a * exp(coef_b * abs(angle)) + coef_c * exp(coef_d * abs(angle)) + 1);
+        radius = signum(rotationError) * (coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) + 2);
     }
 
-    return int((abs(radius) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : radius);
+
+//    syslog(LOG_NOTICE, "Radius computation: %f", radius);
+
+//    return int((abs(radius) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : radius);
+
+    return int(round(radius));
 }
 
 void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
@@ -627,6 +670,14 @@ void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
 //    return true;
 //}
 
+
+int RobotInterface::speedRadiusCorrection(int requiredSpeed, int radius) {
+
+    float result = round(requiredSpeed + requiredSpeed * 0.1 - requiredSpeed/((abs(radius) + 500.0)/500.0));
+
+    // todo znamienka + saturacia
+    return int(result);
+}
 
 void RobotInterface::t_poseController()
 {
@@ -650,6 +701,7 @@ void RobotInterface::t_poseController()
 
                     if (robotCmdPoints.empty()) {
                         robotCmdPoints_mtx.unlock();
+                        sendTranslationSpeed(0);
                         break;
                     }
 
@@ -679,9 +731,13 @@ void RobotInterface::t_poseController()
                     }
 
                     int speed = speedRegulator(translationError);
-                    int radius = fitRotationRadius(odomPosition, currentPoseToGo);
-                    syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, speed, radius);
-                    sendArcSpeed(speed, radius);
+                    double rotationError = getRotationError(odomPosition, currentPoseToGo);
+                    int radius = fitRotationRadius(rotationError);
+
+                    int speed_correction = speedRadiusCorrection(speed, radius);
+                    syslog(LOG_DEBUG, "Remaining distance: %.lf; Calculated speed: %d, %d; Rotation error: %f[%f]; Calculated radius: %d",
+                            translationError, speed, speed_correction, rotationError*RAD2DEG, rotationError, radius);
+                    sendArcSpeed(speed_correction, radius);
 
                     break;
                 }
@@ -724,7 +780,7 @@ void RobotInterface::resetOdom() {
 int RobotInterface::speedRegulator(double error) {
     static int lastOutput = 0;
 
-    double output = error * 2;
+    double output = error * ROBOT_REG_P;
 
     // saturation
     if (output > ROBOT_MAX_SPEED_FORWARD) {
