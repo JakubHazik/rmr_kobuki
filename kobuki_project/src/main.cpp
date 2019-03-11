@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     if(gui){
         QApplication a(argc, argv);
         MainWindow w;
+        w.setRobotInterface(&robot);
         w.show();
 
         syslog(LOG_INFO, "Kobuki started in graphical mode!");

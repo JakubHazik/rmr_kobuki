@@ -188,6 +188,10 @@ public:
 //    bool sendDataToRobot(std::vector<unsigned char> data);
 
     bool forOdomUseGyro =false;
+
+    // Public for GUI - drawing
+    std::mutex laserData_mtx;
+
 private:
     /*
     * ========================================
@@ -200,7 +204,6 @@ private:
 
     TKobukiData robotData;
     LaserMeasurement laserData;
-    std::mutex laserData_mtx;
 
     RobotPose odom;
     std::mutex odom_mtx;
