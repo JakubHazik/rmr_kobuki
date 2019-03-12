@@ -32,13 +32,13 @@
 #define ROBOT_WHEEL_BASE    230     // [mm]
 #define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 // [mm]
 
-#define ROBOT_MAX_SPEED_FORWARD 250 // [mm / s]
-#define ROBOT_MIN_SPEED_FORWARD 40  // [mm / s]
-#define ROBOT_ACCELERATION      50  // [mm / s^-2]
+#define ROBOT_MAX_SPEED_FORWARD 300 // [mm / s]
+#define ROBOT_MIN_SPEED_FORWARD 30  // [mm / s]
+#define ROBOT_ACCELERATION      40  // [mm / s^-2]
 #define ROBOT_REG_P 0.7
 
 
-#define ROBOT_REG_ACCURACY      25  // [mm] accuracy of positioning
+#define ROBOT_REG_ACCURACY      30  // [mm] accuracy of positioning
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)

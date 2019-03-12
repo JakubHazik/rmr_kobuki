@@ -618,39 +618,32 @@ double RobotInterface::getRotationError(RobotPose robotPose, RobotPose goalPose)
         result = abs(goalAngle) + abs(robotAngle);
     }
 
-    if (result > 180) {
-        result = -360 + abs(robotAngle) + abs(goalAngle);
+    if (result > M_PI) {
+        result = -2*M_PI + abs(robotAngle) + abs(goalAngle);
     }
 
-    if (result < -180) {
-        result = 360 - abs(robotAngle) - abs(goalAngle);
+    if (result < -M_PI) {
+        result = 2*M_PI - abs(robotAngle) - abs(goalAngle);
     }
 
     return result;
 }
 
-
-
 int RobotInterface::fitRotationRadius(double rotationError) {
 
-    static const double coef_a = - 1.022896253633420e+03;
-    static const double coef_b = - 2.943278473631116;
-    static const double coef_c = - 1.897709639068426e+04;
-    static const double coef_d = - 26.057588318697285;
+    static const double coef_a = -1.0432e+03;
+    static const double coef_b = -2.9754;
+    static const double coef_c = -2.3957e+04;
+    static const double coef_d = -28.0845;
 
     double radius;
 
     // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
     if (rotationError == 0) {
-        radius = coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) + 2;
+        radius = coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) -1;
     } else {
-        radius = signum(rotationError) * (coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) + 2);
+        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) -1);
     }
-
-
-//    syslog(LOG_NOTICE, "Radius computation: %f", radius);
-
-//    return int((abs(radius) > ROBOT_ARC_MOVE_RADIUS_LIMIT) ? ROBOT_ARC_MOVE_RADIUS_LIMIT * signum(angle) : radius);
 
     return int(round(radius));
 }
@@ -660,20 +653,13 @@ void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
     robotCmdPoints.push(cmd);
 }
 
-//bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
-//{
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//        syslog(LOG_ERR, "Send data to robot failed!");
-//        return false;
-//    }
-//    return true;
-//}
-
-
 int RobotInterface::speedRadiusCorrection(int requiredSpeed, int radius) {
 
-    float result = round(requiredSpeed + requiredSpeed * 0.1 - requiredSpeed/((abs(radius) + 500.0)/500.0));
+    float result = round(requiredSpeed + requiredSpeed * 0.05 - requiredSpeed/((abs(radius) + 500.0)/500.0));
+
+    if (result == 0) {
+        result = 1;
+    }
 
     // todo znamienka + saturacia
     return int(result);
@@ -798,71 +784,3 @@ int RobotInterface::speedRegulator(double error) {
     lastOutput = int(output);
     return int(output);
 }
-
-
-
-//                case PERFORM_COMMANDS:
-//                    robotCmdPoints_mtx.lock();
-//                        if (!robotCmdPoints.empty()){
-////                            leadingEdge = (!moving);
-////                            trailingEdge = (robotCmdPoints.size() == 1);
-//
-////                            currentPoseToGo = robotCmdPoints.front();
-//
-//                            /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
-////                            speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
-//
-//                            /// Calculate speed stepping according to sampling period
-////                            speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
-//
-////                            translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-//
-////                            syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", currentPoseToGo.x, currentPoseToGo.y, currentPoseToGo.fi, translationError);
-//
-////                            setRobotStatus(MOVING);
-//                        } else {
-//                            std::vector<unsigned char> msg = setTranslationSpeed(0);
-//
-//                            sendDataToRobot(msg);
-//
-//                            syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
-//
-//                            moving = false;
-//                            setRobotStatus(READ_POINT);
-//                        }
-//                    robotCmdPoints_mtx.unlock();
-//                    break;
-
-
-//moving = true;
-//
-//                    if (translationError > ROBOT_REG_ACCURACY){
-//                        odomPosition = getOdomData();
-//
-//                        currentSpeed  = (int) wheelPID(translationError, speedLimit);
-//                        currentRadius = (int) fitRotationRadius(odomPosition, currentPoseToGo);
-//
-//                        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
-//
-//                        /// Set arc speed from calculated speed and radius
-//                        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
-//                        sendDataToRobot(msg);
-//
-//                        translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-//
-//                        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
-//                            syslog(LOG_NOTICE, "Braking started");
-//                            braking = true;
-//                        }
-//
-//                        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
-//                            speedLimit += speedStep;
-//                        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
-//                            speedLimit -= speedStep;
-//                        }
-//                    } else {
-//                        syslog(LOG_NOTICE, "Point has been reached out, poping from queue.");
-//                        robotCmdPoints.pop();
-//                        setRobotStatus(PERFORM_COMMANDS);
-//                    }
-//                    break;
