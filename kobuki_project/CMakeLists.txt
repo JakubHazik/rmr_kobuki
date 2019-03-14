@@ -5,6 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5 REQUIRED COMPONENTS Gui Core Widgets)
+find_package(OpenCV REQUIRED)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -17,12 +18,14 @@ set(INCLUDE_FILES
         include/robot_interface.h
         include/regulator.h
         include/own_typedefs.h
+        include/robot_map.h
         include/lidar_interface.h)
 set(SOURCE_FILES
         src/ui.cpp
         src/robot_interface.cpp
-        src/lidar_interface.cpp
-        src/regulator.cpp)
+        src/regulator.cpp
+        src/robot_map.cpp
+        src/lidar_interface.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 
@@ -37,4 +40,5 @@ add_executable(kobuki
 target_link_libraries(kobuki
         pthread
         Qt5::Core
-        Qt5::Widgets)
+        Qt5::Widgets
+        ${OpenCV_LIBS})

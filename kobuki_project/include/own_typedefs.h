@@ -112,5 +112,12 @@ typedef struct {
     int radius;
 } regulatorAction;
 
+typedef struct {
+    int x;
+    int y;
+} MapSize;
+
+typedef MapSize MapPoint;
+
 
 #endif //KOBUKI_PROJECT_OWN_TYPEDEFS_H
