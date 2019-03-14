@@ -17,6 +17,7 @@ set(INCLUDE_FILES
         include/ui.h
         include/robot_interface.h
         include/regulator.h
+        include/global_planner.h
         include/own_typedefs.h
         include/robot_map.h
         include/lidar_interface.h)
@@ -25,6 +26,7 @@ set(SOURCE_FILES
         src/robot_interface.cpp
         src/regulator.cpp
         src/robot_map.cpp
+        src/global_planner.cpp
         src/lidar_interface.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
