@@ -142,16 +142,8 @@ public:
 
     ~RobotInterface();
 
-    enum RobotStates {READ_POINT, STOP, MOVE, ANOTHER_CONTROL};
+    enum RobotStates {READ_POINT, STOP, CANCEL_PIONT, MOVE, ANOTHER_CONTROL};
     RobotStates actualRobotState = READ_POINT;
-
-//    /**
-//     * Go to requested position
-//     * @param position RobotPose object - position of x[mm], y[mm] and fi[rad]
-//     * @param leadingEdge - to create leading Edge (ramp start)
-//     * @param trailingEdge - to create trailing Edge (ramp stop)
-//     */
-//    void goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge);
 
     void addCommandToQueue(const RobotPose &cmd);
     
@@ -166,16 +158,6 @@ public:
     RobotPose getOdomData();
 
     bool sendDataToRobot(std::vector<unsigned char> mess);
-
-    /**
-     * Util function sends created data to robot via socket
-     * @param data Data to be sent
-     * @return Success of sending
-     */
-//    bool sendDataToRobot(std::vector<unsigned char> data);
-
-    bool forOdomUseGyro =false;
-
 private:
     /*
     * ========================================
@@ -207,33 +189,6 @@ private:
 
     void computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle);
 
-    std::vector<unsigned char> setTranslationSpeed(int mmpersec);
-
-    std::vector<unsigned char> setRotationSpeed(double radpersec);
-
-    std::vector<unsigned char> setArcSpeed(int mmpersec, int radius);
-
-    std::vector<unsigned char> setSound(int noteinHz, int duration);
-
-    std::vector<unsigned char> setDefaultPID();
-
-    int checkChecksum(unsigned char *data);
-
-    int parseKobukiMessage(TKobukiData &output, unsigned char *data);
-
-    int fillData(TKobukiData &output, unsigned char *message) {
-        return parseKobukiMessage(output, message);
-    }
-
-//    /**
-//     * PID regulator
-//     * @param w requested value
-//     * @param y current value
-//     * @param saturation saturation of maximal output
-//     * @return
-//     */
-//    double wheelPID(double error, double saturation);
-
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
     double getRotationError(RobotPose robotPose, RobotPose goalPose);
@@ -256,6 +211,29 @@ private:
     int speedRegulator(double error);
 
     int speedRadiusCorrection(int requiredSpeed, int radius);
+
+
+    /*
+     * Communication interface
+     */
+
+    std::vector<unsigned char> setTranslationSpeed(int mmpersec);
+
+    std::vector<unsigned char> setRotationSpeed(double radpersec);
+
+    std::vector<unsigned char> setArcSpeed(int mmpersec, int radius);
+
+    std::vector<unsigned char> setSound(int noteinHz, int duration);
+
+    std::vector<unsigned char> setDefaultPID();
+
+    int checkChecksum(unsigned char *data);
+
+    int parseKobukiMessage(TKobukiData &output, unsigned char *data);
+
+    int fillData(TKobukiData &output, unsigned char *message) {
+        return parseKobukiMessage(output, message);
+    }
 };
 
 #endif //KOBUKI_PROJECT_ROBOT_INTERFACE_H

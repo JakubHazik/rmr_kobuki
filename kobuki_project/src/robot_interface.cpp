@@ -13,12 +13,14 @@ template <typename T> int signum(T val) {
 }
 
 RobotInterface::RobotInterface() {
-    odom = {0};
-
     robot = thread(&RobotInterface::t_readRobotData, this);
 
-    // start pose controller timer
+    // start pose controller timer thread
     std::thread(&RobotInterface::t_poseController, this).detach();
+
+    // wait until arrive the first message, next we can reset odom
+    usleep(1000);
+    odom = {0};
 }
 
 RobotInterface::~RobotInterface() {
@@ -70,6 +72,7 @@ void RobotInterface::t_readRobotData() {
         int returnval = fillData(robotData, (unsigned char *) buff);
         if (returnval == 0) {
             computeOdometry(robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
+//            cout<<float(robotData.GyroAngleRate/100.0)<<endl;
 //            processRobotData = thread(&RobotInterface::t_computeOdometry, this, robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
 //            processRobotData.join(); // TODO treba domysliet lebo ak vyjde z toho scopu tak thread je terminated
         }
@@ -78,12 +81,13 @@ void RobotInterface::t_readRobotData() {
 }
 
 void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle) {
-    //TODO ak je polomer otacania robota mensi ak nieco tak ber uhol otocenia z gyra
     static unsigned short encoderLeftOld, encoderRightOld;
-    static signed short gyroAngleOld;
+//    static signed short gyroAngleOld;
 
     int encoderLeftDelta;
     int encoderRightDelta;
+
+//    syslog(LOG_NOTICE, "ENCODER: left: %d; right: %d; gyro: %d", encoderLeft, encoderRight, gyroAngle );
 
     // detekcia pretecenia encodera,
     if (abs(encoderLeft - encoderLeftOld) > ROBOT_ENCODER_MAX / 2) {
@@ -108,23 +112,6 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
         encoderRightDelta = encoderRight - encoderRightOld;
     }
 
-    // detekcia pretecenie gyra
-    double gyroAngleDelta = 0;
-
-    if (forOdomUseGyro) {
-        if (abs(gyroAngleOld - gyroAngle) > ROBOT_GYRO_MAX) {
-            //detekuj smer pretecenia
-            if (gyroAngleOld < gyroAngle) {
-                gyroAngleDelta = -ROBOT_GYRO_MAX - gyroAngleOld - (ROBOT_GYRO_MAX - gyroAngle);
-            } else {
-                gyroAngleDelta = ROBOT_GYRO_MAX - gyroAngleOld + (ROBOT_GYRO_MAX + gyroAngle);
-            }
-        } else {
-            gyroAngleDelta = gyroAngle - gyroAngleOld;
-        }
-        gyroAngleDelta = gyroAngleDelta / 100 * DEG2RAD;     // prichadza to ako int s tym ze je desatina ciarka posunuta o 2 miesta
-    }
-
     double distanceLeft = encoderLeftDelta * ROBOT_TICK_TO_METER;
     double distanceRight = encoderRightDelta * ROBOT_TICK_TO_METER;
     double distanceCenter = (distanceLeft + distanceRight)/2;
@@ -133,12 +120,7 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
 
     double fiOld = odom.fi;
 
-    // vypocet natocenia
-    if (forOdomUseGyro) {
-        odom.fi = odom.fi + gyroAngleDelta;
-    } else {
-        odom.fi = odom.fi + (distanceRight - distanceLeft) / ROBOT_WHEEL_BASE;
-    }
+    odom.fi = odom.fi + (distanceRight - distanceLeft) / ROBOT_WHEEL_BASE;
 
     // osetrit pretocenie robota o 2pi
     if (odom.fi > M_PI) {
@@ -159,10 +141,6 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
 
     odom_mtx.unlock();
 
-    //TODO treba urobit nejaky signal ktory da info UI o zmene premennej
-    //TODO ? https://en.cppreference.com/w/cpp/thread/condition_variable
-
-    gyroAngleOld = gyroAngle;
     encoderLeftOld = encoderLeft;
     encoderRightOld = encoderRight;
 }
@@ -256,7 +234,6 @@ void RobotInterface::sendTranslationSpeed(int mmPerSec) {
         syslog(LOG_ERR, "Send data to robot failed!");
         return;
     }
-    forOdomUseGyro = false;
 }
 
 void RobotInterface::sendRotationSpeed(int radPerSec) {
@@ -265,7 +242,6 @@ void RobotInterface::sendRotationSpeed(int radPerSec) {
         syslog(LOG_ERR, "Send data to robot failed!");
         return;
     }
-    forOdomUseGyro = false;
 }
 
 void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
@@ -281,8 +257,6 @@ void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
         syslog(LOG_ERR, "Send data to robot failed!");
         return;
     }
-    forOdomUseGyro = false;
-//    forOdomUseGyro = mmRadius < ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION;
 }
 
 int RobotInterface::checkChecksum(unsigned char *data) {//najprv hlavicku
@@ -468,84 +442,6 @@ RobotPose RobotInterface::getOdomData() {
     return odom;
 }
 
-//double RobotInterface::wheelPID(double error, double saturation) {
-////    static double previousError = 0, integral = 0;
-////    static auto start = std::chrono::system_clock::now();
-////
-////    auto end = std::chrono::system_clock::now();
-////
-////    std::chrono::duration<double> elapsed_time = end - start;
-////    double dt = elapsed_time.count();
-////
-////    integral = integral + error * dt;
-////    double derivative = (error - previousError)/dt;
-////    double output = Kp*error + Ki*integral + Kd*derivative;
-////
-////    previousError = error;
-////    start = end;
-////
-////    return (output < saturation) ? output : saturation;
-//
-//    double output = error * ROBOT_REG_P;
-//    if (abs(output) > saturation) {
-//        return saturation * signum(error);
-//    } else {
-//        return output;
-//    }
-//}
-
-//void RobotInterface::goToPosition(const RobotPose &position) {
-//void RobotInterface::goToPosition(RobotPose position, bool leadingEdge, bool trailingEdge) {
-//    RobotPose odomPosition = getOdomData();
-//
-//    double translationError = getAbsoluteDistance(odomPosition, position);
-//    int currentSpeed = 0;
-//    int currentRadius = 0;
-//    bool braking = false;
-//
-//    /// Set speed limit, if leading Edge is set, start from minimal speed, otherwise go with maximal speed
-//    int speedLimit = leadingEdge ? ROBOT_MIN_SPEED_FORWARD : ROBOT_MAX_SPEED_FORWARD;
-//
-//    /// Calculate speed stepping according to sampling period
-//    int speedStep = (int) (ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD);
-//
-//    syslog(LOG_NOTICE, "Going to position x, y, fi: {%.lf, %.lf, %.lf}, distance: %.lf mm.", position.x, position.y, position.fi, translationError);
-//
-//    while (translationError > ROBOT_REG_ACCURACY){
-//        odomPosition = getOdomData();
-//
-//        currentSpeed  = (int) wheelPID(translationError, speedLimit);
-//        currentRadius = (int) fitRotationRadius(position,  odomPosition); //TODO zle
-//
-//        syslog(LOG_DEBUG, "Remaining distance: %.lf, Calculated speed: %d, Calculated radius: %d", translationError, currentSpeed, currentRadius);
-//
-//        /// Set arc speed from calculated speed and radius
-//        std::vector<unsigned char> msg = setArcSpeed(currentSpeed, currentRadius);
-//        sendDataToRobot(msg);
-//
-//        translationError = getAbsoluteDistance(odomPosition, position);
-//
-//        if(translationError < currentSpeed * 4 && !braking && trailingEdge){
-//            syslog(LOG_NOTICE, "Braking started");
-//            braking = true;
-//        }
-//
-//        if (leadingEdge && speedLimit < ROBOT_MAX_SPEED_FORWARD && !braking){
-//            speedLimit += speedStep;
-//        } else if (trailingEdge && speedLimit > ROBOT_MIN_SPEED_FORWARD && braking){
-//            speedLimit -= speedStep;
-//        }
-//        usleep((__useconds_t) (1000 * 1000 * ROBOT_POSE_CONTROLLER_PERIOD));
-//    }
-//
-//    std::vector<unsigned char> msg = setTranslationSpeed(0);
-//
-//    sendDataToRobot(msg);
-//
-//    syslog(LOG_NOTICE, "Reached final position with accuracy of %.lf [mm].", translationError);
-//
-//}
-
 double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
@@ -691,12 +587,19 @@ void RobotInterface::t_poseController()
                      * Do nothing, another proces controll the robot
                      */
                     break;
+                    
+                case CANCEL_PIONT:
+                    robotCmdPoints_mtx.lock();
+                    robotCmdPoints.pop();
+                    robotCmdPoints_mtx.unlock();
+                    setRobotStatus(READ_POINT);
+                    break;
 
                 default:
                     break;
             }
 
-        }
+        }   // end of TIMER
         std::this_thread::sleep_until(startPeriodTime);
     }
 
