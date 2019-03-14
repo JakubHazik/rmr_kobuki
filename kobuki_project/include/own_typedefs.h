@@ -1,0 +1,116 @@
+//
+// Created by jakub on 14.3.2019.
+//
+
+#ifndef KOBUKI_PROJECT_OWN_TYPEDEFS_H
+#define KOBUKI_PROJECT_OWN_TYPEDEFS_H
+
+#include <vector>
+
+typedef struct {
+    unsigned short x;
+    unsigned short y;
+    unsigned short z;
+} TRawGyroData;
+
+typedef struct {
+    //Hardware Version
+    unsigned char HardwareVersionMajor;
+    unsigned char HardwareVersionMinor;
+    unsigned char HardwareVersionPatch;
+    //Firmware Version
+    unsigned char FirmwareVersionMajor;
+    unsigned char FirmwareVersionMinor;
+    unsigned char FirmwareVersionPatch;
+
+    //Unique Device IDentifier(UDID)
+    unsigned int UDID0;
+    unsigned int UDID1;
+    unsigned int UDID2;
+    //Controller Info
+    unsigned char PIDtype;
+    unsigned int PIDgainP;
+    unsigned int PIDgainI;
+    unsigned int PIDgainD;
+} TExtraRequestData;
+
+typedef struct {
+    //---zakladny balik
+    unsigned short timestamp;
+    //narazniky
+    bool BumperLeft;
+    bool BumperCenter;
+    bool BumperRight;
+    //cliff
+    bool CliffLeft;
+    bool CliffCenter;
+    bool CliffRight;
+    // padnutie kolies
+    bool WheelDropLeft;
+    bool WheelDropRight;
+    //tocenie kolies
+    unsigned short EncoderRight;
+    unsigned short EncoderLeft;
+    unsigned char PWMright;
+    unsigned char PWMleft;
+    //gombiky
+    unsigned char ButtonPress;// 0 nie, 1 2 4 pre button 0 1 2 (7 je ze vsetky tri)
+    //napajanie
+    unsigned char Charger;
+    unsigned char Battery;
+    unsigned char overCurrent;
+    //---docking ir
+    unsigned char IRSensorRight;
+    unsigned char IRSensorCenter;
+    unsigned char IRSensorLeft;
+    //---Inertial Sensor Data
+    signed short GyroAngle;
+    unsigned short GyroAngleRate;
+    //---Cliff Sensor Data
+    unsigned short CliffSensorRight;
+    unsigned short CliffSensorCenter;
+    unsigned short CliffSensorLeft;
+    //---Current
+    unsigned char wheelCurrentLeft;
+    unsigned char wheelCurrentRight;
+    //---Raw Data Of 3D Gyro
+    unsigned char frameId;
+    std::vector<TRawGyroData> gyroData;
+    //---General Purpose Input
+    unsigned short digitalInput;
+    unsigned short analogInputCh0;
+    unsigned short analogInputCh1;
+    unsigned short analogInputCh2;
+    unsigned short analogInputCh3;
+    //---struktura s datami ktore sa nam tam objavia iba na poziadanie
+    TExtraRequestData extraInfo;
+} TKobukiData;
+
+
+typedef struct {
+    int scanQuality;
+    double scanAngle;
+    double scanDistance;
+} LaserData;
+
+typedef struct {
+    int numberOfScans;
+    LaserData Data[1000];
+} LaserMeasurement;
+
+/**
+ * Nech je pozicia x,y v jednotkach [mm]
+ */
+typedef struct {
+    double x;
+    double y;
+    double fi;
+} RobotPose;
+
+typedef struct {
+    int speed;
+    int radius;
+} regulatorAction;
+
+
+#endif //KOBUKI_PROJECT_OWN_TYPEDEFS_H

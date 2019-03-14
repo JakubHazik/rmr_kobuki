@@ -3,24 +3,23 @@
 //
 
 #include <include/robot_interface.h>
-#include <functional>
 
 using namespace std;
 
-// vracia znamienko, -1, 1
+// vracia znamienko, -1, 0, 1
 template <typename T> int signum(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
-RobotInterface::RobotInterface() {
+RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
     robot = thread(&RobotInterface::t_readRobotData, this);
 
     // start pose controller timer thread
     std::thread(&RobotInterface::t_poseController, this).detach();
 
     // wait until arrive the first message, next we can reset odom
-    usleep(1000);
-    odom = {0};
+    usleep(1000 * 1000);
+    resetOdom();
 }
 
 RobotInterface::~RobotInterface() {
@@ -446,70 +445,11 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
 
-double RobotInterface::getRotationError(RobotPose robotPose, RobotPose goalPose) {
-    double goalAngle = atan2(goalPose.y - robotPose.y, goalPose.x - robotPose.x);
-    //syslog(LOG_NOTICE, "atan2: Y: %f; X: %f; %f[%f]", goalPose.y - robotPose.y, goalPose.x - robotPose.x, goalAngle*RAD2DEG,goalAngle);
 
-    double robotAngle = robotPose.fi;
-
-    double result;
-
-    if (signum(robotAngle) == signum(goalAngle)) {
-        // uhly patria do jednej polroviny
-        return goalAngle - robotAngle;
-    }
-
-    if (robotAngle > 0) {
-        result = -1 * (abs(goalAngle) + abs(robotAngle));
-    } else {
-        result = abs(goalAngle) + abs(robotAngle);
-    }
-
-    if (result > M_PI) {
-        result = -2*M_PI + abs(robotAngle) + abs(goalAngle);
-    }
-
-    if (result < -M_PI) {
-        result = 2*M_PI - abs(robotAngle) - abs(goalAngle);
-    }
-
-    return result;
-}
-
-int RobotInterface::fitRotationRadius(double rotationError) {
-
-    static const double coef_a = -1.0432e+03;
-    static const double coef_b = -2.9754;
-    static const double coef_c = -2.3957e+04;
-    static const double coef_d = -28.0845;
-
-    double radius;
-
-    // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
-    if (rotationError == 0) {
-        radius = coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) -1;
-    } else {
-        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * abs(rotationError)) + coef_c * exp(coef_d * abs(rotationError)) -1);
-    }
-
-    return int(round(radius));
-}
 
 void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
     std::lock_guard<std::mutex> robotCmdPoints_lg(robotCmdPoints_mtx);
     robotCmdPoints.push(cmd);
-}
-
-int RobotInterface::speedRadiusCorrection(int requiredSpeed, int radius) {
-
-    float result = round(requiredSpeed + requiredSpeed * 0.05 - requiredSpeed/((abs(radius) + 500.0)/500.0));
-
-    if (result == 0) {
-        result = 1;
-    }
-
-    // todo znamienka + saturacia
-    return int(result);
 }
 
 void RobotInterface::t_poseController()
@@ -563,14 +503,8 @@ void RobotInterface::t_poseController()
                         break;
                     }
 
-                    int speed = speedRegulator(translationError);
-                    double rotationError = getRotationError(odomPosition, currentPoseToGo);
-                    int radius = fitRotationRadius(rotationError);
-
-                    int speed_correction = speedRadiusCorrection(speed, radius);
-                    syslog(LOG_DEBUG, "Remaining distance: %.lf; Calculated speed: %d, %d; Rotation error: %f[%f]; Calculated radius: %d",
-                            translationError, speed, speed_correction, rotationError*RAD2DEG, rotationError, radius);
-                    sendArcSpeed(speed_correction, radius);
+                    auto regulatorAction = poseRegulator.getAction(odomPosition, currentPoseToGo);
+                    sendArcSpeed(regulatorAction.speed, regulatorAction.radius);
 
                     break;
                 }
@@ -587,7 +521,7 @@ void RobotInterface::t_poseController()
                      * Do nothing, another proces controll the robot
                      */
                     break;
-                    
+
                 case CANCEL_PIONT:
                     robotCmdPoints_mtx.lock();
                     robotCmdPoints.pop();
@@ -612,39 +546,6 @@ void RobotInterface::setRobotStatus(RobotStates newStatus) {
 
 void RobotInterface::resetOdom() {
     std::lock_guard<std::mutex> odom_lg(odom_mtx);
-    odom.y = 0;
-    odom.x = 0;
-    odom.fi = 0;
+    odom={};
 }
 
-int RobotInterface::speedRegulator(double error) {
-    static int lastOutput = 0;
-
-    double output = error * ROBOT_REG_P;
-
-    // saturation
-    if (output > ROBOT_MAX_SPEED_FORWARD) {
-        output = ROBOT_MAX_SPEED_FORWARD;
-
-        // ked plati tato podmienka tak robot chce zrychlovat, urobme to po rampe
-        if (lastOutput < output) {
-            output = lastOutput + ROBOT_ACCELERATION * ROBOT_POSE_CONTROLLER_PERIOD;
-            if (output < ROBOT_MIN_SPEED_FORWARD) {
-                output = ROBOT_MIN_SPEED_FORWARD;
-            }
-        }
-    }
-
-    lastOutput = int(output);
-    return int(output);
-}
-
-bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
-{
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
-        syslog(LOG_ERR, "Send data to robot failed!");
-        return false;
-    }
-    return true;
-}

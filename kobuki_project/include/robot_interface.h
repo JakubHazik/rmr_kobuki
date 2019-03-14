@@ -20,6 +20,8 @@
 #include <cmath>
 #include <math.h>
 #include <queue>
+#include "regulator.h"
+#include "own_typedefs.h"
 
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
@@ -31,114 +33,18 @@
 #define ROBOT_WHEEL_BASE    230     // [mm]
 #define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 // [mm]
 
-#define ROBOT_MAX_SPEED_FORWARD 300 // [mm / s]
-#define ROBOT_MIN_SPEED_FORWARD 30  // [mm / s]
-#define ROBOT_ACCELERATION      40  // [mm / s^-2]
-#define ROBOT_REG_P 0.7
-
-
 #define ROBOT_REG_ACCURACY      30  // [mm] accuracy of positioning
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
 
 #define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
-#define ROBOT_ARC_MOVE_RADIUS_LIMIT 32000
 
 
-
-typedef struct {
-    unsigned short x;
-    unsigned short y;
-    unsigned short z;
-} TRawGyroData;
-
-typedef struct {
-    //Hardware Version
-    unsigned char HardwareVersionMajor;
-    unsigned char HardwareVersionMinor;
-    unsigned char HardwareVersionPatch;
-    //Firmware Version
-    unsigned char FirmwareVersionMajor;
-    unsigned char FirmwareVersionMinor;
-    unsigned char FirmwareVersionPatch;
-
-    //Unique Device IDentifier(UDID)
-    unsigned int UDID0;
-    unsigned int UDID1;
-    unsigned int UDID2;
-    //Controller Info
-    unsigned char PIDtype;
-    unsigned int PIDgainP;
-    unsigned int PIDgainI;
-    unsigned int PIDgainD;
-} TExtraRequestData;
-
-typedef struct {
-    //---zakladny balik
-    unsigned short timestamp;
-    //narazniky
-    bool BumperLeft;
-    bool BumperCenter;
-    bool BumperRight;
-    //cliff
-    bool CliffLeft;
-    bool CliffCenter;
-    bool CliffRight;
-    // padnutie kolies
-    bool WheelDropLeft;
-    bool WheelDropRight;
-    //tocenie kolies
-    unsigned short EncoderRight;
-    unsigned short EncoderLeft;
-    unsigned char PWMright;
-    unsigned char PWMleft;
-    //gombiky
-    unsigned char ButtonPress;// 0 nie, 1 2 4 pre button 0 1 2 (7 je ze vsetky tri)
-    //napajanie
-    unsigned char Charger;
-    unsigned char Battery;
-    unsigned char overCurrent;
-    //---docking ir
-    unsigned char IRSensorRight;
-    unsigned char IRSensorCenter;
-    unsigned char IRSensorLeft;
-    //---Inertial Sensor Data
-    signed short GyroAngle;
-    unsigned short GyroAngleRate;
-    //---Cliff Sensor Data
-    unsigned short CliffSensorRight;
-    unsigned short CliffSensorCenter;
-    unsigned short CliffSensorLeft;
-    //---Current
-    unsigned char wheelCurrentLeft;
-    unsigned char wheelCurrentRight;
-    //---Raw Data Of 3D Gyro
-    unsigned char frameId;
-    std::vector<TRawGyroData> gyroData;
-    //---General Purpose Input
-    unsigned short digitalInput;
-    unsigned short analogInputCh0;
-    unsigned short analogInputCh1;
-    unsigned short analogInputCh2;
-    unsigned short analogInputCh3;
-    //---struktura s datami ktore sa nam tam objavia iba na poziadanie
-    TExtraRequestData extraInfo;
-} TKobukiData;
-
-
-/**
- * Nech je pozicia x,y v jednotkach [mm]
- */
-typedef struct {
-    double x;
-    double y;
-    double fi;
-} RobotPose;
 
 class RobotInterface {
 public:
-    RobotInterface();
+    explicit RobotInterface();
 
     ~RobotInterface();
 
@@ -181,6 +87,8 @@ private:
     std::queue<RobotPose> robotCmdPoints;
     std::mutex robotCmdPoints_mtx;
 
+    Regulator poseRegulator;
+
     /*
      * ========================================
      * Funkcie
@@ -191,27 +99,9 @@ private:
 
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
-    double getRotationError(RobotPose robotPose, RobotPose goalPose);
-
-    /**
-     * Angle fitting function to rotation radius
-     * Constants calculated with MATLAB-s fitting toolbox
-     *
-     * Source: $PROJECT_ROOT/research/angle_regulator_function.m
-     *
-     * @param angle Angle [rad] to fit to radius
-     * @return rotation radius according to angle
-     */
-    int fitRotationRadius(double rotationError);
-
     void t_poseController();
 
     void setRobotStatus(RobotStates newStatus);
-
-    int speedRegulator(double error);
-
-    int speedRadiusCorrection(int requiredSpeed, int radius);
-
 
     /*
      * Communication interface
