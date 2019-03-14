@@ -21,7 +21,6 @@
 #include <math.h>
 #include <queue>
 
-
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
 #define ROBOT_TICK_TO_RAD   0.002436916871363930187454
@@ -128,17 +127,6 @@ typedef struct {
 } TKobukiData;
 
 
-typedef struct {
-    int scanQuality;
-    double scanAngle;
-    double scanDistance;
-} LaserData;
-
-typedef struct {
-    int numberOfScans;
-    LaserData Data[1000];
-} LaserMeasurement;
-
 /**
  * Nech je pozicia x,y v jednotkach [mm]
  */
@@ -147,7 +135,6 @@ typedef struct {
     double y;
     double fi;
 } RobotPose;
-
 
 class RobotInterface {
 public:
@@ -176,9 +163,9 @@ public:
 
     void resetOdom();
 
-    LaserMeasurement getLaserData();
-
     RobotPose getOdomData();
+
+    bool sendDataToRobot(std::vector<unsigned char> mess);
 
     /**
      * Util function sends created data to robot via socket
@@ -189,9 +176,6 @@ public:
 
     bool forOdomUseGyro =false;
 
-    // Public for GUI - drawing
-    std::mutex laserData_mtx;
-
 private:
     /*
     * ========================================
@@ -199,21 +183,13 @@ private:
     */
 
     std::thread robot;
-    std::thread laser;
-//    std::thread processRobotData;
 
     TKobukiData robotData;
-    LaserMeasurement laserData;
 
     RobotPose odom;
     std::mutex odom_mtx;
 
     const std::string ipAddress = ROBOT_IP_ADDRESS;
-
-    //veci na broadcast laser
-    struct sockaddr_in las_si_me, las_si_other, las_si_posli;
-    int las_s, las_recv_len;
-    unsigned int las_slen;
 
     //veci na broadcast robot
     struct sockaddr_in rob_si_me, rob_si_other, rob_si_posli;
@@ -228,8 +204,6 @@ private:
      * Funkcie
      */
     void t_readRobotData();
-
-    void t_readLaserData();
 
     void computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle);
 

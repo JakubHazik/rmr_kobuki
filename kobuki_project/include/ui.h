@@ -9,8 +9,11 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QTimer>
+
 
 #include <include/robot_interface.h>
+#include <include/lidar_interface.h>
 
 namespace Ui {
     class MainWindow;
@@ -24,8 +27,9 @@ class MainWindow : public QMainWindow
         explicit MainWindow(QWidget *parent = 0);
         ~MainWindow();
 
-        void setRobotInterface(RobotInterface *_robot){
+        void setInterfaces(RobotInterface *_robot, LidarInterface *_lidar){
             this->robot = _robot;
+            this->lidar = _lidar;
         }
 
     private slots:
@@ -44,15 +48,20 @@ class MainWindow : public QMainWindow
     private:
         Ui::MainWindow *ui;
 
+        QTimer timer;
+
         RobotInterface *robot;
+        LidarInterface *lidar;
 
         LaserMeasurement copyOfLaserData;
         bool updateEnviromentMap;
 
         void paintEnviromentMap(QPaintEvent *paintEvent);
 
+
     public slots:
         void setOdometryGuiValues(double robotX,double robotY,double robotFi);
+        void refresh();
 
     signals:
         void odometryGuiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo

@@ -5,14 +5,33 @@
 #include "../ui/ui_mainwindow.h"
 
 
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+
+    /// Call timer to refresh window values periodically
+
+    auto *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(refresh()));
+    timer->start(1000);
 }
 
 MainWindow::~MainWindow() {
     delete ui;
 }
 
+void MainWindow::refresh() {
+    RobotPose odometry = robot->getOdomData();
+    setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
+
+    lidar->laserData_mtx.lock();
+    LaserMeasurement laserData = lidar->getLaserData();
+    memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
+
+    /// V copyOfLaserData mame data z lidaru
+    lidar->laserData_mtx.unlock();
+    paintEnviromentMap(nullptr);
+}
 
 void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
 {
@@ -33,7 +52,7 @@ void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
     if(updateEnviromentMap)
     {
 
-        robot->laserData_mtx.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
+        lidar->laserData_mtx.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
         updateEnviromentMap = false;
 
         painter.setPen(pero);
@@ -50,7 +69,7 @@ void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
             if(rect.contains(xp,yp))
                 painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
         }
-        robot->laserData_mtx.unlock();//unlock..skoncil som
+        lidar->laserData_mtx.unlock();//unlock..skoncil som
     }
 }
 
@@ -117,5 +136,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
 
 void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi)
 {
-
+    ui->lineEdit_2->setText(QString::number(robotX));
+    ui->lineEdit_3->setText(QString::number(robotY));
+    ui->lineEdit_4->setText(QString::number(robotFi));
 }

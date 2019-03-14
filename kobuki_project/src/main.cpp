@@ -4,6 +4,7 @@
 
 #include "include/ui.h"
 #include "include/robot_interface.h"
+#include <include/lidar_interface.h>
 #include <QApplication>
 #include <unistd.h> // for getopt
 
@@ -39,12 +40,14 @@ int main(int argc, char *argv[]) {
     }
 
     RobotInterface robot;
+    LidarInterface lidar;
+
     usleep(1000*1000*2);
 
     if(gui){
         QApplication a(argc, argv);
         MainWindow w;
-        w.setRobotInterface(&robot);
+        w.setInterfaces(&robot, &lidar);
         w.show();
 
         syslog(LOG_INFO, "Kobuki started in graphical mode!");

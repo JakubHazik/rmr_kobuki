@@ -14,10 +14,12 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
 # set source files
 set(INCLUDE_FILES
         include/ui.h
-        include/robot_interface.h)
+        include/robot_interface.h
+        include/lidar_interface.h)
 set(SOURCE_FILES
         src/ui.cpp
-        src/robot_interface.cpp)
+        src/robot_interface.cpp
+        src/lidar_interface.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 

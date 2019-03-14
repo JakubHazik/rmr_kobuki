@@ -16,7 +16,6 @@ RobotInterface::RobotInterface() {
     odom = {0};
 
     robot = thread(&RobotInterface::t_readRobotData, this);
-//    laser = thread(&RobotInterface::t_readLaserData, this);
 
     // start pose controller timer
     std::thread(&RobotInterface::t_poseController, this).detach();
@@ -29,6 +28,7 @@ RobotInterface::~RobotInterface() {
 
 void RobotInterface::t_readRobotData() {
     if ((rob_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+        syslog(LOG_ERR, "Cannot create socket");
     }
 
     char rob_broadcastene = 1;
@@ -42,19 +42,17 @@ void RobotInterface::t_readRobotData() {
 
     rob_si_posli.sin_family = AF_INET;
     rob_si_posli.sin_port = htons(5300);
-    rob_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());//inet_addr("10.0.0.1");// htonl(INADDR_BROADCAST);
+    rob_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());
     rob_slen = sizeof(rob_si_me);
     bind(rob_s, (struct sockaddr *) &rob_si_me, sizeof(rob_si_me));
 
     std::vector<unsigned char> mess = setDefaultPID();
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+    sendDataToRobot(mess);
 
-    }
     usleep(100 * 1000);
     mess = setSound(440, 1000);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+    sendDataToRobot(mess);
 
-    }
     unsigned char buff[50000];
     while (1) {
         memset(buff, 0, 50000 * sizeof(char));
@@ -62,7 +60,6 @@ void RobotInterface::t_readRobotData() {
 
             continue;
         }
-        //https://i.pinimg.com/236x/1b/91/34/1b9134e6a5d2ea2e5447651686f60520--lol-funny-funny-shit.jpg
         //tu mame data..zavolame si funkciu
 
         //     memcpy(&sens,buff,sizeof(sens));
@@ -168,47 +165,6 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
     gyroAngleOld = gyroAngle;
     encoderLeftOld = encoderLeft;
     encoderRightOld = encoderRight;
-}
-
-void RobotInterface::t_readLaserData() {
-
-    // Initialize Winsock
-
-    las_slen = sizeof(las_si_other);
-    if ((las_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-    }
-
-    int las_broadcastene = 1;
-    setsockopt(las_s, SOL_SOCKET, SO_BROADCAST, (char *) &las_broadcastene, sizeof(las_broadcastene));
-    // zero out the structure
-    memset((char *) &las_si_me, 0, sizeof(las_si_me));
-
-    las_si_me.sin_family = AF_INET;
-    las_si_me.sin_port = htons(52999);//toto je port z ktoreho pocuvame
-    las_si_me.sin_addr.s_addr = htonl(INADDR_ANY);//moze dojst od hocikial..
-
-    las_si_posli.sin_family = AF_INET;
-    las_si_posli.sin_port = htons(5299);//toto je port na ktory posielame
-    las_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());//htonl(INADDR_BROADCAST);
-    bind(las_s, (struct sockaddr *) &las_si_me, sizeof(las_si_me));
-    char command = 0x00;
-    //najskor posleme prazdny prikaz
-    //preco?
-    //https://ih0.redbubble.net/image.74126234.5567/raf,750x1000,075,t,heather_grey_lightweight_raglan_sweatshirt.u3.jpg
-    if (sendto(las_s, &command, sizeof(command), 0, (struct sockaddr *) &las_si_posli, las_slen) == -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
-    {
-
-    }
-//    LaserMeasurement measure;
-    while (1) {
-        laserData_mtx.lock();
-        if ((las_recv_len = recvfrom(las_s, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &las_si_other, &las_slen)) == -1) {
-            laserData_mtx.unlock();
-            continue;
-        }
-        laserData.numberOfScans = las_recv_len / sizeof(LaserData);
-        laserData_mtx.unlock();
-    }
 }
 
 //600
@@ -507,11 +463,6 @@ int RobotInterface::parseKobukiMessage(TKobukiData &output, unsigned char *data)
     return 0;
 }
 
-LaserMeasurement RobotInterface::getLaserData() {
-    lock_guard<mutex> lockGuard(laserData_mtx);
-    return laserData;
-}
-
 RobotPose RobotInterface::getOdomData() {
     lock_guard<mutex> lockGuard(odom_mtx);
     return odom;
@@ -783,4 +734,14 @@ int RobotInterface::speedRegulator(double error) {
 
     lastOutput = int(output);
     return int(output);
+}
+
+bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
+{
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return false;
+    }
+    return true;
 }
