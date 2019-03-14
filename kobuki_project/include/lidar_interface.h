@@ -18,20 +18,9 @@
 #include <stdlib.h>
 
 #include <include/robot_interface.h>
+#include "own_typedefs.h"
 
 using namespace std;
-
-typedef struct {
-    int scanQuality;
-    double scanAngle;
-    double scanDistance;
-} LaserData;
-
-typedef struct {
-    int numberOfScans;
-    LaserData Data[1000];
-} LaserMeasurement;
-
 
 class LidarInterface {
 public:

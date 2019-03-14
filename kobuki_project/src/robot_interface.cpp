@@ -23,7 +23,7 @@ RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
 }
 
 RobotInterface::~RobotInterface() {
-//    std::terminate();
+//    TODO kill threads
 }
 
 
@@ -549,3 +549,13 @@ void RobotInterface::resetOdom() {
     odom={};
 }
 
+
+bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
+{
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
+        syslog(LOG_ERR, "Send data to robot failed!");
+        return false;
+    }
+    return true;
+}
