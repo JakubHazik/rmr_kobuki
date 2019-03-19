@@ -17,8 +17,8 @@
 /*
  * Reprezentacia mapy:
  * matica uchovavajuca mapu (RobotMap::data) ma 2 vrstvy:
- *              MEASUREMETN - namerane body lidarom
- *              PROBABILITY - pravdepodobnostan charakteristika merani
+ *              MEASUREMENT - namerane body lidarom
+ *              PROBABILITY - pravdepodobnostna charakteristika merani
  */
 
 class RobotMap {
@@ -59,6 +59,7 @@ private:
 
 //    MapSize mapSize;
     int resolution;     // resolution of one cell in [mm]
+    int rows, cols;
 
 //    void allocateMatrix(int **array, int Xsize, int Ysize);
 //    void deallocMatrix(int **array, int Ysize);

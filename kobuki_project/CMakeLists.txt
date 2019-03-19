@@ -20,14 +20,16 @@ set(INCLUDE_FILES
         include/global_planner.h
         include/own_typedefs.h
         include/robot_map.h
-        include/lidar_interface.h)
+        include/lidar_interface.h
+        include/lidar.h)
 set(SOURCE_FILES
         src/ui.cpp
         src/robot_interface.cpp
         src/regulator.cpp
         src/robot_map.cpp
         src/global_planner.cpp
-        src/lidar_interface.cpp)
+        src/lidar_interface.cpp
+        src/lidar.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 

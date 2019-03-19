@@ -17,6 +17,9 @@ RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
     // start pose controller timer thread
     std::thread(&RobotInterface::t_poseController, this).detach();
 
+//    lidar = LidarInterface();
+//    map = RobotMap({10,10}, 10);
+
     // wait until arrive the first message, next we can reset odom
     usleep(1000 * 1000);
     resetOdom();

@@ -5,20 +5,25 @@
 #ifndef KOBUKI_PROJECT_LIDAR_INTERFACE_H
 #define KOBUKI_PROJECT_LIDAR_INTERFACE_H
 
+#pragma once
+
 #include <mutex>
 #include <thread>
+#include <syslog.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <iostream>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
+#include <include/own_typedefs.h>
 
 #include <include/robot_interface.h>
-#include "own_typedefs.h"
+
 
 using namespace std;
 
@@ -26,7 +31,7 @@ class LidarInterface {
 public:
     LidarInterface();
 
-    ~LidarInterface();
+    virtual ~LidarInterface();
 
     /**
      * Getter for laser data
@@ -38,19 +43,23 @@ public:
     std::mutex laserData_mtx;
 
 private:
+
     std::thread laser;
     LaserMeasurement laserData;
 
+    RobotInterface robot;
+
     const std::string ipAddress = ROBOT_IP_ADDRESS;
 
-    //veci na broadcast laser
-    struct sockaddr_in las_si_me, las_si_other, las_si_posli;
-    int las_s, las_recv_len;
-    unsigned int las_slen;
+    /// UDP settings
+    struct sockaddr_in socket_me, socket_other, socket_send;
+    int socket_FD;
+    ssize_t received_length;
+    unsigned int socket_FD_length;
+
+    char buf[50000];
 
     void t_readLaserData();
-
-
 };
 
 #endif //KOBUKI_PROJECT_LIDAR_INTERFACE_H

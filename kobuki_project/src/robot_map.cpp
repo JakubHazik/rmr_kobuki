@@ -76,8 +76,8 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
     // TODO add measured data to map
 }
 
-MapSize RobotMap::getSize() {
-    return {data.size().width, data.size().height};
+MapPoint RobotMap::getSize() {
+    return {data.rows, data.cols};
 }
 
 cv::Mat RobotMap::getRawData() {

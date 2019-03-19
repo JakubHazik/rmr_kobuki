@@ -23,6 +23,8 @@
 #include "regulator.h"
 #include "own_typedefs.h"
 
+#include <include/robot_map.h>
+
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
 #define ROBOT_TICK_TO_RAD   0.002436916871363930187454
@@ -71,6 +73,9 @@ private:
     */
 
     std::thread robot;
+
+//    LidarInterface lidar;
+//    RobotMap map;
 
     TKobukiData robotData;
 
