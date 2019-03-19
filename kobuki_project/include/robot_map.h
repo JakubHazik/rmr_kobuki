@@ -22,7 +22,7 @@
 
 class RobotMap {
 public:
-    enum MapLayer {MEASUREMENT, PROBABILITY};
+//    enum MapLayer {MEASUREMENT, PROBABILITY};
 
     RobotMap(MapSize mapSize, int resolution);
     RobotMap(std::string filename);
@@ -32,17 +32,20 @@ public:
 
     void saveToFile(std::string filename);
 
-    MapPoint getSize();
+    MapSize getSize();
 
     int getResolution();
 
     cv::Mat getRawData();
 
-    void setPointValue(MapPoint point, MapLayer mapLayer, unsigned short value);
+    void setPointValue(MapPoint point, unsigned short value);
 
-    int getPointValue(MapPoint point, MapLayer mapLayer);
+    int getPointValue(MapPoint point);
 
     RobotMap filterSpeckles();
+
+    cv::Mat getMap();
+
 private:
     cv::Mat data;
 

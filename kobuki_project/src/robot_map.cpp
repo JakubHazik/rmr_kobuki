@@ -24,7 +24,7 @@ RobotMap::RobotMap(std::string filename) {
     fileStorage["resolution"] >> resolution;
     fileStorage["data"] >> data;
 
-    data.convertTo(data, CV_16UC2); // potrebne iba teraz, ked mam debilny dataset
+//    data.convertTo(data, CV_16UC2); // potrebne iba teraz, ked mam debilny dataset
 }
 
 void RobotMap::saveToFile(std::string filename) {
@@ -59,7 +59,7 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
     // TODO add measured data to map
 }
 
-MapPoint RobotMap::getSize() {
+MapSize RobotMap::getSize() {
     return {data.size().width, data.size().height};
 }
 
@@ -71,17 +71,23 @@ int RobotMap::getResolution() {
     return resolution;
 }
 
-void RobotMap::setPointValue(MapPoint point, MapLayer mapLayer, unsigned short value) {
-    data.at<cv::Vec2s>(Point(point.x, point.y))[mapLayer] = value;
+void RobotMap::setPointValue(MapPoint point, unsigned short value) {
+//    data.at<cv::Vec>(Point(point.x, point.y))[mapLayer] = value;
+    data.at<ushort>(Point(point.x, point.y))  = value;
 }
 
-int RobotMap::getPointValue(MapPoint point, MapLayer mapLayer) {
-    return data.at<Vec2s>(Point(point.x, point.y))[mapLayer];
+int RobotMap::getPointValue(MapPoint point) {
+    //return data.at<Vec2s>(Point(point.x, point.y))[mapLayer];
+    return data.at<ushort>(Point(point.x, point.y));
 }
 
 RobotMap RobotMap::filterSpeckles() {
-    //TODO filtrovanie neziaducich flakov na zaklade PROBABILITY vrstvy
+    //TODO filtrovanie neziaducich flakov na zaklade pravdepodobnosti
     return RobotMap({}, 0);
 }
 
+cv::Mat RobotMap::getMap() {
+    // TODO filter na zaklade pravdepodobnosti
+    return data;
+}
 
