@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by jakub on 14.3.2019.
 //
@@ -23,16 +25,31 @@ RobotMap::RobotMap(std::string filename) {
     cv::FileStorage fileStorage(filename, cv::FileStorage::READ);
     fileStorage["resolution"] >> resolution;
     fileStorage["data"] >> data;
+//    data.convertTo(data, CV_16UC1);
 
 //    data.convertTo(data, CV_16UC2); // potrebne iba teraz, ked mam debilny dataset
 }
 
+
+RobotMap::RobotMap(cv::Mat dataMatrix, int resolution):
+        data(std::move(dataMatrix)), resolution(resolution) {
+}
+
+
 void RobotMap::saveToFile(std::string filename) {
 //    data.convertTo(data, CV_16UC2);
 //    cv::cvtColor(data, data, CV_16UC1);
-    cv::FileStorage fileStorage(filename, cv::FileStorage::WRITE);
-    fileStorage << "resolution" << resolution;
-    fileStorage << "data" << data;
+
+    if (filename.find(".yaml") != string::npos) {
+        cv::FileStorage fileStorage(filename, cv::FileStorage::WRITE);
+        fileStorage << "resolution" << resolution;
+        fileStorage << "data" << data;
+    } else if (filename.find(".csv") != string::npos) {
+        ofstream myfile;
+        myfile.open(filename.c_str());
+        myfile<< cv::format(data, cv::Formatter::FMT_CSV) << std::endl;
+        myfile.close();
+    }
 }
 
 RobotMap::~RobotMap() {
@@ -76,18 +93,29 @@ void RobotMap::setPointValue(MapPoint point, unsigned short value) {
     data.at<ushort>(Point(point.x, point.y))  = value;
 }
 
-int RobotMap::getPointValue(MapPoint point) {
+unsigned short RobotMap::getPointValue(MapPoint point) {
     //return data.at<Vec2s>(Point(point.x, point.y))[mapLayer];
     return data.at<ushort>(Point(point.x, point.y));
 }
 
 RobotMap RobotMap::filterSpeckles() {
     //TODO filtrovanie neziaducich flakov na zaklade pravdepodobnosti
-    return RobotMap({}, 0);
+    return RobotMap("");
 }
 
-cv::Mat RobotMap::getMap() {
-    // TODO filter na zaklade pravdepodobnosti
-    return data;
+RobotMap RobotMap::getRobotMap() {
+    return RobotMap(data, resolution);
 }
 
+bool RobotMap::containPoint(MapPoint point) {
+    cv::Rect rect(cv::Point(), data.size());
+    return rect.contains(cv::Point(point.x, point.y));
+}
+
+void RobotMap::showMap() {
+    cv::Mat output;
+    data.convertTo(output, CV_8UC1);
+    resize(output, output, Size(), 5, 5);
+    imshow("Robot map", output);
+    cv::waitKey(0);
+}

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <exception>
 #include <opencv2/opencv.hpp>
+#include <fstream>
 
 // TODO classu treba doimplementovat podla potreby
 /*
@@ -26,6 +27,7 @@ public:
 
     RobotMap(MapSize mapSize, int resolution);
     RobotMap(std::string filename);
+    RobotMap(cv::Mat dataMatrix, int resolution);
     ~RobotMap();
 
     void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement);
@@ -40,12 +42,15 @@ public:
 
     void setPointValue(MapPoint point, unsigned short value);
 
-    int getPointValue(MapPoint point);
+    unsigned short getPointValue(MapPoint point);
 
     RobotMap filterSpeckles();
 
-    cv::Mat getMap();
+    RobotMap getRobotMap();
 
+    void showMap();
+
+    bool containPoint(MapPoint point);
 private:
     cv::Mat data;
 
