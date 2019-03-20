@@ -9,24 +9,30 @@
 #include <opencv2/opencv.hpp>
 #include "own_typedefs.h"
 #include "robot_map.h"
+#include <queue>
+
 
 using namespace std;
 
 class GlobalPlanner {
 public:
-    explicit GlobalPlanner(RobotMap map);
+    explicit GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose);
 
     void setStartEndPose(RobotPose startPose, RobotPose goalPose);
 
     void floodFill();
 
+    // TODo private
+    RobotMap map;
+
 private:
     MapPoint tfRealToMap(RobotPose realSpacePose);
     RobotPose tfMapToReal(MapPoint mapSpacePose);
 
-    RobotMap map;
 
-    MapPoint mapStartPose;
+
+    MapPoint startPoint;
+    MapPoint goalPoint;
 };
 
 
