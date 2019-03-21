@@ -5,29 +5,22 @@
 #ifndef KOBUKI_PROJECT_ROBOT_MAP_H
 #define KOBUKI_PROJECT_ROBOT_MAP_H
 
-#include "own_typedefs.h"
-
 #include <string>
 #include <fstream>
 #include <exception>
 #include <opencv2/opencv.hpp>
-#include <fstream>
+#include "own_typedefs.h"
 
 // TODO classu treba doimplementovat podla potreby
-/*
- * Reprezentacia mapy:
- * matica uchovavajuca mapu (RobotMap::data) ma 2 vrstvy:
- *              MEASUREMENT - namerane body lidarom
- *              PROBABILITY - pravdepodobnostna charakteristika merani
- */
 
 class RobotMap {
 public:
-//    enum MapLayer {MEASUREMENT, PROBABILITY};
-
     RobotMap(MapSize mapSize, int resolution);
+
     RobotMap(std::string filename);
+
     RobotMap(cv::Mat dataMatrix, int resolution);
+
     ~RobotMap();
 
     void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement);
@@ -38,7 +31,7 @@ public:
 
     int getResolution();
 
-    cv::Mat getRawData();
+    cv::Mat getCVMatMap();
 
     void setPointValue(MapPoint point, unsigned short value);
 
@@ -51,18 +44,25 @@ public:
     void showMap();
 
     bool containPoint(MapPoint point);
+
+    /**
+     * Transform real robot pose from real 2D space to map space
+     * @param realSpacePose robot pose
+     * @return  map point
+     */
+    MapPoint tfRealToMap(RobotPose realSpacePose);
+
+    /**
+     * Transform map point to real 2D space robot pose
+     * @param realSpacePose robot pose
+     * @return  map point
+     */
+    RobotPose tfMapToReal(MapPoint mapSpacePose);
+
 private:
     cv::Mat data;
-
-//    int **data;          // keep measured data (map representation)
-//    int **probability;   // keep likelihood/ probability of measured data
-
-//    MapSize mapSize;
     int resolution;     // resolution of one cell in [mm]
     int rows, cols;
-
-//    void allocateMatrix(int **array, int Xsize, int Ysize);
-//    void deallocMatrix(int **array, int Ysize);
 };
 
 
