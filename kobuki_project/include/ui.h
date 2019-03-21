@@ -48,6 +48,8 @@ class MainWindow : public QMainWindow
     private:
         Ui::MainWindow *ui;
 
+        mutex paint_mux;
+
         QTimer timer;
 
         RobotInterface *robot;
@@ -56,7 +58,7 @@ class MainWindow : public QMainWindow
         LaserMeasurement copyOfLaserData;
         bool updateEnviromentMap;
 
-        void paintEnviromentMap(QPaintEvent *paintEvent);
+        void paintEvent(QPaintEvent *paintEvent);
 
 
     public slots:

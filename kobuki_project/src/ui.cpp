@@ -24,21 +24,20 @@ void MainWindow::refresh() {
     RobotPose odometry = robot->getOdomData();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
-    lidar->laserData_mtx.lock();
     LaserMeasurement laserData = lidar->getLaserData();
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
 
     /// V copyOfLaserData mame data z lidaru
-    lidar->laserData_mtx.unlock();
-    paintEnviromentMap(nullptr);
+    updateEnviromentMap = true;
+    update();
 }
 
-void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
+void MainWindow::paintEvent(QPaintEvent *paintEvent)
 {
     QPainter painter(this);
     ///prekreslujem lidar len vtedy, ked viem ze mam nove data. paintevent sa
     /// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
-    painter.setBrush(Qt::black);//cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+    painter.setBrush(Qt::white);//cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
     QPen pero;
     pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
     pero.setWidth(3);//hrubka pera -3pixely
@@ -51,8 +50,9 @@ void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
     painter.drawRect(rect);//vykreslite stvorec
     if(updateEnviromentMap)
     {
+        syslog(LOG_DEBUG, "Update enviroment map");
 
-        lidar->laserData_mtx.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
+        paint_mux.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
         updateEnviromentMap = false;
 
         painter.setPen(pero);
@@ -69,7 +69,7 @@ void MainWindow::paintEnviromentMap(QPaintEvent *paintEvent)
             if(rect.contains(xp,yp))
                 painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
         }
-        lidar->laserData_mtx.unlock();//unlock..skoncil som
+        paint_mux.unlock();//unlock..skoncil som
     }
 }
 

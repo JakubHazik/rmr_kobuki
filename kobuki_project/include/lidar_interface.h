@@ -23,6 +23,7 @@
 #include <include/own_typedefs.h>
 
 #include <include/robot_interface.h>
+#include <include/lidar.h>
 
 
 using namespace std;
@@ -44,10 +45,10 @@ public:
 
 private:
 
-    std::thread laser;
+    std::thread laser_thread;
     LaserMeasurement laserData;
 
-    RobotInterface robot;
+    Lidar lidar;
 
     const std::string ipAddress = ROBOT_IP_ADDRESS;
 

@@ -8,6 +8,8 @@ Lidar::Lidar() {
     ktoreZapisujem=-1;
     ktorePosielam=-1;
     stopMeasurement=0;
+
+    start();
 }
 
 void Lidar::receiveCommandUDP()

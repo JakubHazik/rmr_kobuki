@@ -5,7 +5,7 @@
 #include <include/lidar_interface.h>
 
 LidarInterface::LidarInterface() {
-    laser = thread(&LidarInterface::t_readLaserData, this);
+    laser_thread = thread(&LidarInterface::t_readLaserData, this);
 }
 
 LidarInterface::~LidarInterface() = default;
@@ -43,16 +43,16 @@ void LidarInterface::t_readLaserData() {
     }
 //    LaserMeasurement measure;
     while (1) {
-        laserData_mtx.lock();
+//        laserData_mtx.lock();
         if ((received_length = recvfrom(socket_FD, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &socket_other, &socket_FD_length)) == -1) {
-            laserData_mtx.unlock();
+//            laserData_mtx.unlock();
             continue;
         }
         laserData.numberOfScans = received_length / sizeof(LaserData);
 
-        cout << "Received: " << laserData.Data << endl;
+//        cout << "Distance: " << laserData.Data[0].scanDistance << ", angle: " << laserData.Data[0].scanAngle << endl;
 
-        laserData_mtx.unlock();
+//        laserData_mtx.unlock();
     }
 }
 
