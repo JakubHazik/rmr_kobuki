@@ -1,1 +1,3 @@
-premenna forOdomUseGyro nema mutex!
+MOzne vylepsenia:
+- spomalovanie robota robit po exponencialnej funkcii, nie  linearnej
+- floodFill je trochu neoptimalny, prerobit podla Dekana

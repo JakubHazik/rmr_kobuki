@@ -11,7 +11,6 @@
 #include <opencv2/opencv.hpp>
 #include "own_typedefs.h"
 
-// TODO classu treba doimplementovat podla potreby
 
 class RobotMap {
 public:
@@ -62,7 +61,6 @@ public:
 private:
     cv::Mat data;
     int resolution;     // resolution of one cell in [mm]
-    int rows, cols;
 };
 
 

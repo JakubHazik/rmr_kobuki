@@ -108,7 +108,7 @@ MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
     mapPose.x = int(round(realSpacePose.x / resolution) + data.rows / 2);
     mapPose.y = int(data.cols / 2 - round(realSpacePose.y / resolution));
     if (__glibc_unlikely(!containPoint(mapPose))) {
-        throw runtime_error("GlobalPlanner: MapTf is out of map range");
+        throw runtime_error("RobotMap: tfRealToMap: transformation result is out of map range");
     }
     return mapPose;
 }
