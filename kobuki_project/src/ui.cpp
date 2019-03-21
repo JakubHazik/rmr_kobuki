@@ -82,70 +82,53 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
     }
 }
 
-void MainWindow::on_pushButton_9_clicked() //start button
-{
-
-//    //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
-//    laserthreadID=pthread_create(&laserthreadHandle,NULL,&laserUDPVlakno,(void *)this);
-//    robotthreadID=pthread_create(&robotthreadHandle,NULL,&robotUDPVlakno,(void *)this);
-/////toto je prepojenie signalu o zmene udajov, na signal
-//    connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
-}
-
-void MainWindow::on_pushButton_2_clicked() //forward
-{
-//    //pohyb dopredu
-//    std::vector<unsigned char> mess=robot.setTranslationSpeed(100);
-//
-/////ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
-///// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//
-//    }
-}
-
-void MainWindow::on_pushButton_3_clicked() //back
-{
-//    std::vector<unsigned char> mess=robot.setTranslationSpeed(-250);
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//
-//    }
-}
-
-void MainWindow::on_pushButton_6_clicked() //left
-{
-//
-//    std::vector<unsigned char> mess=robot.setRotationSpeed(M_PI/2);
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//
-//    }
-}
-
-void MainWindow::on_pushButton_5_clicked()//right
-{
-//
-//    std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//
-//    }
-}
-
-void MainWindow::on_pushButton_4_clicked() //stop
-{
-//    std::vector<unsigned char> mess=robot.setTranslationSpeed(0);
-//    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-//    {
-//
-//    }
-}
-
 void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi)
 {
     ui->lineEdit_2->setText(QString::number(robotX));
     ui->lineEdit_3->setText(QString::number(robotY));
     ui->lineEdit_4->setText(QString::number(robotFi));
 }
+
+/**************************
+           SLOTS
+ **************************/
+
+void MainWindow::on_button_right_clicked(){
+    kobuki->robotInterface.sendRotationSpeed(-1);
+}
+
+void MainWindow::on_button_left_clicked(){
+    kobuki->robotInterface.sendRotationSpeed(1);
+};
+
+void MainWindow::on_button_forward_clicked(){
+    kobuki->robotInterface.sendTranslationSpeed(250);
+};
+
+void MainWindow::on_button_back_clicked(){
+    kobuki->robotInterface.sendTranslationSpeed(-250);
+};
+
+void MainWindow::on_button_stop_clicked(){
+    kobuki->robotInterface.sendTranslationSpeed(0);
+}
+
+void MainWindow::on_button_start_mapping_clicked(){
+    syslog(LOG_WARNING, "Function not implemented yet!");
+};
+
+void MainWindow::on_button_stop_mapping_clicked(){
+    syslog(LOG_WARNING, "Function not implemented yet!");
+};
+
+void MainWindow::on_button_map_reset_clicked(){
+    syslog(LOG_WARNING, "Function not implemented yet!");
+};
+
+void MainWindow::on_button_map_save_clicked(){
+    syslog(LOG_WARNING, "Function not implemented yet!");
+};
+
+void MainWindow::on_button_map_load_clicked(){
+    syslog(LOG_WARNING, "Function not implemented yet!");
+};

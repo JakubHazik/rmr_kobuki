@@ -79,7 +79,7 @@ void RobotMap::setPointValue(MapPoint point, unsigned short value) {
         throw invalid_argument("RobotMap: Set point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
         + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
-    data.at<ushort>(Point(point.x, point.y)) = (value > UINT16_MAX) ? UINT16_MAX : value;
+    data.at<ushort>(Point(point.x, point.y)) = (value > USHRT_MAX) ? (unsigned short) USHRT_MAX : value;
 }
 
 unsigned short RobotMap::getPointValue(MapPoint point) {

@@ -31,17 +31,16 @@ class MainWindow : public QMainWindow
         }
 
     private slots:
-        void on_pushButton_9_clicked();
-
-        void on_pushButton_2_clicked();
-
-        void on_pushButton_3_clicked();
-
-        void on_pushButton_6_clicked();
-
-        void on_pushButton_5_clicked();
-
-        void on_pushButton_4_clicked();
+        void on_button_right_clicked();
+        void on_button_left_clicked();
+        void on_button_forward_clicked();
+        void on_button_back_clicked();
+        void on_button_stop_clicked();
+        void on_button_start_mapping_clicked();
+        void on_button_stop_mapping_clicked();
+        void on_button_map_reset_clicked();
+        void on_button_map_save_clicked();
+        void on_button_map_load_clicked();
 
     private:
         Ui::MainWindow *ui;

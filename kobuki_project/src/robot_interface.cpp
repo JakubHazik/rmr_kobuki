@@ -231,6 +231,7 @@ std::vector<unsigned char> RobotInterface::setDefaultPID() {
 }
 
 void RobotInterface::sendTranslationSpeed(int mmPerSec) {
+//    syslog(LOG_INFO, "Setting translation speed to %d [mm/s]", mmPerSec);
     std::vector<unsigned char> mess = setTranslationSpeed(mmPerSec);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
         syslog(LOG_ERR, "Send data to robot failed!");
@@ -239,6 +240,7 @@ void RobotInterface::sendTranslationSpeed(int mmPerSec) {
 }
 
 void RobotInterface::sendRotationSpeed(int radPerSec) {
+//    syslog(LOG_INFO, "Setting rotation speed to %d [rad/s]", radPerSec);
     std::vector<unsigned char> mess = setRotationSpeed(radPerSec);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
         syslog(LOG_ERR, "Send data to robot failed!");

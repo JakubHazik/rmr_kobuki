@@ -38,14 +38,18 @@ public:
     QLineEdit *lineEdit;
     QPushButton *pushButton;
     QGridLayout *gridLayout_2;
-    QPushButton *pushButton_5;
-    QPushButton *pushButton_2;
-    QPushButton *pushButton_6;
-    QPushButton *pushButton_3;
-    QPushButton *pushButton_4;
+    QPushButton *button_right;
+    QPushButton *button_forward;
+    QPushButton *button_left;
+    QPushButton *button_back;
+    QPushButton *button_stop;
     QVBoxLayout *verticalLayout_2;
-    QPushButton *pushButton_8;
-    QPushButton *pushButton_7;
+    QPushButton *button_start_mapping;
+    QPushButton *button_stop_mapping;
+    QPushButton *button_map_reset;
+    QLineEdit *input_file_name;
+    QPushButton *button_map_save;
+    QPushButton *button_map_load;
     QSpacerItem *verticalSpacer;
     QGridLayout *gridLayout_3;
     QLabel *label;
@@ -116,43 +120,43 @@ public:
         gridLayout_2 = new QGridLayout();
         gridLayout_2->setSpacing(6);
         gridLayout_2->setObjectName(QStringLiteral("gridLayout_2"));
-        pushButton_5 = new QPushButton(centralWidget);
-        pushButton_5->setObjectName(QStringLiteral("pushButton_5"));
+        button_right = new QPushButton(centralWidget);
+        button_right->setObjectName(QStringLiteral("button_right"));
         QSizePolicy sizePolicy2(QSizePolicy::Expanding, QSizePolicy::Fixed);
         sizePolicy2.setHorizontalStretch(0);
         sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(pushButton_5->sizePolicy().hasHeightForWidth());
-        pushButton_5->setSizePolicy(sizePolicy2);
+        sizePolicy2.setHeightForWidth(button_right->sizePolicy().hasHeightForWidth());
+        button_right->setSizePolicy(sizePolicy2);
 
-        gridLayout_2->addWidget(pushButton_5, 1, 2, 1, 1);
+        gridLayout_2->addWidget(button_right, 1, 2, 1, 1);
 
-        pushButton_2 = new QPushButton(centralWidget);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
-        sizePolicy2.setHeightForWidth(pushButton_2->sizePolicy().hasHeightForWidth());
-        pushButton_2->setSizePolicy(sizePolicy2);
+        button_forward = new QPushButton(centralWidget);
+        button_forward->setObjectName(QStringLiteral("button_forward"));
+        sizePolicy2.setHeightForWidth(button_forward->sizePolicy().hasHeightForWidth());
+        button_forward->setSizePolicy(sizePolicy2);
 
-        gridLayout_2->addWidget(pushButton_2, 0, 1, 1, 1);
+        gridLayout_2->addWidget(button_forward, 0, 1, 1, 1);
 
-        pushButton_6 = new QPushButton(centralWidget);
-        pushButton_6->setObjectName(QStringLiteral("pushButton_6"));
-        sizePolicy2.setHeightForWidth(pushButton_6->sizePolicy().hasHeightForWidth());
-        pushButton_6->setSizePolicy(sizePolicy2);
+        button_left = new QPushButton(centralWidget);
+        button_left->setObjectName(QStringLiteral("button_left"));
+        sizePolicy2.setHeightForWidth(button_left->sizePolicy().hasHeightForWidth());
+        button_left->setSizePolicy(sizePolicy2);
 
-        gridLayout_2->addWidget(pushButton_6, 1, 0, 1, 1);
+        gridLayout_2->addWidget(button_left, 1, 0, 1, 1);
 
-        pushButton_3 = new QPushButton(centralWidget);
-        pushButton_3->setObjectName(QStringLiteral("pushButton_3"));
-        sizePolicy2.setHeightForWidth(pushButton_3->sizePolicy().hasHeightForWidth());
-        pushButton_3->setSizePolicy(sizePolicy2);
+        button_back = new QPushButton(centralWidget);
+        button_back->setObjectName(QStringLiteral("button_back"));
+        sizePolicy2.setHeightForWidth(button_back->sizePolicy().hasHeightForWidth());
+        button_back->setSizePolicy(sizePolicy2);
 
-        gridLayout_2->addWidget(pushButton_3, 2, 1, 1, 1);
+        gridLayout_2->addWidget(button_back, 2, 1, 1, 1);
 
-        pushButton_4 = new QPushButton(centralWidget);
-        pushButton_4->setObjectName(QStringLiteral("pushButton_4"));
-        sizePolicy2.setHeightForWidth(pushButton_4->sizePolicy().hasHeightForWidth());
-        pushButton_4->setSizePolicy(sizePolicy2);
+        button_stop = new QPushButton(centralWidget);
+        button_stop->setObjectName(QStringLiteral("button_stop"));
+        sizePolicy2.setHeightForWidth(button_stop->sizePolicy().hasHeightForWidth());
+        button_stop->setSizePolicy(sizePolicy2);
 
-        gridLayout_2->addWidget(pushButton_4, 1, 1, 1, 1);
+        gridLayout_2->addWidget(button_stop, 1, 1, 1, 1);
 
 
         gridLayout->addLayout(gridLayout_2, 1, 0, 1, 1);
@@ -160,21 +164,50 @@ public:
         verticalLayout_2 = new QVBoxLayout();
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        pushButton_8 = new QPushButton(centralWidget);
-        pushButton_8->setObjectName(QStringLiteral("pushButton_8"));
-        sizePolicy1.setHeightForWidth(pushButton_8->sizePolicy().hasHeightForWidth());
-        pushButton_8->setSizePolicy(sizePolicy1);
-        pushButton_8->setMinimumSize(QSize(162, 0));
+        button_start_mapping = new QPushButton(centralWidget);
+        button_start_mapping->setObjectName(QStringLiteral("button_start_mapping"));
+        sizePolicy1.setHeightForWidth(button_start_mapping->sizePolicy().hasHeightForWidth());
+        button_start_mapping->setSizePolicy(sizePolicy1);
+        button_start_mapping->setMinimumSize(QSize(162, 0));
 
-        verticalLayout_2->addWidget(pushButton_8);
+        verticalLayout_2->addWidget(button_start_mapping);
 
-        pushButton_7 = new QPushButton(centralWidget);
-        pushButton_7->setObjectName(QStringLiteral("pushButton_7"));
-        sizePolicy1.setHeightForWidth(pushButton_7->sizePolicy().hasHeightForWidth());
-        pushButton_7->setSizePolicy(sizePolicy1);
-        pushButton_7->setMinimumSize(QSize(162, 0));
+        button_stop_mapping = new QPushButton(centralWidget);
+        button_stop_mapping->setObjectName(QStringLiteral("button_stop_mapping"));
+        sizePolicy1.setHeightForWidth(button_stop_mapping->sizePolicy().hasHeightForWidth());
+        button_stop_mapping->setSizePolicy(sizePolicy1);
+        button_stop_mapping->setMinimumSize(QSize(162, 0));
 
-        verticalLayout_2->addWidget(pushButton_7);
+        verticalLayout_2->addWidget(button_stop_mapping);
+
+        button_map_reset = new QPushButton(centralWidget);
+        button_map_reset->setObjectName(QStringLiteral("button_map_reset"));
+        sizePolicy1.setHeightForWidth(button_map_reset->sizePolicy().hasHeightForWidth());
+        button_map_reset->setSizePolicy(sizePolicy1);
+        button_map_reset->setMinimumSize(QSize(162, 0));
+
+        verticalLayout_2->addWidget(button_map_reset);
+
+        input_file_name = new QLineEdit(centralWidget);
+        input_file_name->setObjectName(QStringLiteral("input_file_name"));
+        sizePolicy1.setHeightForWidth(input_file_name->sizePolicy().hasHeightForWidth());
+        input_file_name->setSizePolicy(sizePolicy1);
+        input_file_name->setMinimumSize(QSize(162, 0));
+
+        verticalLayout_2->addWidget(input_file_name);
+
+        button_map_save = new QPushButton(centralWidget);
+        button_map_save->setObjectName(QStringLiteral("button_map_save"));
+        sizePolicy1.setHeightForWidth(button_map_save->sizePolicy().hasHeightForWidth());
+        button_map_save->setSizePolicy(sizePolicy1);
+        button_map_save->setMinimumSize(QSize(162, 0));
+
+        verticalLayout_2->addWidget(button_map_save);
+
+        button_map_load = new QPushButton(centralWidget);
+        button_map_load->setObjectName(QStringLiteral("button_map_load"));
+
+        verticalLayout_2->addWidget(button_map_load);
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
@@ -246,13 +279,18 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", Q_NULLPTR));
         pushButton_9->setText(QApplication::translate("MainWindow", "Start", Q_NULLPTR));
         pushButton->setText(QApplication::translate("MainWindow", "Set Ip", Q_NULLPTR));
-        pushButton_5->setText(QApplication::translate("MainWindow", "Right", Q_NULLPTR));
-        pushButton_2->setText(QApplication::translate("MainWindow", "Forward", Q_NULLPTR));
-        pushButton_6->setText(QApplication::translate("MainWindow", "Left", Q_NULLPTR));
-        pushButton_3->setText(QApplication::translate("MainWindow", "Back", Q_NULLPTR));
-        pushButton_4->setText(QApplication::translate("MainWindow", "Stop", Q_NULLPTR));
-        pushButton_8->setText(QApplication::translate("MainWindow", "Reset robot", Q_NULLPTR));
-        pushButton_7->setText(QApplication::translate("MainWindow", "Reset Laser", Q_NULLPTR));
+        button_right->setText(QApplication::translate("MainWindow", "Right", Q_NULLPTR));
+        button_forward->setText(QApplication::translate("MainWindow", "Forward", Q_NULLPTR));
+        button_left->setText(QApplication::translate("MainWindow", "Left", Q_NULLPTR));
+        button_back->setText(QApplication::translate("MainWindow", "Back", Q_NULLPTR));
+        button_stop->setText(QApplication::translate("MainWindow", "Stop", Q_NULLPTR));
+        button_start_mapping->setText(QApplication::translate("MainWindow", "Start mapping", Q_NULLPTR));
+        button_stop_mapping->setText(QApplication::translate("MainWindow", "Stop mapping", Q_NULLPTR));
+        button_map_reset->setText(QApplication::translate("MainWindow", "Clear map", Q_NULLPTR));
+        input_file_name->setInputMask(QString());
+        input_file_name->setText(QApplication::translate("MainWindow", "filename.yaml", Q_NULLPTR));
+        button_map_save->setText(QApplication::translate("MainWindow", "Save map", Q_NULLPTR));
+        button_map_load->setText(QApplication::translate("MainWindow", "Load map", Q_NULLPTR));
         label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
         label_3->setText(QApplication::translate("MainWindow", "Rot:", Q_NULLPTR));
         label_2->setText(QApplication::translate("MainWindow", "Y:", Q_NULLPTR));
