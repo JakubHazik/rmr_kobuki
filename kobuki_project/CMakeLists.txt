@@ -21,7 +21,8 @@ set(INCLUDE_FILES
         include/own_typedefs.h
         include/robot_map.h
         include/lidar_interface.h
-        include/lidar.h)
+        include/lidar.h
+        include/kobuki.h)
 set(SOURCE_FILES
         src/ui.cpp
         src/robot_interface.cpp
@@ -29,7 +30,8 @@ set(SOURCE_FILES
         src/robot_map.cpp
         src/global_planner.cpp
         src/lidar_interface.cpp
-        src/lidar.cpp)
+        src/lidar.cpp
+        src/kobuki.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 

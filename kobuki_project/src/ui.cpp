@@ -21,13 +21,14 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::refresh() {
-    RobotPose odometry = robot->getOdomData();
+    RobotPose odometry = kobuki->robotInterface.getOdomData();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
-    LaserMeasurement laserData = lidar->getLaserData();
+    LaserMeasurement laserData = kobuki->lidarInterface.getLaserData();
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
 
     /// V copyOfLaserData mame data z lidaru
+    /// Call paintEvent
     updateEnviromentMap = true;
     update();
 }

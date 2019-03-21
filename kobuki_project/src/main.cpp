@@ -2,12 +2,12 @@
 // Created by jakub on 13.2.2019.
 //
 
-#include "include/ui.h"
-#include "include/robot_interface.h"
-#include <include/lidar_interface.h>
 #include <QApplication>
 #include <unistd.h> // for getopt
+#include <syslog.h>
 
+#include <include/kobuki.h>
+#include <include/ui.h>
 
 using namespace std;
 
@@ -39,15 +39,14 @@ int main(int argc, char *argv[]) {
                          "\tSee /etc/systemd/journald.conf for your settings.");
     }
 
-    RobotInterface robot;
-    LidarInterface lidar;
+    Kobuki kobuki;
 
     usleep(1000*1000*2);
 
     if(gui){
         QApplication a(argc, argv);
         MainWindow w;
-        w.setInterfaces(&robot, &lidar);
+        w.setInterfaces(&kobuki);
         w.show();
 
         syslog(LOG_INFO, "Kobuki started in graphical mode!");

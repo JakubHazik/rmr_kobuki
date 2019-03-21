@@ -12,8 +12,7 @@
 #include <QTimer>
 
 
-#include <include/robot_interface.h>
-#include <include/lidar_interface.h>
+#include <include/kobuki.h>
 
 namespace Ui {
     class MainWindow;
@@ -27,9 +26,8 @@ class MainWindow : public QMainWindow
         explicit MainWindow(QWidget *parent = 0);
         ~MainWindow();
 
-        void setInterfaces(RobotInterface *_robot, LidarInterface *_lidar){
-            this->robot = _robot;
-            this->lidar = _lidar;
+        void setInterfaces(Kobuki *_kobuki){
+            this->kobuki = _kobuki;
         }
 
     private slots:
@@ -52,8 +50,7 @@ class MainWindow : public QMainWindow
 
         QTimer timer;
 
-        RobotInterface *robot;
-        LidarInterface *lidar;
+        Kobuki *kobuki;
 
         LaserMeasurement copyOfLaserData;
         bool updateEnviromentMap;
