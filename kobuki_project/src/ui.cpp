@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     auto *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(refresh()));
-    timer->start(1000);
+    timer->start(250);
 }
 
 MainWindow::~MainWindow() {
@@ -30,6 +30,8 @@ void MainWindow::refresh() {
     /// V copyOfLaserData mame data z lidaru
     /// Call paintEvent
     updateEnviromentMap = true;
+    kobuki->updateGlobalMap();
+    kobuki->mapInterface.showMap();
     update();
 }
 
@@ -43,6 +45,12 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
     pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
     pero.setWidth(3);//hrubka pera -3pixely
     pero.setColor(Qt::green);//farba je zelena
+
+    QPen wall;
+    wall.setStyle(Qt::SolidLine); //styl pera - plna ciara
+    wall.setWidth(5);//hrubka pera -3pixely
+    wall.setColor(Qt::black);//farba je zelena
+
     QRect rect;//(20,120,700,500);
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
 

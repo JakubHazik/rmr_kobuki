@@ -5,7 +5,11 @@
 #ifndef KOBUKI_PROJECT_OWN_TYPEDEFS_H
 #define KOBUKI_PROJECT_OWN_TYPEDEFS_H
 
+#define RAD2DEG (180.0/M_PI)
+#define DEG2RAD (M_PI/180.0)
+
 #include <vector>
+#include <string>
 
 typedef struct {
     unsigned short x;

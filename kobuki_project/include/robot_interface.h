@@ -37,9 +37,6 @@
 
 #define ROBOT_REG_ACCURACY      30  // [mm] accuracy of positioning
 
-#define RAD2DEG (180.0/M_PI)
-#define DEG2RAD (M_PI/180.0)
-
 #define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
 
 

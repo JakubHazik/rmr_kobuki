@@ -3,6 +3,7 @@
 //
 
 #include "include/robot_map.h"
+#include <limits>
 
 using namespace std;
 using namespace cv;
@@ -42,8 +43,20 @@ RobotMap::~RobotMap() {
 }
 
 void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement) {
-    // TODO add measured data to map
-}
+    cout << "odom: " << robotPose.x << "  " << robotPose.y << "  " << robotPose.fi << endl;
+    for(int k = 0; k < laserMeasurement->numberOfScans; k++)
+    {
+        double distance = laserMeasurement->Data[k].scanDistance;
+        double xp = - (robotPose.x + distance * 2 * sin((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD));
+        double yp = robotPose.y + distance * 2 * cos((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD);
+        double fp = laserMeasurement->Data[k].scanAngle * DEG2RAD;
+
+        MapPoint p = tfRealToMap({xp, yp, fp});
+
+        setPointValue(p, getPointValue(p) + (unsigned short) 2);
+//        cout << p.x << ", " << p.y << endl;
+
+    }}
 
 MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
@@ -63,14 +76,16 @@ int RobotMap::getResolution() {
 
 void RobotMap::setPointValue(MapPoint point, unsigned short value) {
     if (!containPoint(point)) {
-        throw invalid_argument("RobotMap: Set point is out of range");
+        throw invalid_argument("RobotMap: Set point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
+        + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
-    data.at<ushort>(Point(point.x, point.y)) = value;
+    data.at<ushort>(Point(point.x, point.y)) = (value > UINT16_MAX) ? UINT16_MAX : value;
 }
 
 unsigned short RobotMap::getPointValue(MapPoint point) {
     if (!containPoint(point)) {
-        throw invalid_argument("RobotMap: Get point is out of range");
+        throw invalid_argument("RobotMap: Get point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
+                               + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
     return data.at<ushort>(Point(point.x, point.y));
 }
@@ -100,7 +115,7 @@ void RobotMap::showMap() {
     data.convertTo(output, CV_8UC1);
     resize(output, output, Size(), 5, 5);
     imshow("Robot map", output);
-    cv::waitKey(0);
+//    cv::waitKey(0);
 }
 
 MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
@@ -108,7 +123,8 @@ MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
     mapPose.x = int(round(realSpacePose.x / resolution) + data.rows / 2);
     mapPose.y = int(data.cols / 2 - round(realSpacePose.y / resolution));
     if (__glibc_unlikely(!containPoint(mapPose))) {
-        throw runtime_error("RobotMap: tfRealToMap: transformation result is out of map range");
+        throw invalid_argument("RobotMap: tfRealToMap: transformation result is out of map range ( " + to_string(realSpacePose.x) + ", " + to_string(realSpacePose.y) + "), size: ("
+                               + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
     return mapPose;
 }

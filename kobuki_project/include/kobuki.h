@@ -23,8 +23,10 @@ public:
     LidarInterface lidarInterface;
     RobotMap       mapInterface;
 
-private:
+    void updateGlobalMap();
 
+private:
+    void startPeriodic(int seconds);
 
 
 
