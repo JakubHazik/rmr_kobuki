@@ -67,7 +67,7 @@ void GlobalPlanner::floodFill() {
     floodPoints.push({goalPoint, 2});
 
     while (!floodPoints.empty()) {
-        auto floodPoint = floodPoints.front();
+        FloodPoint floodPoint = floodPoints.front();
         floodPoints.pop();
 
         if (!map.containPoint(floodPoint.mapPoint) || map.getPointValue(floodPoint.mapPoint) != 0) {
@@ -80,14 +80,14 @@ void GlobalPlanner::floodFill() {
             return;
         }
 
-        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y + 1}, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y    }, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y - 1}, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x    , floodPoint.mapPoint.y - 1}, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y - 1}, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y    }, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y + 1}, floodPoint.color + 1});
-        floodPoints.push({{floodPoint.mapPoint.x    , floodPoint.mapPoint.y + 1}, floodPoint.color + 1});
+        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y + 1}, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y    }, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x + 1, floodPoint.mapPoint.y - 1}, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x    , floodPoint.mapPoint.y - 1}, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y - 1}, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y    }, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x - 1, floodPoint.mapPoint.y + 1}, (unsigned short)(floodPoint.color + 1)});
+        floodPoints.push({{floodPoint.mapPoint.x    , floodPoint.mapPoint.y + 1}, (unsigned short)(floodPoint.color + 1)});
     }
 }
 

@@ -3,13 +3,13 @@
 //
 
 #include "include/robot_map.h"
-#include <limits>
 
 using namespace std;
 using namespace cv;
 
-RobotMap::RobotMap(MapSize mapSize, int resolution): resolution(resolution) {
-    data = Mat::zeros(mapSize.x, mapSize.y, CV_16UC1);  // construct matrix with unsigned short values
+RobotMap::RobotMap(RobotPose mapSize, int resolution): resolution(resolution) {
+
+    data = Mat::zeros(int(mapSize.x / resolution), int(mapSize.y / resolution), CV_16UC1);  // construct matrix with unsigned short values
 }
 
 RobotMap::RobotMap(std::string filename) {
@@ -75,7 +75,7 @@ int RobotMap::getResolution() {
 }
 
 void RobotMap::setPointValue(MapPoint point, unsigned short value) {
-    if (!containPoint(point)) {
+    if (__glibc_unlikely(!containPoint(point))) {
         throw invalid_argument("RobotMap: Set point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
         + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
@@ -83,7 +83,7 @@ void RobotMap::setPointValue(MapPoint point, unsigned short value) {
 }
 
 unsigned short RobotMap::getPointValue(MapPoint point) {
-    if (!containPoint(point)) {
+    if (__glibc_unlikely(!containPoint(point))) {
         throw invalid_argument("RobotMap: Get point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
                                + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
@@ -113,9 +113,9 @@ bool RobotMap::containPoint(MapPoint point) {
 void RobotMap::showMap() {
     cv::Mat output;
     data.convertTo(output, CV_8UC1);
-    resize(output, output, Size(), 5, 5);
+    resize(output, output, Size(), SHOW_IMAGE_SCALE_FACTOR, SHOW_IMAGE_SCALE_FACTOR);
     imshow("Robot map", output);
-//    cv::waitKey(0);
+    cv::waitKey(0);
 }
 
 MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
@@ -123,8 +123,8 @@ MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
     mapPose.x = int(round(realSpacePose.x / resolution) + data.rows / 2);
     mapPose.y = int(data.cols / 2 - round(realSpacePose.y / resolution));
     if (__glibc_unlikely(!containPoint(mapPose))) {
-        throw invalid_argument("RobotMap: tfRealToMap: transformation result is out of map range ( " + to_string(realSpacePose.x) + ", " + to_string(realSpacePose.y) + "), size: ("
-                               + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
+        throw invalid_argument("RobotMap: tfRealToMap: transformation result is out of map range ( " + to_string(mapPose.x) + ", " + to_string(mapPose.y) + "), size: ("
+                               + to_string(data.rows) + ", " + to_string(data.cols) + ")");
     }
     return mapPose;
 }
@@ -135,4 +135,60 @@ RobotPose RobotMap::tfMapToReal(MapPoint mapSpacePose) {
     realSpacePose.y = (data.cols / 2 - mapSpacePose.y) * resolution;
     realSpacePose.fi = 0;
     return realSpacePose;
+}
+
+void RobotMap::loadIdealMap(std::string filename, RobotPose robotReference) {
+    ifstream file;
+    file.open(filename);
+
+    string line;
+    int pointsNum;
+    char delimiter;
+    double pointX;
+    double pointY;
+    vector<MapPoint> corners;
+
+    while (!file.eof()) {
+        file>>pointsNum;
+
+        for(int i = 0; i < pointsNum; i++) {
+            file>>delimiter;    // [
+            file>>pointX;       // number
+            file>>delimiter;    // ,
+            file>>pointY;       // number
+            file>>delimiter;    // ]
+
+            corners.push_back(tfRealToMap(RobotPose{pointX * 10, pointY * 10}));    // also convert from [cm] to [mm]
+        }
+        corners.push_back(corners[0]);
+        printWallToMap(corners);
+        corners.clear();
+    }
+
+    // translate map center to robot reference
+    auto translation = tfRealToMap(robotReference);
+    translateMap({data.rows/2 - translation.x, data.cols/2 - translation.y});
+
+    // rotate map around center to robot reference
+    cv::Mat rotation = cv::getRotationMatrix2D(cv::Point(data.rows/2, data.cols/2), robotReference.fi, 1);
+    warpAffine(data, data, rotation, data.size());
+
+    //setPointValue(tfRealToMap({0,0,0}), 255);  // write center to the map
+}
+
+void RobotMap::printWallToMap(const std::vector<MapPoint> &corners) {
+    for (int i = 0; i < corners.size() - 1; i++) {
+        for (int x = corners[i].x; x != corners[i + 1].x; (x < corners[i + 1].x)? x++: x--) {
+            setPointValue({x, corners[i].y}, 1);
+        }
+
+        for (int y = corners[i].y; y != corners[i + 1].y; (y < corners[i + 1].y)? y++: y--) {
+            setPointValue({corners[i].x, y}, 1);
+        }
+    }
+}
+
+void RobotMap::translateMap(MapPoint direction) {
+    cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, direction.x, 0, 1, direction.y);    // create transformation matrix for translate map
+    cv::warpAffine(data, data, trans_mat, data.size());     // translate image
 }

@@ -11,16 +11,24 @@
 #include <opencv2/opencv.hpp>
 #include "own_typedefs.h"
 
+#define SHOW_IMAGE_SCALE_FACTOR 2
 
 class RobotMap {
 public:
-    RobotMap(MapSize mapSize, int resolution);
+    /**
+     *
+     * @param mapSize size of whole map in [mm]
+     * @param resolution resolution of map in [mm]
+     */
+    RobotMap(RobotPose mapSize, int resolution);
 
     RobotMap(std::string filename);
 
     RobotMap(cv::Mat dataMatrix, int resolution);
 
     ~RobotMap();
+
+    void loadIdealMap(std::string filename, RobotPose robotReference);
 
     void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement);
 
@@ -61,6 +69,8 @@ public:
 private:
     cv::Mat data;
     int resolution;     // resolution of one cell in [mm]
+    void printWallToMap(const std::vector<MapPoint> &corners);
+    void translateMap(MapPoint direction);
 };
 
 
