@@ -50,6 +50,8 @@ public:
 
     void showMap();
 
+    void clearMap();
+
     bool containPoint(MapPoint point);
 
     /**

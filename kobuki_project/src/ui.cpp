@@ -65,7 +65,7 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
     painter.drawRect(rect);//vykreslite stvorec
     if(updateEnviromentMap)
     {
-        syslog(LOG_DEBUG, "Update enviroment map");
+//        syslog(LOG_DEBUG, "Update enviroment map");
 
         paint_mux.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
         updateEnviromentMap = false;
@@ -155,13 +155,18 @@ void MainWindow::on_button_stop_mapping_clicked(){
 };
 
 void MainWindow::on_button_map_reset_clicked(){
-    syslog(LOG_WARNING, "Function not implemented yet!");
+    syslog(LOG_INFO, "Clearing enviroment map");
+    kobuki->mapInterface.clearMap();
 };
 
 void MainWindow::on_button_map_save_clicked(){
-    syslog(LOG_WARNING, "Function not implemented yet!");
+    string file_name = ui->input_file_name->text().toUtf8().constData();
+    syslog(LOG_INFO, "Saving map as: %s", file_name.c_str());
+    kobuki->mapInterface.saveToFile(file_name);
 };
 
 void MainWindow::on_button_map_load_clicked(){
-    syslog(LOG_WARNING, "Function not implemented yet!");
+    string file_name = ui->input_file_name->text().toUtf8().constData();
+    syslog(LOG_INFO, "Loading map from file: %s", file_name.c_str());
+    kobuki->mapInterface = RobotMap(file_name);
 };

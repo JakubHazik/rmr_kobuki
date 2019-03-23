@@ -63,9 +63,6 @@ class MainWindow : public QMainWindow
         void setOdometryGuiValues(double robotX,double robotY,double robotFi);
         void refresh();
 
-    signals:
-        void odometryGuiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
-
 };
 
 #endif //KOBUKI_PROJECT_UI_H

@@ -21,6 +21,6 @@ void Kobuki::updateGlobalMap(){
     LaserMeasurement laserData = lidarInterface.getLaserData();
     RobotPose odometry = robotInterface.getOdomData();
 
-    syslog(LOG_DEBUG, "Update global map");
+//    syslog(LOG_DEBUG, "Update global map");
     mapInterface.addMeasurement(odometry, &laserData);
 }

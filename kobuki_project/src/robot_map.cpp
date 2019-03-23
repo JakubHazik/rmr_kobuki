@@ -43,7 +43,7 @@ RobotMap::~RobotMap() {
 }
 
 void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement) {
-    cout << "odom: " << robotPose.x << "  " << robotPose.y << "  " << robotPose.fi << endl;
+//    cout << "odom: " << robotPose.x << "  " << robotPose.y << "  " << robotPose.fi << endl;
     for(int k = 0; k < laserMeasurement->numberOfScans; k++)
     {
         double distance = laserMeasurement->Data[k].scanDistance;
@@ -192,4 +192,8 @@ void RobotMap::printWallToMap(const std::vector<MapPoint> &corners) {
 void RobotMap::translateMap(MapPoint direction) {
     cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, direction.x, 0, 1, direction.y);    // create transformation matrix for translate map
     cv::warpAffine(data, data, trans_mat, data.size());     // translate image
+}
+
+void RobotMap::clearMap() {
+    data = cv::Mat::zeros(data.size(), data.type());
 }
