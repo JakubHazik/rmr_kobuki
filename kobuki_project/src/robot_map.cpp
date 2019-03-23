@@ -178,7 +178,7 @@ void RobotMap::loadIdealMap(std::string filename, RobotPose robotReference) {
 }
 
 void RobotMap::printWallToMap(const std::vector<MapPoint> &corners) {
-    for (int i = 0; i < corners.size() - 1; i++) {
+    for (int i = 0; i < (int) corners.size() - 1; i++) {
         for (int x = corners[i].x; x != corners[i + 1].x; (x < corners[i + 1].x)? x++: x--) {
             setPointValue({x, corners[i].y}, 1);
         }

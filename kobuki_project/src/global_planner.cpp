@@ -28,7 +28,7 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
 
     if (map.getPointValue(startPoint) == 1) {
         string message = "GlobalPLanner: start pose is in wall or to close to wall";
-        syslog(LOG_ERR, message.c_str());
+        syslog(LOG_ERR, "%s", message.c_str());
         throw invalid_argument(message);
     }
 
@@ -37,7 +37,7 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
 
     if (map.getPointValue(goalPoint) == 1) {
         string message = "GlobalPLanner: goal pose is in wall or to close to wall";
-        syslog(LOG_ERR, message.c_str());
+        syslog(LOG_ERR, "%s", message.c_str());
         throw invalid_argument(message);
     }
 }
@@ -50,12 +50,12 @@ void GlobalPlanner::addWallBoundaries() {
     cv::Mat resultMap = referenceMap.clone();
     {
     for (int b = 0; b < boundariesSize; b++)
-        for (int i = 1; i < directions.size(); i++) {
+        for (int i = 1; i < (int) directions.size(); i++) {
             tmpMap = translateMap(referenceMap, directions[i]);
             cv::bitwise_or(resultMap, tmpMap, resultMap);
         }
-        referenceMap = resultMap.clone();
     }
+    referenceMap = resultMap.clone();
 
     this->map = RobotMap(resultMap, this->map.getResolution());
 }
@@ -128,7 +128,7 @@ MapPoint GlobalPlanner::findNextDirection(const MapPoint &point, FFDirection &di
         return point + directions[direction];
     }
 
-    for (int i = 1; i < directions.size(); i++) {
+    for (int i = 1; i < (int) directions.size(); i++) {
         try { // catch if point is outside of the map
             nextPointValue = map.getPointValue(point + directions[i]);
         } catch (invalid_argument &e) {
@@ -157,7 +157,7 @@ queue<RobotPose> GlobalPlanner::getRobotWayPoints() {
     try{
         findPathPoints();
     } catch (NoPathException &e) {
-        syslog(LOG_ERR, e.what());
+        syslog(LOG_ERR, "%s", e.what());
         return queue<RobotPose> {};     // return empty queue if no path exist
     }
 
