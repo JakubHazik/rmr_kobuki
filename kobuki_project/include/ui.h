@@ -52,7 +52,9 @@ class MainWindow : public QMainWindow
         Kobuki *kobuki;
 
         LaserMeasurement copyOfLaserData;
-        bool updateEnviromentMap;
+        bool updateEnviromentMap = false;
+
+        bool scanningEnviroment = false;
 
         cv::Mat enviromentMap;
 

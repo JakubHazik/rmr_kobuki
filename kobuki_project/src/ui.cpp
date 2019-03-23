@@ -24,17 +24,19 @@ void MainWindow::refresh() {
     RobotPose odometry = kobuki->robotInterface.getOdomData();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
-    LaserMeasurement laserData = kobuki->lidarInterface.getLaserData();
-    memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-
     /// V copyOfLaserData mame data z lidaru
     /// Call paintEvent
     updateEnviromentMap = true;
-    kobuki->updateGlobalMap();
+
+    LaserMeasurement laserData = kobuki->lidarInterface.getLaserData();
+    memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
+
+    if(scanningEnviroment){
+        kobuki->updateGlobalMap();
+    }
 
     /// Output map contains only zeros and ones (0 -> space, 1 -> wall)
     enviromentMap = kobuki->mapInterface.getCVMatMap(1);
-//    kobuki->mapInterface.showMap();
 
     update();
 }
@@ -147,11 +149,13 @@ void MainWindow::on_button_stop_clicked(){
 }
 
 void MainWindow::on_button_start_mapping_clicked(){
-    syslog(LOG_WARNING, "Function not implemented yet!");
+    syslog(LOG_INFO, "Started mapping process");
+    scanningEnviroment = true;
 };
 
 void MainWindow::on_button_stop_mapping_clicked(){
-    syslog(LOG_WARNING, "Function not implemented yet!");
+    syslog(LOG_INFO, "Stopping mapping process");
+    scanningEnviroment = false;
 };
 
 void MainWindow::on_button_map_reset_clicked(){

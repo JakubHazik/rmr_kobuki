@@ -8,7 +8,6 @@ using namespace std;
 using namespace cv;
 
 RobotMap::RobotMap(RobotPose mapSize, int resolution): resolution(resolution) {
-
     data = Mat::zeros(int(mapSize.x / resolution), int(mapSize.y / resolution), CV_16UC1);  // construct matrix with unsigned short values
 }
 

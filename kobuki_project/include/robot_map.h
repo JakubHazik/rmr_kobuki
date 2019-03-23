@@ -16,12 +16,14 @@
 class RobotMap {
 public:
     /**
-     *
      * @param mapSize size of whole map in [mm]
      * @param resolution resolution of map in [mm]
      */
     RobotMap(RobotPose mapSize, int resolution);
 
+    /**
+     * @param filename name of file from filesystem
+     */
     RobotMap(std::string filename);
 
     RobotMap(cv::Mat dataMatrix, int resolution);
@@ -30,28 +32,70 @@ public:
 
     void loadIdealMap(std::string filename, RobotPose robotReference);
 
+
+    /**
+     * Adding current set of measuremets from lidar and odometry to enviroment Map
+     * Increment points in map where obstacles were found
+     * @param - robotPose current position from odometry
+     * @param - laserMeasurement set of measurements from lidar
+     */
     void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement);
 
+    /**
+     * Save Map class to .yaml file for future purposes
+     * @param filename - name of saved file
+     */
     void saveToFile(std::string filename);
 
+    /**
+     * Get map size
+     * @return MapPoint (x,y) resolution (or rows,cols)
+     */
     MapSize getSize();
 
+    /**
+     * Get map resolution (one square dimensions)
+     * @return resolution
+     */
     int getResolution();
 
+    /**
+     * Get matrix as set of zeros and ones, where 1 represents obstacle
+     * Uses filterSpeckles with given threshold value to filter lidar noise
+     * @param threshold_value lidar noise filter
+     * @return cv::Mat object
+     */
     cv::Mat getCVMatMap(int threshold_value);
 
+    /**
+     * Setter for given point (index, pixel) value
+     * @param point given point to be set to
+     * @param value vale to be set to
+     */
     void setPointValue(MapPoint point, unsigned short value);
 
     unsigned short getPointValue(MapPoint point);
 
+    /**
+     * Filter measured dataset with given threshold value
+     * @param threshold_value lidar noise filter
+     */
     void filterSpeckles(int threshold_value);
 
     RobotMap getRobotMap();
 
     void showMap();
 
+    /**
+     * Set whole map to zeros, clear all data for new measurement
+     */
     void clearMap();
 
+    /**
+     * Check if Map contains given point
+     * @param point given point
+     * @return true if Map contains a point
+     */
     bool containPoint(MapPoint point);
 
     /**
