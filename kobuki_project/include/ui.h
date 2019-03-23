@@ -11,7 +11,7 @@
 #include <QFileDialog>
 #include <QTimer>
 
-
+#include <opencv2/opencv.hpp>
 #include <include/kobuki.h>
 
 namespace Ui {
@@ -53,6 +53,8 @@ class MainWindow : public QMainWindow
 
         LaserMeasurement copyOfLaserData;
         bool updateEnviromentMap;
+
+        cv::Mat enviromentMap;
 
         void paintEvent(QPaintEvent *paintEvent);
 

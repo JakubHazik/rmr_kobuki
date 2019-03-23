@@ -31,30 +31,36 @@ void MainWindow::refresh() {
     /// Call paintEvent
     updateEnviromentMap = true;
     kobuki->updateGlobalMap();
-    kobuki->mapInterface.showMap();
+
+    /// Output map contains only zeros and ones (0 -> space, 1 -> wall)
+    enviromentMap = kobuki->mapInterface.getCVMatMap(1);
+//    kobuki->mapInterface.showMap();
+
     update();
 }
 
 void MainWindow::paintEvent(QPaintEvent *paintEvent)
 {
     QPainter painter(this);
-    ///prekreslujem lidar len vtedy, ked viem ze mam nove data. paintevent sa
-    /// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
-    painter.setBrush(Qt::white);//cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+
+    painter.setBrush(Qt::white); // background color
+
     QPen pero;
-    pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
-    pero.setWidth(3);//hrubka pera -3pixely
-    pero.setColor(Qt::green);//farba je zelena
+    pero.setStyle(Qt::SolidLine);
+    pero.setWidth(3);
+    pero.setColor(Qt::green);
 
     QPen wall;
-    wall.setStyle(Qt::SolidLine); //styl pera - plna ciara
-    wall.setWidth(5);//hrubka pera -3pixely
-    wall.setColor(Qt::black);//farba je zelena
+    wall.setStyle(Qt::SolidLine);
+    wall.setColor(Qt::black);
+
+    QPen grid;
+    grid.setStyle(Qt::SolidLine);
+    grid.setColor(Qt::gray);
+    grid.setWidth(1);
 
     QRect rect;//(20,120,700,500);
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
-
-
 
     painter.drawRect(rect);//vykreslite stvorec
     if(updateEnviromentMap)
@@ -78,6 +84,33 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
             if(rect.contains(xp,yp))
                 painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
         }
+
+        /// Calculate scaling
+        int wall_size = (int) MAX(rect.width() / enviromentMap.rows, rect.height() / enviromentMap.cols) + 1;
+        wall.setWidth((wall_size < 1) ? 1 : wall_size);
+
+        painter.setPen(wall);
+
+        for(int i=0; i<enviromentMap.rows; i++){
+            for(int j=0; j<enviromentMap.cols; j++){
+                unsigned short p = kobuki->mapInterface.getPointValue({i,j});
+                if(p >= 1){
+                    painter.drawPoint(rect.topLeft().x() + (i * rect.width() / enviromentMap.rows), rect.topLeft().y() + (j * rect.height() / enviromentMap.cols));
+                }
+            }
+        }
+
+//        /// Paint grid
+//        painter.setPen(grid);
+//
+//        for(int i = rect.top(); i < rect.bottom(); i += wall_size - 1){
+//            painter.drawLine(QPoint(rect.left(), i),QPoint(rect.right(), i));
+//        }
+//        for(int j = rect.left(); j < rect.right(); j += wall_size - 1){
+//            painter.drawLine(QPoint(j, rect.top()),QPoint(j, rect.bottom()));
+//        }
+
+
         paint_mux.unlock();//unlock..skoncil som
     }
 }

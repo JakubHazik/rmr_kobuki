@@ -38,13 +38,13 @@ public:
 
     int getResolution();
 
-    cv::Mat getCVMatMap();
+    cv::Mat getCVMatMap(int threshold_value);
 
     void setPointValue(MapPoint point, unsigned short value);
 
     unsigned short getPointValue(MapPoint point);
 
-    RobotMap filterSpeckles();
+    void filterSpeckles(int threshold_value);
 
     RobotMap getRobotMap();
 
@@ -68,6 +68,7 @@ public:
 
 private:
     cv::Mat data;
+    cv::Mat outputMap;
     int resolution;     // resolution of one cell in [mm]
     void printWallToMap(const std::vector<MapPoint> &corners);
     void translateMap(MapPoint direction);

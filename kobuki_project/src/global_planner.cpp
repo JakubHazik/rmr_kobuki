@@ -45,11 +45,11 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
 void GlobalPlanner::addWallBoundaries() {
     int boundariesSize = static_cast<int>(ceil(robotWidth / 2 / this->map.getResolution()));
 
-    cv::Mat referenceMap = this->map.getCVMatMap();
+    cv::Mat referenceMap = this->map.getCVMatMap(1);
     cv::Mat tmpMap = referenceMap.clone();
     cv::Mat resultMap = referenceMap.clone();
-
-    for (int b = 0; b < boundariesSize; b++) {
+    {
+    for (int b = 0; b < boundariesSize; b++)
         for (int i = 1; i < directions.size(); i++) {
             tmpMap = translateMap(referenceMap, directions[i]);
             cv::bitwise_or(resultMap, tmpMap, resultMap);

@@ -62,12 +62,12 @@ MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
 }
 
-cv::Mat RobotMap::getCVMatMap() {
-    // TODO filter probability
-    //filterSpeckles()
+cv::Mat RobotMap::getCVMatMap(int threshold_value) {
+    /// Filter proability
+    filterSpeckles(threshold_value);
 
     // we have to clone cv::Mat, instead on we return only reference to cv::Mat
-    return data.clone();
+    return outputMap.clone();
 }
 
 int RobotMap::getResolution() {
@@ -90,12 +90,13 @@ unsigned short RobotMap::getPointValue(MapPoint point) {
     return data.at<ushort>(Point(point.x, point.y));
 }
 
-RobotMap RobotMap::filterSpeckles() {
-    //TODO filtrovanie neziaducich flakov na zaklade pravdepodobnosti
-    // pouzi nasledujucu funkciu, je TOP
-    // threshold( data, output, threshold_value, max_output_value, cv::THRESH_BINARY );
-
-    return RobotMap("");
+void RobotMap::filterSpeckles(int threshold_value) {
+    /// @1 - input image
+    /// @2 - output image
+    /// @3 - threshold value
+    /// @4 - binary MAX (all values above threshold)
+    /// @5 - mode (type) of threshold
+    threshold( data, outputMap, threshold_value, 1, cv::THRESH_BINARY );
 }
 
 RobotMap RobotMap::getRobotMap() {
