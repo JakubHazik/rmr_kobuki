@@ -54,8 +54,8 @@ void GlobalPlanner::addWallBoundaries() {
             tmpMap = translateMap(referenceMap, directions[i]);
             cv::bitwise_or(resultMap, tmpMap, resultMap);
         }
+        referenceMap = resultMap.clone();
     }
-    referenceMap = resultMap.clone();
 
     this->map = RobotMap(resultMap, this->map.getResolution());
 }

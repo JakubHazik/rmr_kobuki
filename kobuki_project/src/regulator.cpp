@@ -64,9 +64,9 @@ int Regulator::fitRotationRadius(double rotationError) {
 
     // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
     if (rotationError == 0) {
-        radius = coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) - ROBOT_REG_RADIUS_MIN;
+        radius = coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 - ROBOT_REG_RADIUS_MIN;
     } else {
-        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -ROBOT_REG_RADIUS_MIN);
+        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 -ROBOT_REG_RADIUS_MIN);
     }
 
     return int(round(radius));
