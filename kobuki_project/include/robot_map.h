@@ -28,6 +28,12 @@ public:
 
     RobotMap(cv::Mat dataMatrix, int resolution);
 
+    /**
+     * Copy constructor
+     * @param robotMap
+     */
+    RobotMap(const RobotMap &robotMap);
+
     ~RobotMap();
 
     void loadIdealMap(std::string filename, RobotPose robotReference);
@@ -65,7 +71,7 @@ public:
      * @param threshold_value lidar noise filter
      * @return cv::Mat object
      */
-    cv::Mat getCVMatMap(int threshold_value);
+    cv::Mat getCVMatMap();
 
     /**
      * Setter for given point (index, pixel) value
@@ -112,10 +118,24 @@ public:
      */
     RobotPose tfMapToReal(MapPoint mapSpacePose);
 
+    /**
+     * Transform real robot pose from real 2D space to map space
+     * @param realSpacePose robot pose
+     * @return  map point
+     */
+    static MapPoint tfRealToMap(RobotPose realSpacePose, MapSize mapSize, int resolution);
+
+    /**
+     * Transform map point to real 2D space robot pose
+     * @param realSpacePose robot pose
+     * @return  map point
+     */
+    static RobotPose tfMapToReal(MapPoint mapSpacePose, MapSize mapSize, int resolution);
+
 private:
     cv::Mat data;
-    cv::Mat outputMap;
-    int resolution;     // resolution of one cell in [mm]
+    cv::Mat outputMap;  //TODO toto bude vystupna mapa
+    int resolution;     // mapResolution of one cell in [mm]
     void printWallToMap(const std::vector<MapPoint> &corners);
     void translateMap(MapPoint direction);
 };

@@ -45,7 +45,7 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
 void GlobalPlanner::addWallBoundaries() {
     int boundariesSize = static_cast<int>(ceil(robotWidth / 2 / this->map.getResolution()));
 
-    cv::Mat referenceMap = this->map.getCVMatMap(1);
+    cv::Mat referenceMap = this->map.getCVMatMap();
     cv::Mat tmpMap = referenceMap.clone();
     cv::Mat resultMap = referenceMap.clone();
 

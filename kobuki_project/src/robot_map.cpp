@@ -22,6 +22,12 @@ RobotMap::RobotMap(cv::Mat dataMatrix, int resolution): resolution(resolution) {
     dataMatrix.convertTo(data, CV_16UC1);   // convert input matrix to unsigned short values
 }
 
+RobotMap::RobotMap(const RobotMap &robotMap) {
+    this->data = robotMap.data.clone();
+    this->outputMap = robotMap.outputMap.clone();
+    this->resolution = robotMap.resolution;
+}
+
 void RobotMap::saveToFile(std::string filename) {
     if (filename.find(".yaml") != string::npos) {
         cv::FileStorage fileStorage(filename, cv::FileStorage::WRITE);
@@ -61,12 +67,13 @@ MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
 }
 
-cv::Mat RobotMap::getCVMatMap(int threshold_value) {
+cv::Mat RobotMap::getCVMatMap() {        // TODO tuto necheme treshold argument
+    int threshold_value = 1;       //TODO doimplementovat
     /// Filter proability
-    filterSpeckles(threshold_value);
+    //filterSpeckles(threshold_value);
 
     // we have to clone cv::Mat, instead on we return only reference to cv::Mat
-    return outputMap.clone();
+    return data.clone();
 }
 
 int RobotMap::getResolution() {
@@ -102,7 +109,7 @@ RobotMap RobotMap::getRobotMap() {
     // TODO filter map probability, return map only as 0, 1
     // filterSpeckles()
 
-    return RobotMap(data, resolution);
+    return RobotMap(data.clone(), resolution); // TODO tuto bude output.clone()
 }
 
 bool RobotMap::containPoint(MapPoint point) {
@@ -133,6 +140,22 @@ RobotPose RobotMap::tfMapToReal(MapPoint mapSpacePose) {
     RobotPose realSpacePose;
     realSpacePose.x = (mapSpacePose.x - data.rows / 2) * resolution;
     realSpacePose.y = (data.cols / 2 - mapSpacePose.y) * resolution;
+    realSpacePose.fi = 0;
+    return realSpacePose;
+}
+
+
+MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose, MapSize mapSize, int resolution) {
+    MapPoint mapPose;
+    mapPose.x = int(round(realSpacePose.x / resolution) + mapSize.x / 2);
+    mapPose.y = int(mapSize.y / 2 - round(realSpacePose.y / resolution));
+    return mapPose;
+}
+
+RobotPose RobotMap::tfMapToReal(MapPoint mapSpacePose, MapSize mapSize, int resolution) {
+    RobotPose realSpacePose;
+    realSpacePose.x = (mapSpacePose.x - mapSize.x  / 2) * resolution;
+    realSpacePose.y = (mapSize.y / 2 - mapSpacePose.y) * resolution;
     realSpacePose.fi = 0;
     return realSpacePose;
 }
