@@ -15,11 +15,24 @@ MapPoint operator+(const MapPoint &p1, const MapPoint &p2)
     return {p1.x + p2.x, p1.y + p2.y};
 }
 
-GlobalPlanner::GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose, double robotWidth):
-    map(map), robotWidth(robotWidth) {
+GlobalPlanner::GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose, int robotWidth):
+    map(map),
+    floodMap(cv::Mat::zeros(map.getSize().x, map.getSize().y, CV_16UC1), map.getResolution()),
+    pathMap(cv::Mat::zeros(map.getSize().x, map.getSize().y, CV_8UC1), map.getResolution()),
+    wayPoints(cv::Mat::zeros(map.getSize().x, map.getSize().y, CV_8UC1), map.getResolution()),
+    robotWidth(robotWidth)
+    {
 
     addWallBoundaries();
     setStartEndPose(startPose, goalPose);
+    floodFill();
+
+    try{
+        findPathPoints();
+    } catch (NoPathException &e) {
+        syslog(LOG_ERR, "%s", e.what());
+        robotWayPoints = list<RobotPose>();     // clear queue
+    }
 }
 
 void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
@@ -101,7 +114,7 @@ void GlobalPlanner::findPathPoints() {
         actualPoint = findNextDirection(actualPoint, direction);
 
         if (__glibc_unlikely(direction != directionOld)) {
-            robotWayPoints.push(map.tfMapToReal(pathPoints.back()));
+            robotWayPoints.push_back(map.tfMapToReal(pathPoints.back()));
         }
 
         pathPoints.push_back(actualPoint);
@@ -109,8 +122,10 @@ void GlobalPlanner::findPathPoints() {
     }
 
     if (__glibc_likely(!robotWayPoints.empty())) {
-        robotWayPoints.pop();
+        robotWayPoints.pop_front();         // remove first (start) point
     }
+
+    robotWayPoints.push_back(map.tfMapToReal(goalPoint));    // add last (goalPoint) to waypoints queue
 }
 
 MapPoint GlobalPlanner::findNextDirection(const MapPoint &point, FFDirection &direction) {
@@ -144,35 +159,41 @@ MapPoint GlobalPlanner::findNextDirection(const MapPoint &point, FFDirection &di
     throw NoPathException("GlobalPlanner: findNextDirection: floodfill have no fall gradient in point: [" + to_string(point.x) + ", " + to_string(point.y) + "]");
 }
 
-void GlobalPlanner::drawPathToMap() {
-    // draw path to map as white color
-    for (const auto &point: pathPoints) {
-        map.setPointValue(point, 255);
-    }
-}
-
-queue<RobotPose> GlobalPlanner::getRobotWayPoints() {
-    floodFill();
-
-    try{
-        findPathPoints();
-    } catch (NoPathException &e) {
-        syslog(LOG_ERR, "%s", e.what());
-        return queue<RobotPose> {};     // return empty queue if no path exist
-    }
-
-    robotWayPoints.push(map.tfMapToReal(goalPoint));    // add last (goalPoint) to waypoints queue
+list<RobotPose> GlobalPlanner::getRobotWayPoints() {
     return robotWayPoints;
-}
-
-RobotMap GlobalPlanner::getRobotMapWithPath() {
-    drawPathToMap();
-    return map;
 }
 
 cv::Mat GlobalPlanner::translateMap(const cv::Mat &map, MapDirection direction) {
     cv::Mat output;
     cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, direction.x, 0, 1, direction.y);    // create transformation matrix for translate map
     cv::warpAffine(map, output, trans_mat, map.size());     // translate image
+    return output;
+}
+
+cv::Mat GlobalPlanner::getPathImage() {
+    for (const auto &point: pathPoints) {
+        pathMap.setPointValue(point, 1);
+    }
+
+    return pathMap.getCVMatMap();
+}
+
+cv::Mat GlobalPlanner::getWayPointsImage() {
+    for (const auto &point: robotWayPoints) {
+        wayPoints.setPointValue(wayPoints.tfRealToMap(point), 1);
+    }
+
+    return wayPoints.getCVMatMap();
+}
+
+cv::Mat GlobalPlanner::getFloodFillImage() {
+    cv::Mat mask;
+    cv::Mat output;
+    cv::Mat cv_map = map.getCVMatMap();
+
+    cv::threshold(cv_map, mask, 2, USHRT_MAX, cv::THRESH_BINARY);
+    mask.convertTo(mask, CV_8UC1);
+    cv_map.copyTo(output, mask);
+
     return output;
 }

@@ -15,6 +15,7 @@
 #include <syslog.h>
 #include "own_typedefs.h"
 #include "robot_map.h"
+#include <list>
 
 
 using namespace std;
@@ -41,28 +42,42 @@ private:
 class GlobalPlanner {
 
 public:
-    explicit GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose, double robotWidth);
+    /**
+     *
+     * @param map
+     * @param startPose
+     * @param goalPose
+     * @param robotWidth Robot width in mm
+     */
+    explicit GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose, int robotWidth);
 
     /**
      * Function run flood fill algorithm, next find path and also find Robot waypoints
      * @return queue of RobotPose waypoints
      */
-    queue<RobotPose> getRobotWayPoints();
+    list<RobotPose> getRobotWayPoints();
 
-    /**
-     * Function call drawPathToMap and newt return this map
-     * @return RobotMat with draw path in white color
-     */
-    RobotMap getRobotMapWithPath();
+//    /**
+//     * Function call drawPathToMap and newt return this map
+//     * @return RobotMat with draw path in white color
+//     */
+//    RobotMap getRobotMapWithPath();
+
+    cv::Mat getPathImage();
+    cv::Mat getWayPointsImage();
+    cv::Mat getFloodFillImage();
 
 private:
     enum FFDirection{NONE, NORTH, NORTH_EAST, EAST, EAST_SOUTH, SOUTH, SOUTH_WEST, WEST, WEST_NORTH}; // !!! dont change it
     vector<MapDirection> directions = {{0,0},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1}};
 
     RobotMap map;
+    RobotMap floodMap;
+    RobotMap pathMap;
+    RobotMap wayPoints;
 
     vector<MapPoint> pathPoints;
-    queue<RobotPose> robotWayPoints;
+    list<RobotPose> robotWayPoints;
 
     MapPoint startPoint;
     MapPoint goalPoint;

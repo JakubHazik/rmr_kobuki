@@ -161,6 +161,9 @@ RobotPose RobotMap::tfMapToReal(MapPoint mapSpacePose, MapSize mapSize, int reso
 }
 
 void RobotMap::loadIdealMap(std::string filename, RobotPose robotReference) {
+    // set data to zeros
+    data.setTo(Scalar());
+
     ifstream file;
     file.open(filename);
 
@@ -195,8 +198,6 @@ void RobotMap::loadIdealMap(std::string filename, RobotPose robotReference) {
     // rotate map around center to robot reference
     cv::Mat rotation = cv::getRotationMatrix2D(cv::Point(data.rows/2, data.cols/2), robotReference.fi, 1);
     warpAffine(data, data, rotation, data.size());
-
-    //setPointValue(tfRealToMap({0,0,0}), 255);  // write center to the map
 }
 
 void RobotMap::printWallToMap(const std::vector<MapPoint> &corners) {
