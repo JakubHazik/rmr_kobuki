@@ -4,7 +4,7 @@
 
 #include <include/kobuki.h>
 
- Kobuki::Kobuki() : mapInterface((RobotPose){24*1000,24*1000}, 50) {
+ Kobuki::Kobuki() : mapInterface((RobotPose){12*1000,12*1000}, 30) {
 //Kobuki::Kobuki() : mapInterface("../map_dataset.yaml") {
 
 }

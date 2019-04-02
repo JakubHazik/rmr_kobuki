@@ -61,6 +61,11 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
     grid.setColor(Qt::gray);
     grid.setWidth(1);
 
+    QPen rob;
+    grid.setStyle(Qt::SolidLine);
+    grid.setColor(Qt::red);
+    grid.setWidth(10);
+
     QRect rect;//(20,120,700,500);
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
 
@@ -181,3 +186,10 @@ void MainWindow::on_button_map_load_clicked(){
     syslog(LOG_INFO, "Loading map from file: %s", file_name.c_str());
     kobuki->mapInterface = RobotMap(file_name);
 };
+
+void MainWindow::on_button_go_to_pos_clicked(){
+    double x_to_go = ui->edit_go_x->text().toDouble();
+    double y_to_go = ui->edit_go_y->text().toDouble();
+    syslog(LOG_INFO, "Going x = %lf, y = %lf", x_to_go, y_to_go);
+    kobuki->robotInterface.addOffsetToQueue({x_to_go, y_to_go, 0});
+}

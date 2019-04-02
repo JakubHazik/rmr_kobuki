@@ -569,7 +569,7 @@ bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
     return true;
 }
 
-void RobotInterface::addOffsetToQueue(RobotPose &offset) {
+void RobotInterface::addOffsetToQueue(RobotPose offset) {
     RobotPose actual = getOdomData();
     addCommandToQueue(actual + offset);
 }

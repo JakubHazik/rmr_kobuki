@@ -50,6 +50,8 @@ void LidarInterface::t_readLaserData() {
         }
         laserData.numberOfScans = received_length / sizeof(LaserData);
 
+//        cout << "recv_l: " << received_length << ", sizeof: " << sizeof(LaserData) << endl;
+
 //        cout << "Distance: " << laserData.Data[0].scanDistance << ", angle: " << laserData.Data[0].scanAngle << endl;
 
 //        laserData_mtx.unlock();

@@ -41,6 +41,7 @@ class MainWindow : public QMainWindow
         void on_button_map_reset_clicked();
         void on_button_map_save_clicked();
         void on_button_map_load_clicked();
+        void on_button_go_to_pos_clicked();
 
     private:
         Ui::MainWindow *ui;

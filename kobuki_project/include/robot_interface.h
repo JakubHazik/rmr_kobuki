@@ -52,7 +52,7 @@ public:
 
     void addCommandToQueue(const RobotPose &cmd);
 
-    void addOffsetToQueue(RobotPose &offset);
+    void addOffsetToQueue(RobotPose offset);
 
     void sendTranslationSpeed(int mmPerSec);
 
@@ -65,6 +65,8 @@ public:
     RobotPose getOdomData();
 
     bool sendDataToRobot(std::vector<unsigned char> mess);
+
+    void setRobotStatus(RobotStates newStatus);
 private:
     /*
     * ========================================
@@ -104,8 +106,6 @@ private:
     double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
     void t_poseController();
-
-    void setRobotStatus(RobotStates newStatus);
 
     /*
      * Communication interface

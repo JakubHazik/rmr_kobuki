@@ -51,13 +51,20 @@ public:
     QPushButton *button_map_save;
     QPushButton *button_map_load;
     QSpacerItem *verticalSpacer;
+    QGridLayout *gridLayout_4;
+    QGridLayout *gridLayout_5;
+    QLabel *label_5;
+    QLabel *label_6;
+    QPushButton *button_go_to_pos;
+    QLineEdit *edit_go_x;
+    QLineEdit *edit_go_y;
     QGridLayout *gridLayout_3;
-    QLabel *label;
     QLabel *label_3;
     QLabel *label_2;
-    QLineEdit *lineEdit_2;
     QLineEdit *lineEdit_3;
     QLineEdit *lineEdit_4;
+    QLineEdit *lineEdit_2;
+    QLabel *label;
     QStatusBar *statusBar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -213,32 +220,59 @@ public:
 
         verticalLayout_2->addItem(verticalSpacer);
 
+        gridLayout_4 = new QGridLayout();
+        gridLayout_4->setSpacing(6);
+        gridLayout_4->setObjectName(QStringLiteral("gridLayout_4"));
+
+        verticalLayout_2->addLayout(gridLayout_4);
+
+        gridLayout_5 = new QGridLayout();
+        gridLayout_5->setSpacing(6);
+        gridLayout_5->setObjectName(QStringLiteral("gridLayout_5"));
+        label_5 = new QLabel(centralWidget);
+        label_5->setObjectName(QStringLiteral("label_5"));
+
+        gridLayout_5->addWidget(label_5, 2, 0, 1, 1);
+
+        label_6 = new QLabel(centralWidget);
+        label_6->setObjectName(QStringLiteral("label_6"));
+
+        gridLayout_5->addWidget(label_6, 1, 0, 1, 1);
+
+        button_go_to_pos = new QPushButton(centralWidget);
+        button_go_to_pos->setObjectName(QStringLiteral("button_go_to_pos"));
+
+        gridLayout_5->addWidget(button_go_to_pos, 3, 1, 1, 1);
+
+        edit_go_x = new QLineEdit(centralWidget);
+        edit_go_x->setObjectName(QStringLiteral("edit_go_x"));
+        sizePolicy1.setHeightForWidth(edit_go_x->sizePolicy().hasHeightForWidth());
+        edit_go_x->setSizePolicy(sizePolicy1);
+
+        gridLayout_5->addWidget(edit_go_x, 1, 1, 1, 1);
+
+        edit_go_y = new QLineEdit(centralWidget);
+        edit_go_y->setObjectName(QStringLiteral("edit_go_y"));
+        sizePolicy1.setHeightForWidth(edit_go_y->sizePolicy().hasHeightForWidth());
+        edit_go_y->setSizePolicy(sizePolicy1);
+
+        gridLayout_5->addWidget(edit_go_y, 2, 1, 1, 1);
+
+
+        verticalLayout_2->addLayout(gridLayout_5);
+
         gridLayout_3 = new QGridLayout();
         gridLayout_3->setSpacing(6);
         gridLayout_3->setObjectName(QStringLiteral("gridLayout_3"));
-        label = new QLabel(centralWidget);
-        label->setObjectName(QStringLiteral("label"));
-
-        gridLayout_3->addWidget(label, 0, 0, 1, 1);
-
         label_3 = new QLabel(centralWidget);
         label_3->setObjectName(QStringLiteral("label_3"));
 
-        gridLayout_3->addWidget(label_3, 2, 0, 1, 1);
+        gridLayout_3->addWidget(label_3, 3, 0, 1, 1);
 
         label_2 = new QLabel(centralWidget);
         label_2->setObjectName(QStringLiteral("label_2"));
 
-        gridLayout_3->addWidget(label_2, 1, 0, 1, 1);
-
-        lineEdit_2 = new QLineEdit(centralWidget);
-        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
-        sizePolicy1.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
-        lineEdit_2->setSizePolicy(sizePolicy1);
-        lineEdit_2->setFocusPolicy(Qt::NoFocus);
-        lineEdit_2->setReadOnly(true);
-
-        gridLayout_3->addWidget(lineEdit_2, 0, 1, 1, 1);
+        gridLayout_3->addWidget(label_2, 2, 0, 1, 1);
 
         lineEdit_3 = new QLineEdit(centralWidget);
         lineEdit_3->setObjectName(QStringLiteral("lineEdit_3"));
@@ -247,7 +281,7 @@ public:
         lineEdit_3->setFocusPolicy(Qt::NoFocus);
         lineEdit_3->setReadOnly(true);
 
-        gridLayout_3->addWidget(lineEdit_3, 1, 1, 1, 1);
+        gridLayout_3->addWidget(lineEdit_3, 2, 1, 1, 1);
 
         lineEdit_4 = new QLineEdit(centralWidget);
         lineEdit_4->setObjectName(QStringLiteral("lineEdit_4"));
@@ -256,7 +290,21 @@ public:
         lineEdit_4->setFocusPolicy(Qt::NoFocus);
         lineEdit_4->setReadOnly(true);
 
-        gridLayout_3->addWidget(lineEdit_4, 2, 1, 1, 1);
+        gridLayout_3->addWidget(lineEdit_4, 3, 1, 1, 1);
+
+        lineEdit_2 = new QLineEdit(centralWidget);
+        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
+        sizePolicy1.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
+        lineEdit_2->setSizePolicy(sizePolicy1);
+        lineEdit_2->setFocusPolicy(Qt::NoFocus);
+        lineEdit_2->setReadOnly(true);
+
+        gridLayout_3->addWidget(lineEdit_2, 1, 1, 1, 1);
+
+        label = new QLabel(centralWidget);
+        label->setObjectName(QStringLiteral("label"));
+
+        gridLayout_3->addWidget(label, 1, 0, 1, 1);
 
 
         verticalLayout_2->addLayout(gridLayout_3);
@@ -291,9 +339,12 @@ public:
         input_file_name->setText(QApplication::translate("MainWindow", "filename.yaml", Q_NULLPTR));
         button_map_save->setText(QApplication::translate("MainWindow", "Save map", Q_NULLPTR));
         button_map_load->setText(QApplication::translate("MainWindow", "Load map", Q_NULLPTR));
-        label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
+        label_5->setText(QApplication::translate("MainWindow", "Y:", Q_NULLPTR));
+        label_6->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
+        button_go_to_pos->setText(QApplication::translate("MainWindow", "GO", Q_NULLPTR));
         label_3->setText(QApplication::translate("MainWindow", "Rot:", Q_NULLPTR));
         label_2->setText(QApplication::translate("MainWindow", "Y:", Q_NULLPTR));
+        label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
     } // retranslateUi
 
 };
