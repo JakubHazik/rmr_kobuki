@@ -36,7 +36,7 @@ void MainWindow::refresh() {
     }
 
     /// Output map contains only zeros and ones (0 -> space, 1 -> wall)
-    enviromentMap = kobuki->mapInterface.getCVMatMap(50);
+    enviromentMap = kobuki->mapInterface.getCVMatMap();
 
     update();
 }
