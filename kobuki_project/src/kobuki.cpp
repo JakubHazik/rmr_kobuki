@@ -4,8 +4,8 @@
 
 #include <include/kobuki.h>
 
-// Kobuki::Kobuki() : mapInterface((MapSize){120,120}, 100) {
-Kobuki::Kobuki() : mapInterface("../map_dataset.yaml") {
+ Kobuki::Kobuki() : mapInterface((RobotPose){24*1000,24*1000}, 50) {
+//Kobuki::Kobuki() : mapInterface("../map_dataset.yaml") {
 
 }
 

@@ -52,13 +52,16 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
     for(int k = 0; k < laserMeasurement->numberOfScans; k++)
     {
         double distance = laserMeasurement->Data[k].scanDistance;
-        double xp = - (robotPose.x + distance * 2 * sin((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD));
-        double yp = robotPose.y + distance * 2 * cos((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD);
-        double fp = laserMeasurement->Data[k].scanAngle * DEG2RAD;
+        double fp = robotPose.fi + (360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD;
+        double xp = - (robotPose.x + distance * 2 * sin((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD + robotPose.fi));
+        double yp = robotPose.y + distance * 2 * cos((360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD + robotPose.fi);
 
-        MapPoint p = tfRealToMap({xp, yp, fp});
+        try{
+            MapPoint p = tfRealToMap({xp, yp, fp});
+            setPointValue(p, getPointValue(p) + (unsigned short) 2);
+        } catch(...){
 
-        setPointValue(p, getPointValue(p) + (unsigned short) 2);
+        } // else do not add measurement to map
 //        cout << p.x << ", " << p.y << endl;
 
     }}

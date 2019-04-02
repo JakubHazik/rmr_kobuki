@@ -36,7 +36,7 @@ void MainWindow::refresh() {
     }
 
     /// Output map contains only zeros and ones (0 -> space, 1 -> wall)
-    enviromentMap = kobuki->mapInterface.getCVMatMap();
+    enviromentMap = kobuki->mapInterface.getCVMatMap(50);
 
     update();
 }
@@ -77,14 +77,12 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
         for(int k=0;k<copyOfLaserData.numberOfScans;k++)
         {
 
-            //tu sa rata z polarnych suradnic na kartezske, a zaroven sa upravuje mierka aby sme sa zmestili do
-            //do vyhradeneho stvorca aspon castou merania.. ale nieje to pekne, krajsie by bolo
-            //keby ste nastavovali mierku tak,aby bolo v okne zobrazene cele meranie (treba najst min a max pre x a y suradnicu a podla toho to prenasobit)
-            int dist=copyOfLaserData.Data[k].scanDistance/15;//delim 15 aby som sa aspon niektorymi udajmi zmestil do okna.
-            int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x();
-            int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();
-            if(rect.contains(xp,yp))
-                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
+
+            int dist = (int) (copyOfLaserData.Data[k].scanDistance / kobuki->mapInterface.getResolution());
+            int xp = (int) (rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x());
+            int yp = (int) (rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y());
+//            if(rect.contains(xp,yp))
+//                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
         }
 
         /// Calculate scaling
@@ -101,6 +99,10 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
                 }
             }
         }
+
+        painter.setPen(rob);
+        RobotPose pos = kobuki->robotInterface.getOdomData();
+        painter.drawPoint((int) pos.x, (int) pos.y);
 
 //        /// Paint grid
 //        painter.setPen(grid);
@@ -129,22 +131,27 @@ void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi
  **************************/
 
 void MainWindow::on_button_right_clicked(){
+    syslog(LOG_INFO, "Move robot right");
     kobuki->robotInterface.sendRotationSpeed(-1);
 }
 
 void MainWindow::on_button_left_clicked(){
+    syslog(LOG_INFO, "Move robot left");
     kobuki->robotInterface.sendRotationSpeed(1);
 };
 
 void MainWindow::on_button_forward_clicked(){
-    kobuki->robotInterface.sendTranslationSpeed(250);
+    syslog(LOG_INFO, "Move robot forward");
+    kobuki->robotInterface.sendTranslationSpeed(100);
 };
 
 void MainWindow::on_button_back_clicked(){
-    kobuki->robotInterface.sendTranslationSpeed(-250);
+    syslog(LOG_INFO, "Move robot back");
+    kobuki->robotInterface.sendTranslationSpeed(-100);
 };
 
 void MainWindow::on_button_stop_clicked(){
+    syslog(LOG_INFO, "Stop robot");
     kobuki->robotInterface.sendTranslationSpeed(0);
 }
 
