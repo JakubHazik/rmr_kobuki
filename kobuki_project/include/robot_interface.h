@@ -51,7 +51,9 @@ public:
     RobotStates actualRobotState = READ_POINT;
 
     void addCommandToQueue(const RobotPose &cmd);
-    
+
+    void addOffsetToQueue(RobotPose &offset);
+
     void sendTranslationSpeed(int mmPerSec);
 
     void sendRotationSpeed(int radPerSec);

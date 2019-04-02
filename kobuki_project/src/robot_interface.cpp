@@ -11,6 +11,10 @@ template <typename T> int signum(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+RobotPose operator+(const RobotPose &a, const RobotPose &b) {
+    return {a.x + b.x, a.y + b.y, a.fi + b.fi};
+}
+
 RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
     robot = thread(&RobotInterface::t_readRobotData, this);
 
@@ -563,4 +567,9 @@ bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
         return false;
     }
     return true;
+}
+
+void RobotInterface::addOffsetToQueue(RobotPose &offset) {
+    RobotPose actual = getOdomData();
+    addCommandToQueue(actual + offset);
 }
