@@ -19,7 +19,7 @@ class Regulator{
 public:
     Regulator(double regPeriod);
 
-    regulatorAction getAction(const RobotPose &robotPose, const RobotPose &goalPose);
+    RegulatorAction getAction(const RobotPose &robotPose, const RobotPose &goalPose);
 private:
     double regPeriod;
     int speedRadiusCorrection(int requiredSpeed, int radius);

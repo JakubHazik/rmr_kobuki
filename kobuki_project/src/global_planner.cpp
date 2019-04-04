@@ -4,17 +4,6 @@
 
 #include "include/global_planner.h"
 
-
-bool operator==(const MapPoint &p1, const MapPoint &p2)
-{
-    return p1.x == p2.x && p1.y == p2.y;
-}
-
-MapPoint operator+(const MapPoint &p1, const MapPoint &p2)
-{
-    return {p1.x + p2.x, p1.y + p2.y};
-}
-
 GlobalPlanner::GlobalPlanner(RobotMap map, RobotPose startPose, RobotPose goalPose, int robotWidth):
     map(map),
     floodMap(cv::Mat::zeros(map.getSize().x, map.getSize().y, CV_16UC1), map.getResolution()),

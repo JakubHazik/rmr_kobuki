@@ -103,7 +103,7 @@ double Regulator::getRotationError(const RobotPose &robotPose, const RobotPose &
     return result;
 }
 
-regulatorAction Regulator::getAction(const RobotPose &robotPose, const RobotPose &goalPose) {
+RegulatorAction Regulator::getAction(const RobotPose &robotPose, const RobotPose &goalPose) {
     double translationError = getAbsoluteDistance(robotPose,  goalPose);
     double rotationError = getRotationError(robotPose, goalPose);
 
@@ -111,7 +111,7 @@ regulatorAction Regulator::getAction(const RobotPose &robotPose, const RobotPose
     int actionSpeed = speedRegulator(translationError);
     actionSpeed = speedRadiusCorrection(actionSpeed, actionRadius);
 
-    regulatorAction action;
+    RegulatorAction action;
     action.radius = actionRadius;
     action.speed = actionSpeed;
 

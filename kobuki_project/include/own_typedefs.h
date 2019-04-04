@@ -114,7 +114,7 @@ typedef struct {
 typedef struct {
     int speed;
     int radius;
-} regulatorAction;
+} RegulatorAction;
 
 typedef struct {
     int x;
@@ -123,5 +123,19 @@ typedef struct {
 
 typedef MapSize MapPoint;
 
+inline bool operator==(const RobotPose &p1, const RobotPose &p2)
+{
+    return p1.x == p2.x && p1.y == p2.y && p1.fi == p2.fi;
+}
+
+inline bool operator==(const MapPoint &p1, const MapPoint &p2)
+{
+    return p1.x == p2.x && p1.y == p2.y;
+}
+
+inline MapPoint operator+(const MapPoint &p1, const MapPoint &p2)
+{
+    return {p1.x + p2.x, p1.y + p2.y};
+}
 
 #endif //KOBUKI_PROJECT_OWN_TYPEDEFS_H
