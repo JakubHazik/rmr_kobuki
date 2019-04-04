@@ -4,8 +4,8 @@
 
 #include <include/kobuki.h>
 
- Kobuki::Kobuki() : mapInterface((RobotPose){12*1000,12*1000}, 30) {
-//Kobuki::Kobuki() : mapInterface("../map_dataset.yaml") {
+ Kobuki::Kobuki() : map((RobotPose){12*1000,12*1000}, 30) {
+//Kobuki::Kobuki() : map("../map_dataset.yaml") {
 
 }
 
@@ -13,14 +13,11 @@ Kobuki::~Kobuki() {
 
 }
 
-void Kobuki::startPeriodic(int seconds){
-
-}
 
 void Kobuki::updateGlobalMap(){
     LaserMeasurement laserData = lidarInterface.getLaserData();
     RobotPose odometry = robotInterface.getOdomData();
 
 //    syslog(LOG_DEBUG, "Update global map");
-    mapInterface.addMeasurement(odometry, &laserData);
+    map.addMeasurement(odometry, &laserData);
 }

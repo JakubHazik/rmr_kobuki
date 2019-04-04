@@ -36,7 +36,7 @@ void MainWindow::refresh() {
     }
 
     /// Output map contains only zeros and ones (0 -> space, 1 -> wall)
-    enviromentMap = kobuki->mapInterface.getCVMatMap();
+    enviromentMap = kobuki->map.getCVMatMap();
 
     update();
 }
@@ -83,7 +83,7 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
         {
 
 
-            int dist = (int) (copyOfLaserData.Data[k].scanDistance / kobuki->mapInterface.getResolution());
+            int dist = (int) (copyOfLaserData.Data[k].scanDistance / kobuki->map.getResolution());
             int xp = (int) (rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x());
             int yp = (int) (rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y());
 //            if(rect.contains(xp,yp))
@@ -98,7 +98,7 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
 
         for(int i=0; i<enviromentMap.rows; i++){
             for(int j=0; j<enviromentMap.cols; j++){
-                unsigned short p = kobuki->mapInterface.getPointValue({i,j});
+                unsigned short p = kobuki->map.getPointValue({i,j});
                 if(p >= 1){
                     painter.drawPoint(rect.topLeft().x() + (i * rect.width() / enviromentMap.rows), rect.topLeft().y() + (j * rect.height() / enviromentMap.cols));
                 }
@@ -172,19 +172,19 @@ void MainWindow::on_button_stop_mapping_clicked(){
 
 void MainWindow::on_button_map_reset_clicked(){
     syslog(LOG_INFO, "Clearing enviroment map");
-    kobuki->mapInterface.clearMap();
+    kobuki->map.clearMap();
 };
 
 void MainWindow::on_button_map_save_clicked(){
     string file_name = ui->input_file_name->text().toUtf8().constData();
     syslog(LOG_INFO, "Saving map as: %s", file_name.c_str());
-    kobuki->mapInterface.saveToFile(file_name);
+    kobuki->map.saveToFile(file_name);
 };
 
 void MainWindow::on_button_map_load_clicked(){
     string file_name = ui->input_file_name->text().toUtf8().constData();
     syslog(LOG_INFO, "Loading map from file: %s", file_name.c_str());
-    kobuki->mapInterface = RobotMap(file_name);
+    kobuki->map = RobotMap(file_name);
 };
 
 void MainWindow::on_button_go_to_pos_clicked(){
