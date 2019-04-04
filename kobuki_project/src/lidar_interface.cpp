@@ -4,7 +4,7 @@
 
 #include <include/lidar_interface.h>
 
-LidarInterface::LidarInterface() {
+LidarInterface::LidarInterface(RobotPose mapSize, int mapResolution): localMap(mapSize, mapResolution) {
     laser_thread = thread(&LidarInterface::t_readLaserData, this);
 }
 

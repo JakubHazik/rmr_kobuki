@@ -30,7 +30,7 @@ using namespace std;
 
 class LidarInterface {
 public:
-    LidarInterface();
+    LidarInterface(RobotPose mapSize, int mapResolution);
 
     virtual ~LidarInterface();
 
@@ -43,7 +43,19 @@ public:
     // Public for GUI - drawing
     std::mutex laserData_mtx;
 
+    void startMapping();        // zacne zapisovat scany do nejakej svojej mapy
+
+    void stopMapoing();         // skonci zapisovanie do nejakej svojej mapy
+
+    RobotMap getRobotMap();     // vrati nejaku svoju mapu 'localMap'
+
+    //void setMeasurementCallback(function<void(LaserMeasurement)> callback);
+
 private:
+    RobotMap localMap;  //TODO mapa ktora uchovava poslednych 100 scanov (mozne parametrizovat)
+
+//    function<void(LaserMeasurement)> laserMeasurementCallback = nullptr;
+//    thread callback_t;
 
     std::thread laser_thread;
     LaserMeasurement laserData;
