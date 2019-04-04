@@ -4,19 +4,27 @@
 
 #include <include/kobuki.h>
 
- Kobuki::Kobuki() : map((RobotPose){12*1000,12*1000}, 30) {
-//Kobuki::Kobuki() : map("../map_dataset.yaml") {
+
+
+Kobuki::Kobuki() : map(MAP_SIZE, MAP_RESOLUTION) {
+    robotInterface = new RobotInterface();
+    lidarInterface = new LidarInterface(MAP_SIZE, MAP_RESOLUTION);
+
+
+
 
 }
 
 Kobuki::~Kobuki() {
-
+    delete robotInterface;
+    delete lidarInterface;
+    // pozor na to vlakna vo vnutri objektov stale bezia
 }
 
 
 void Kobuki::updateGlobalMap(){
-    LaserMeasurement laserData = lidarInterface.getLaserData();
-    RobotPose odometry = robotInterface.getOdomData();
+    LaserMeasurement laserData = lidarInterface->getLaserData();
+    RobotPose odometry = robotInterface->getOdomData();
 
 //    syslog(LOG_DEBUG, "Update global map");
     map.addMeasurement(odometry, &laserData);

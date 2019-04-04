@@ -21,14 +21,14 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::refresh() {
-    RobotPose odometry = kobuki->robotInterface.getOdomData();
+    RobotPose odometry = kobuki->robotInterface->getOdomData();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
     /// V copyOfLaserData mame data z lidaru
     /// Call paintEvent
     updateEnviromentMap = true;
 
-    LaserMeasurement laserData = kobuki->lidarInterface.getLaserData();
+    LaserMeasurement laserData = kobuki->lidarInterface->getLaserData();
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
 
     if(scanningEnviroment){
@@ -106,7 +106,7 @@ void MainWindow::paintEvent(QPaintEvent *paintEvent)
         }
 
         painter.setPen(rob);
-        RobotPose pos = kobuki->robotInterface.getOdomData();
+        RobotPose pos = kobuki->robotInterface->getOdomData();
         painter.drawPoint((int) pos.x, (int) pos.y);
 
 //        /// Paint grid
@@ -137,27 +137,27 @@ void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi
 
 void MainWindow::on_button_right_clicked(){
     syslog(LOG_INFO, "Move robot right");
-    kobuki->robotInterface.sendRotationSpeed(-1);
+    kobuki->robotInterface->sendRotationSpeed(-1);
 }
 
 void MainWindow::on_button_left_clicked(){
     syslog(LOG_INFO, "Move robot left");
-    kobuki->robotInterface.sendRotationSpeed(1);
+    kobuki->robotInterface->sendRotationSpeed(1);
 };
 
 void MainWindow::on_button_forward_clicked(){
     syslog(LOG_INFO, "Move robot forward");
-    kobuki->robotInterface.sendTranslationSpeed(100);
+    kobuki->robotInterface->sendTranslationSpeed(100);
 };
 
 void MainWindow::on_button_back_clicked(){
     syslog(LOG_INFO, "Move robot back");
-    kobuki->robotInterface.sendTranslationSpeed(-100);
+    kobuki->robotInterface->sendTranslationSpeed(-100);
 };
 
 void MainWindow::on_button_stop_clicked(){
     syslog(LOG_INFO, "Stop robot");
-    kobuki->robotInterface.sendTranslationSpeed(0);
+    kobuki->robotInterface->sendTranslationSpeed(0);
 }
 
 void MainWindow::on_button_start_mapping_clicked(){
@@ -191,5 +191,5 @@ void MainWindow::on_button_go_to_pos_clicked(){
     double x_to_go = ui->edit_go_x->text().toDouble();
     double y_to_go = ui->edit_go_y->text().toDouble();
     syslog(LOG_INFO, "Going x = %lf, y = %lf", x_to_go, y_to_go);
-    kobuki->robotInterface.addOffsetToQueue({x_to_go, y_to_go, 0});
+    //TODO kobuki->robotInterface.addOffsetToQueue({x_to_go, y_to_go, 0});
 }
