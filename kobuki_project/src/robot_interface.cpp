@@ -21,9 +21,6 @@ RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
     // start pose controller timer thread
     std::thread(&RobotInterface::t_poseController, this).detach();
 
-//    lidar = LidarInterface();
-//    map = RobotMap({10,10}, 10);
-
     // wait until arrive the first message, next we can reset odom
     usleep(1000 * 1000);
     resetOdom();
@@ -454,103 +451,161 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
     return sqrt(pow(posA.x - posB.x, 2) + pow(posA.y - posB.y, 2));
 }
 
+void RobotInterface::t_poseController() {
+    //static RobotPose poseToGo = {0};
+    static RobotPose poseToGoOld;
 
+    double translationError;
+    RobotPose poseToGo;
+    bool zoneNotified = false;
 
-void RobotInterface::addCommandToQueue(const RobotPose &cmd) {
-    std::lock_guard<std::mutex> robotCmdPoints_lg(robotCmdPoints_mtx);
-    robotCmdPoints.push(cmd);
-}
-
-void RobotInterface::t_poseController()
-{
-    static RobotPose currentPoseToGo = {0};
-    double translationError = 0;
-
-    setRobotStatus(READ_POINT);
+    //setRobotStatus(READ_POINT);
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
-        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int)(ROBOT_POSE_CONTROLLER_PERIOD*1000));
+        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (ROBOT_POSE_CONTROLLER_PERIOD * 1000));
 
         // TIMER
         {
-            switch (actualRobotState) {
-                case READ_POINT: {
-                    /*
-                     * read first point
-                     */
-                    robotCmdPoints_mtx.lock();
+            // read target position
+            goalPose_mtx.lock();
+            poseToGo = this->goalPose;
+            goalPose_mtx.unlock();
 
-                    if (robotCmdPoints.empty()) {
-                        robotCmdPoints_mtx.unlock();
-                        sendTranslationSpeed(0);
-                        break;
-                    }
-
-                    currentPoseToGo = robotCmdPoints.front();
-
-                    robotCmdPoints_mtx.unlock();
-
-                    setRobotStatus(MOVE);
-                    break;
+            if (zoneNotified) {
+                if (__glibc_unlikely(!(poseToGo == poseToGoOld))) {
+                    zoneNotified = false;
                 }
-
-                case MOVE: {
-                    /*
-                     * Move the robot to a goal point
-                     */
-                    RobotPose odomPosition = getOdomData();
-                    translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-
-                    // zistovanie ci robot dosiahol bod
-                    if (translationError < ROBOT_REG_ACCURACY) {
-                        robotCmdPoints_mtx.lock();
-                        robotCmdPoints.pop();
-                        robotCmdPoints_mtx.unlock();
-
-                        setRobotStatus(READ_POINT);
-                        break;
-                    }
-
-                    auto regulatorAction = poseRegulator.getAction(odomPosition, currentPoseToGo);
-                    sendArcSpeed(regulatorAction.speed, regulatorAction.radius);
-
-                    break;
-                }
-
-                case STOP:
-                    /*
-                     * Stop the robot
-                     */
-                    setTranslationSpeed(0);
-                    break;
-
-                case ANOTHER_CONTROL:
-                    /*
-                     * Do nothing, another proces controll the robot
-                     */
-                    break;
-
-                case CANCEL_PIONT:
-                    robotCmdPoints_mtx.lock();
-                    robotCmdPoints.pop();
-                    robotCmdPoints_mtx.unlock();
-                    setRobotStatus(READ_POINT);
-                    break;
-
-                default:
-                    break;
             }
 
-        }   // end of TIMER
-        std::this_thread::sleep_until(startPeriodTime);
-    }
+            RobotPose odomPosition = getOdomData();
+            translationError = getAbsoluteDistance(odomPosition, poseToGo);
 
+            // zistovanie ci robot dosiahol bod
+            if (__glibc_unlikely(translationError < ROBOT_REG_ACCURACY)) {
+                // bod je dosiahnuty
+                sendTranslationSpeed(0);
+                continue;
+            }
+
+            if (__glibc_unlikely(translationError < goalZone && !zoneNotified)) {
+                // zona je dosiahnuta
+                zone_mtx.lock();
+                if (!zoneSlot.empty()) {
+                    zoneSlot();
+                }
+                zone_mtx.unlock();
+                zoneNotified = true;
+            }
+
+            RegulatorAction regulatorAction = poseRegulator.getAction(odomPosition, poseToGo);
+            //cout<<"transError: "<<translationError<<", reg: "<<regulatorAction.radius << ", "<<regulatorAction.speed<<endl;
+            sendArcSpeed(regulatorAction.speed, regulatorAction.radius);
+
+            poseToGoOld = poseToGo;
+            std::this_thread::sleep_until(startPeriodTime);
+        }
+    }
 }
 
-void RobotInterface::setRobotStatus(RobotStates newStatus) {
-    syslog(LOG_INFO, "Changing robot state from: %d -> %d", actualRobotState, newStatus);
-    actualRobotState = newStatus;
+//
+//void RobotInterface::t_poseController()
+//{
+//    static RobotPose currentPoseToGo = {0};
+//    double translationError = 0;
+//
+//    setRobotStatus(READ_POINT);
+//
+//    // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
+//    while (true) {
+//        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int)(ROBOT_POSE_CONTROLLER_PERIOD*1000));
+//
+//        // TIMER
+//        {
+//            switch (actualRobotState) {
+//                case READ_POINT: {
+//                    /*
+//                     * read first point
+//                     */
+//                    robotCmdPoints_mtx.lock();
+//
+//                    if (robotCmdPoints.empty()) {
+//                        robotCmdPoints_mtx.unlock();
+//                        sendTranslationSpeed(0);
+//                        break;
+//                    }
+//
+//                    currentPoseToGo = robotCmdPoints.front();
+//
+//                    robotCmdPoints_mtx.unlock();
+//
+//                    setRobotStatus(MOVE);
+//                    break;
+//                }
+//
+//                case MOVE: {
+//                    /*
+//                     * Move the robot to a goal point
+//                     */
+//                    RobotPose odomPosition = getOdomData();
+//                    translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
+//
+//                    // zistovanie ci robot dosiahol bod
+//                    if (translationError < ROBOT_REG_ACCURACY) {
+//                        robotCmdPoints_mtx.lock();
+//                        robotCmdPoints.pop();
+//                        robotCmdPoints_mtx.unlock();
+//
+//                        setRobotStatus(READ_POINT);
+//                        break;
+//                    }
+//
+//                    auto RegulatorAction = poseRegulator.getAction(odomPosition, currentPoseToGo);
+//                    sendArcSpeed(RegulatorAction.speed, RegulatorAction.radius);
+//
+//                    break;
+//                }
+//
+//                case STOP:
+//                    /*
+//                     * Stop the robot
+//                     */
+//                    setTranslationSpeed(0);
+//                    break;
+//
+//                case ANOTHER_CONTROL:
+//                    /*
+//                     * Do nothing, another proces controll the robot
+//                     */
+//                    break;
+//
+//                case CANCEL_PIONT:
+//                    robotCmdPoints_mtx.lock();
+//                    robotCmdPoints.pop();
+//                    robotCmdPoints_mtx.unlock();
+//                    setRobotStatus(READ_POINT);
+//                    break;
+//
+//                default:
+//                    break;
+//            }
+//
+//        }   // end of TIMER
+//        std::this_thread::sleep_until(startPeriodTime);
+//    }
+//
+//}
+//void RobotInterface::setRobotStatus(RobotStates newStatus) {
+//    syslog(LOG_INFO, "Changing robot state from: %d -> %d", actualRobotState, newStatus);
+//    actualRobotState = newStatus;
+//}
+
+bool RobotInterface::isGoalAchieved() {
+    goalPose_mtx.lock();
+    RobotPose poseToGo = this->goalPose;
+    goalPose_mtx.unlock();
+    double translationError = getAbsoluteDistance(getOdomData(), poseToGo);
+    return translationError < ROBOT_REG_ACCURACY;
 }
 
 void RobotInterface::resetOdom() {
@@ -569,7 +624,14 @@ bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
     return true;
 }
 
-void RobotInterface::addOffsetToQueue(RobotPose offset) {
-    RobotPose actual = getOdomData();
-    addCommandToQueue(actual + offset);
+void RobotInterface::setRequiredPose(RobotPose goalPose) {
+    lock_guard<mutex> lk(goalPose_mtx);
+    this->goalPose = goalPose;
 }
+
+void RobotInterface::setZoneParams(int goalZone, boost::function<void()> callbackFcn) {
+    lock_guard<mutex> lk(zone_mtx);
+    this->goalZone = goalZone;
+    this->zoneSlot.connect(callbackFcn);
+}
+

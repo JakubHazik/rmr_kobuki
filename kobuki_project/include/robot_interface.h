@@ -22,8 +22,8 @@
 #include <queue>
 #include "regulator.h"
 #include "own_typedefs.h"
-
 #include <include/robot_map.h>
+#include <boost/signals2.hpp>
 
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
@@ -39,7 +39,7 @@
 
 #define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
 
-
+typedef boost::signals2::signal<void()> ZoneSlot;
 
 class RobotInterface {
 public:
@@ -47,13 +47,15 @@ public:
 
     ~RobotInterface();
 
-    enum RobotStates {READ_POINT, STOP, CANCEL_PIONT, MOVE, ANOTHER_CONTROL};
-    RobotStates actualRobotState = READ_POINT;
+//    enum RobotStates {READ_POINT, STOP, CANCEL_PIONT, MOVE, ANOTHER_CONTROL};
+//    RobotStates actualRobotState = READ_POINT;
 
-    void addCommandToQueue(const RobotPose &cmd);
+    void setRequiredPose(RobotPose goalPose);
 
-    void addOffsetToQueue(RobotPose offset);
+    void setRequiredPoseOffset(RobotPose goalPose);
 
+    void setZoneParams(int goalZone, boost::function<void()> callbackFcn);
+    
     void sendTranslationSpeed(int mmPerSec);
 
     void sendRotationSpeed(int radPerSec);
@@ -66,7 +68,9 @@ public:
 
     bool sendDataToRobot(std::vector<unsigned char> mess);
 
-    void setRobotStatus(RobotStates newStatus);
+    bool isGoalAchieved();
+
+//    void setRobotStatus(RobotStates newStatus);
 private:
     /*
     * ========================================
@@ -74,9 +78,6 @@ private:
     */
 
     std::thread robot;
-
-//    LidarInterface lidar;
-//    RobotMap map;
 
     TKobukiData robotData;
 
@@ -90,10 +91,14 @@ private:
     int rob_s, rob_recv_len;
     unsigned int rob_slen;
 
-    std::queue<RobotPose> robotCmdPoints;
-    std::mutex robotCmdPoints_mtx;
 
     Regulator poseRegulator;
+    RobotPose goalPose = {0};
+    std::mutex goalPose_mtx;
+
+    std::mutex zone_mtx;
+    int goalZone = 0;
+    ZoneSlot zoneSlot;
 
     /*
      * ========================================
