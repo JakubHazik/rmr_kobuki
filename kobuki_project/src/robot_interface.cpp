@@ -481,13 +481,6 @@ void RobotInterface::t_poseController() {
             RobotPose odomPosition = getOdomData();
             translationError = getAbsoluteDistance(odomPosition, poseToGo);
 
-            // zistovanie ci robot dosiahol bod
-            if (__glibc_unlikely(translationError < ROBOT_REG_ACCURACY)) {
-                // bod je dosiahnuty
-                sendTranslationSpeed(0);
-                continue;
-            }
-
             if (__glibc_unlikely(translationError < goalZone && !zoneNotified)) {
                 // zona je dosiahnuta
                 zone_mtx.lock();
@@ -496,6 +489,15 @@ void RobotInterface::t_poseController() {
                 }
                 zone_mtx.unlock();
                 zoneNotified = true;
+                cout<<"ZONA dosiahnuta"<<endl;
+            }
+
+            // zistovanie ci robot dosiahol bod
+            if (__glibc_unlikely(translationError < ROBOT_REG_ACCURACY)) {
+                // bod je dosiahnuty
+                cout<<"BOD dosiahnuty"<<endl;
+                sendTranslationSpeed(0);
+                continue;
             }
 
             RegulatorAction regulatorAction = poseRegulator.getAction(odomPosition, poseToGo);

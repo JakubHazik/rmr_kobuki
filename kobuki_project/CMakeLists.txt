@@ -24,7 +24,8 @@ set(INCLUDE_FILES
         include/lidar_interface.h
         include/lidar.h
         include/kobuki.h
-        include/visualizer.h)
+        include/visualizer.h
+        include/local_planner.h)
 set(SOURCE_FILES
         src/ui.cpp
         src/robot_interface.cpp
@@ -34,7 +35,8 @@ set(SOURCE_FILES
         src/lidar_interface.cpp
         src/lidar.cpp
         src/kobuki.cpp
-        src/visualizer.cpp)
+        src/visualizer.cpp
+        src/local_planner.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 
