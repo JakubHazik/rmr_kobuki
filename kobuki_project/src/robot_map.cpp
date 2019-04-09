@@ -47,7 +47,7 @@ RobotMap::~RobotMap() {
 
 }
 
-void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement) {
+void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement, unsigned short _pointValue) {
 //    cout << "odom: " << robotPose.x << "  " << robotPose.y << "  " << robotPose.fi << endl;
     for(int k = 0; k < laserMeasurement->numberOfScans; k++)
     {
@@ -60,13 +60,14 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
 
             try{
                 MapPoint p = tfRealToMap({xp, yp, fp * RAD2DEG});
-                setPointValue(p, getPointValue(p) + (unsigned short) 2);
+                setPointValue(p, getPointValue(p) + _pointValue);
             } catch(...){
-
+                syslog(LOG_ERR, "Add point to map failed - out of range");
             }
         }
         // else do not add measurement to map
-    }}
+    }
+}
 
 MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
@@ -75,7 +76,7 @@ MapPoint RobotMap::getSize() {
 cv::Mat RobotMap::getCVMatMap() {        // TODO tuto necheme treshold argument
     int threshold_value = 1;       //TODO doimplementovat
     /// Filter proability
-    //filterSpeckles(threshold_value);
+    filterSpeckles(threshold_value);
 
     // we have to clone cv::Mat, instead on we return only reference to cv::Mat
     return data.clone();

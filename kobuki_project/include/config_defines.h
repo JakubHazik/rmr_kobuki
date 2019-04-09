@@ -16,9 +16,15 @@ namespace Kconfig {
     namespace Defaults {
         // default algorithm params
         static const std::string ROBOT_IP_ADDRESS = "192.168.1.12";
-
         static const RobotPose MAP_SIZE = RobotPose{6000 * 2, 6000 * 2, 0};         // dvojnasobny rozmer mapy
         static const int MAP_RESOLUTION = 50;                                       // mm per pixel
+    }
+
+    namespace LidarControl {
+        static const int DATA_HOLD_COEFFICIENT = 100;                               // number of scans which will be keep in local RobotMap
+    }
+
+    namespace PoseControl {
         static const int GOAL_ZONE_DISTANCE = 300;                                  // mm polomer kruhu okolo goal pozicie
         static const int GOAL_ACCURACY = 30;                                        // [mm] accuracy of positioning
         static const float POSE_CONTROLLER_PERIOD = 0.1;                            // [s]

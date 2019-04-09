@@ -8,7 +8,7 @@ using namespace std;
 
 Kobuki::Kobuki() : map(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION) {
     robotInterface = new RobotInterface();
-    lidarInterface = new LidarInterface(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION);
+    lidarInterface = new LidarInterface(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION, robotInterface);
 }
 
 Kobuki::~Kobuki() {
@@ -22,7 +22,7 @@ void Kobuki::updateGlobalMap(){
     LaserMeasurement laserData = lidarInterface->getLaserData();
     RobotPose odometry = robotInterface->getOdomData();
 
-//    syslog(LOG_DEBUG, "Update global map");
+    syslog(LOG_DEBUG, "Update global map");
     map.addMeasurement(odometry, &laserData);
 }
 

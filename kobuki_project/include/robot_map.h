@@ -7,6 +7,7 @@
 
 #include <string>
 #include <fstream>
+#include <syslog.h>
 #include <exception>
 #include <opencv2/opencv.hpp>
 #include "own_typedefs.h"
@@ -45,7 +46,7 @@ public:
      * @param - robotPose current position from odometry
      * @param - laserMeasurement set of measurements from lidar
      */
-    void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement);
+    void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement, unsigned short _pointValue = 2);
 
     /**
      * Save Map class to .yaml file for future purposes

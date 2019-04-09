@@ -4,8 +4,9 @@
 
 #include <include/lidar_interface.h>
 
-LidarInterface::LidarInterface(RobotPose mapSize, int mapResolution): localMap(mapSize, mapResolution) {
+LidarInterface::LidarInterface(RobotPose mapSize, int mapResolution, RobotInterface *_robotInterface): localMap(mapSize, mapResolution) {
     laser_thread = thread(&LidarInterface::t_readLaserData, this);
+    robot = _robotInterface;
 }
 
 LidarInterface::~LidarInterface() = default;
@@ -41,24 +42,27 @@ void LidarInterface::t_readLaserData() {
     {
         syslog(LOG_ERR, "Send empty command failed");
     }
-//    LaserMeasurement measure;
+
     while (1) {
-//        laserData_mtx.lock();
         if ((received_length = recvfrom(socket_FD, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &socket_other, &socket_FD_length)) == -1) {
-//            laserData_mtx.unlock();
             continue;
         }
         laserData.numberOfScans = received_length / sizeof(LaserData);
-
-//        cout << "recv_l: " << received_length << ", sizeof: " << sizeof(LaserData) << endl;
-
-//        cout << "Distance: " << laserData.Data[0].scanDistance << ", angle: " << laserData.Data[0].scanAngle << endl;
-
-//        laserData_mtx.unlock();
+        updateLocalMap(laserData);
     }
 }
 
 LaserMeasurement LidarInterface::getLaserData() {
     lock_guard<mutex> lockGuard(laserData_mtx);
     return laserData;
+}
+
+RobotMap LidarInterface::getRobotMap(){
+    return localMap;
+}
+
+void LidarInterface::updateLocalMap(LaserMeasurement laserData){
+    RobotPose odom = robot->getOdomData();
+
+    localMap.addMeasurement(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
 }

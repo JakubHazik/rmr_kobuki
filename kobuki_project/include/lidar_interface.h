@@ -29,11 +29,12 @@
 #include "own_typedefs.h"
 #include "config_defines.h"
 
+
 using namespace std;
 
 class LidarInterface {
 public:
-    LidarInterface(RobotPose mapSize, int mapResolution);
+    LidarInterface(RobotPose mapSize, int mapResolution, RobotInterface *_robotInterface);
 
     virtual ~LidarInterface();
 
@@ -46,15 +47,13 @@ public:
     // Public for GUI - drawing
     std::mutex laserData_mtx;
 
-    void startMapping();        // zacne zapisovat scany do nejakej svojej mapy
-
-    void stopMapoing();         // skonci zapisovanie do nejakej svojej mapy
-
     RobotMap getRobotMap();     // vrati nejaku svoju mapu 'localMap'
 
     //void setMeasurementCallback(function<void(LaserMeasurement)> callback);
 
 private:
+
+    RobotInterface *robot;
     RobotMap localMap;  //TODO mapa ktora uchovava poslednych 100 scanov (mozne parametrizovat)
 
 //    function<void(LaserMeasurement)> laserMeasurementCallback = nullptr;
@@ -74,6 +73,8 @@ private:
     char buf[50000];
 
     void t_readLaserData();
+
+    void updateLocalMap(LaserMeasurement laserData);
 };
 
 #endif //KOBUKI_PROJECT_LIDAR_INTERFACE_H

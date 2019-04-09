@@ -15,7 +15,7 @@ RobotPose operator+(const RobotPose &a, const RobotPose &b) {
     return {a.x + b.x, a.y + b.y, a.fi + b.fi};
 }
 
-RobotInterface::RobotInterface(): poseRegulator(Kconfig::Defaults::POSE_CONTROLLER_PERIOD) {
+RobotInterface::RobotInterface(): poseRegulator(Kconfig::PoseControl::POSE_CONTROLLER_PERIOD) {
     robot = thread(&RobotInterface::t_readRobotData, this);
 
     // start pose controller timer thread
@@ -462,7 +462,7 @@ void RobotInterface::t_poseController() {
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
-        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (Kconfig::Defaults::POSE_CONTROLLER_PERIOD * 1000));
+        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (Kconfig::PoseControl::POSE_CONTROLLER_PERIOD * 1000));
 
         // TIMER
         {
@@ -489,7 +489,7 @@ void RobotInterface::t_poseController() {
             }
 
             // zistovanie ci robot dosiahol bod
-            if (__glibc_unlikely(translationError < Kconfig::Defaults::GOAL_ACCURACY &&  !goalNotified)) {
+            if (__glibc_unlikely(translationError < Kconfig::PoseControl::GOAL_ACCURACY &&  !goalNotified)) {
                 // bod je dosiahnuty
                 cout<<"BOD dosiahnuty"<<endl;
                 sendTranslationSpeed(0);
@@ -513,7 +513,7 @@ bool RobotInterface::isGoalAchieved() {
     RobotPose poseToGo = this->goalPose;
     goalPose_mtx.unlock();
     double translationError = getAbsoluteDistance(getOdomData(), poseToGo);
-    return translationError < Kconfig::Defaults::GOAL_ACCURACY;
+    return translationError < Kconfig::PoseControl::GOAL_ACCURACY;
 }
 
 void RobotInterface::resetOdom(double x, double y, double fi) {
