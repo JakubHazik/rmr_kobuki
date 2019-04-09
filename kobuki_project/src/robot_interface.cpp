@@ -15,7 +15,7 @@ RobotPose operator+(const RobotPose &a, const RobotPose &b) {
     return {a.x + b.x, a.y + b.y, a.fi + b.fi};
 }
 
-RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
+RobotInterface::RobotInterface(): poseRegulator(Kconfig::Defaults::POSE_CONTROLLER_PERIOD) {
     robot = thread(&RobotInterface::t_readRobotData, this);
 
     // start pose controller timer thread
@@ -47,7 +47,7 @@ void RobotInterface::t_readRobotData() {
 
     rob_si_posli.sin_family = AF_INET;
     rob_si_posli.sin_port = htons(5300);
-    rob_si_posli.sin_addr.s_addr = inet_addr(ipAddress.data());
+    rob_si_posli.sin_addr.s_addr = inet_addr(Kconfig::Defaults::ROBOT_IP_ADDRESS.data());
     rob_slen = sizeof(rob_si_me);
     bind(rob_s, (struct sockaddr *) &rob_si_me, sizeof(rob_si_me));
 
@@ -93,37 +93,37 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
 //    syslog(LOG_NOTICE, "ENCODER: left: %d; right: %d; gyro: %d", encoderLeft, encoderRight, gyroAngle );
 
     // detekcia pretecenia encodera,
-    if (abs(encoderLeft - encoderLeftOld) > ROBOT_ENCODER_MAX / 2) {
+    if (abs(encoderLeft - encoderLeftOld) > Kconfig::HW::ENCODER_MAX / 2) {
         if (encoderLeft < encoderLeftOld) {
-            encoderLeftDelta = ROBOT_ENCODER_MAX - encoderLeftOld + encoderLeft;
+            encoderLeftDelta = Kconfig::HW::ENCODER_MAX - encoderLeftOld + encoderLeft;
         } else {
-            encoderLeftDelta = -(ROBOT_ENCODER_MAX - encoderLeft + encoderLeftOld);
+            encoderLeftDelta = -(Kconfig::HW::ENCODER_MAX - encoderLeft + encoderLeftOld);
         }
     } else {
         // v pripade bez pretecenia
         encoderLeftDelta = encoderLeft - encoderLeftOld;
     }
 
-    if (abs(encoderRight - encoderRightOld) > ROBOT_ENCODER_MAX / 2) {
+    if (abs(encoderRight - encoderRightOld) > Kconfig::HW::ENCODER_MAX / 2) {
         if (encoderRight < encoderRightOld) {
-            encoderRightDelta = ROBOT_ENCODER_MAX - encoderRightOld + encoderRight;
+            encoderRightDelta = Kconfig::HW::ENCODER_MAX - encoderRightOld + encoderRight;
         } else {
-            encoderRightDelta = -(ROBOT_ENCODER_MAX - encoderRight + encoderRightOld);
+            encoderRightDelta = -(Kconfig::HW::ENCODER_MAX - encoderRight + encoderRightOld);
         }
     } else {
         // v pripade bez pretecenia
         encoderRightDelta = encoderRight - encoderRightOld;
     }
 
-    double distanceLeft = encoderLeftDelta * ROBOT_TICK_TO_METER;
-    double distanceRight = encoderRightDelta * ROBOT_TICK_TO_METER;
+    double distanceLeft = encoderLeftDelta * Kconfig::HW::TICK_TO_METER;
+    double distanceRight = encoderRightDelta * Kconfig::HW::TICK_TO_METER;
     double distanceCenter = (distanceLeft + distanceRight)/2;
 
     odom_mtx.lock();
 
     double fiOld = odom.fi;
 
-    odom.fi = odom.fi + (distanceRight - distanceLeft) / ROBOT_WHEEL_BASE;
+    odom.fi = odom.fi + (distanceRight - distanceLeft) / Kconfig::HW::WHEEL_BASE;
 
     // osetrit pretocenie robota o 2pi
     if (odom.fi > M_PI) {
@@ -138,8 +138,8 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
         odom.y = odom.y + distanceCenter * sin(odom.fi);
     } else {
         // ked robot ide po krivke
-        odom.x = odom.x + ((ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (sin(odom.fi) - sin(fiOld));
-        odom.y = odom.y - ((ROBOT_WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (cos(odom.fi) - cos(fiOld));
+        odom.x = odom.x + ((Kconfig::HW::WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (sin(odom.fi) - sin(fiOld));
+        odom.y = odom.y - ((Kconfig::HW::WHEEL_BASE * (distanceRight + distanceLeft)) / (2*(distanceRight - distanceLeft))) * (cos(odom.fi) - cos(fiOld));
     }
 
     odom_mtx.unlock();
@@ -462,7 +462,7 @@ void RobotInterface::t_poseController() {
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
-        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (ROBOT_POSE_CONTROLLER_PERIOD * 1000));
+        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (Kconfig::Defaults::POSE_CONTROLLER_PERIOD * 1000));
 
         // TIMER
         {
@@ -489,7 +489,7 @@ void RobotInterface::t_poseController() {
             }
 
             // zistovanie ci robot dosiahol bod
-            if (__glibc_unlikely(translationError < ROBOT_GOAL_ACCURACY &&  !goalNotified)) {
+            if (__glibc_unlikely(translationError < Kconfig::Defaults::GOAL_ACCURACY &&  !goalNotified)) {
                 // bod je dosiahnuty
                 cout<<"BOD dosiahnuty"<<endl;
                 sendTranslationSpeed(0);
@@ -513,7 +513,7 @@ bool RobotInterface::isGoalAchieved() {
     RobotPose poseToGo = this->goalPose;
     goalPose_mtx.unlock();
     double translationError = getAbsoluteDistance(getOdomData(), poseToGo);
-    return translationError < ROBOT_GOAL_ACCURACY;
+    return translationError < Kconfig::Defaults::GOAL_ACCURACY;
 }
 
 void RobotInterface::resetOdom(double x, double y, double fi) {

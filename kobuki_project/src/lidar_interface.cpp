@@ -30,7 +30,7 @@ void LidarInterface::t_readLaserData() {
 
     socket_send.sin_family = AF_INET;
     socket_send.sin_port = htons(5299);//toto je port na ktory posielame
-    socket_send.sin_addr.s_addr = inet_addr(ipAddress.data());//htonl(INADDR_BROADCAST);
+    socket_send.sin_addr.s_addr = inet_addr(Kconfig::Defaults::ROBOT_IP_ADDRESS.data());//htonl(INADDR_BROADCAST);
     bind(socket_FD, (struct sockaddr *) &socket_me, sizeof(socket_me));
 
     syslog(LOG_INFO, "Lidar sockets created, send empty command to lidar");

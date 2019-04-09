@@ -19,7 +19,6 @@ set(INCLUDE_FILES
         include/robot_interface.h
         include/regulator.h
         include/global_planner.h
-        include/own_typedefs.h
         include/robot_map.h
         include/lidar_interface.h
         include/lidar.h

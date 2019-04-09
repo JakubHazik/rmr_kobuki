@@ -18,22 +18,13 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
-#include <math.h>
-#include <queue>
-#include "regulator.h"
-#include "own_typedefs.h"
-#include <include/robot_map.h>
 #include <boost/signals2.hpp>
 #include <future>
 
-#define ROBOT_IP_ADDRESS    "192.168.1.12"
-#define ROBOT_TICK_TO_METER 0.085292090497737556558
-#define ROBOT_TICK_TO_RAD   0.002436916871363930187454
-#define ROBOT_ENCODER_MAX   0xFFFF  // max of unsigned short
-#define ROBOT_WHEEL_RADIUS  35      // [mm]
-#define ROBOT_WHEEL_BASE    230     // [mm]
-#define ROBOT_GOAL_ACCURACY      30  // [mm] accuracy of positioning
-#define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
+#include "regulator.h"
+#include "own_typedefs.h"
+#include "robot_map.h"
+#include "config_defines.h"
 
 
 class RobotInterface {
@@ -72,8 +63,6 @@ private:
 
     RobotPose odom;
     std::mutex odom_mtx;
-
-    const std::string ipAddress = ROBOT_IP_ADDRESS;
 
     //veci na broadcast robot
     struct sockaddr_in rob_si_me, rob_si_other, rob_si_posli;

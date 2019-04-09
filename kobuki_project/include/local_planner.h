@@ -10,14 +10,11 @@
 #include "lidar_interface.h"
 #include "own_typedefs.h"
 #include "global_planner.h"
+#include "config_defines.h"
 #include <list>
 #include <mutex>
-#include <condition_variable>
-#include <boost/bind.hpp>
-#include <thread>
+#include <future>
 
-
-#define GOAL_ZONE_DISTANCE 300
 
 using namespace std;
 

@@ -19,7 +19,7 @@ void LocalPlanner::processMovement() {
     std::future<void> zoneAchieved_fut;
 
     goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
-    zoneAchieved_fut = robotInterface->setZoneParams(GOAL_ZONE_DISTANCE);
+    zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::Defaults::GOAL_ZONE_DISTANCE);
 
     while (true) {
         if (waypoints.empty()) {
@@ -33,7 +33,7 @@ void LocalPlanner::processMovement() {
             waypoints.pop_front();
             if (!waypoints.empty()) {
                 goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
-                zoneAchieved_fut = robotInterface->setZoneParams(GOAL_ZONE_DISTANCE);
+                zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::Defaults::GOAL_ZONE_DISTANCE);
             }
         } else {
             // zone is not achieved yet

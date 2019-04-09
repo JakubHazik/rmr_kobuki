@@ -5,19 +5,17 @@
 #ifndef KOBUKI_PROJECT_KOBUKI_H
 #define KOBUKI_PROJECT_KOBUKI_H
 
-#include <include/own_typedefs.h>
-#include <include/robot_interface.h>
-#include <include/lidar_interface.h>
-#include <include/robot_map.h>
-#include <include/local_planner.h>
-#include <include/global_planner.h>
-#include <include/visualizer.h>
+#include "own_typedefs.h"
+#include "robot_interface.h"
+#include "lidar_interface.h"
+#include "robot_map.h"
+#include "local_planner.h"
+#include "global_planner.h"
+#include "visualizer.h"
+#include "config_defines.h"
 
 #include <list>
 
-#define MAP_SIZE RobotPose{6000 * 2, 6000 * 2, 0}   // dvojnasobny rozmer mapy
-#define MAP_RESOLUTION 50                           // mm per pixel
-#define ROBOT_WIDTH 360                             // mm
 
 using namespace std;
 

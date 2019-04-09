@@ -6,9 +6,9 @@
 
 using namespace std;
 
-Kobuki::Kobuki() : map(MAP_SIZE, MAP_RESOLUTION) {
+Kobuki::Kobuki() : map(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION) {
     robotInterface = new RobotInterface();
-    lidarInterface = new LidarInterface(MAP_SIZE, MAP_RESOLUTION);
+    lidarInterface = new LidarInterface(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION);
 }
 
 Kobuki::~Kobuki() {
@@ -27,7 +27,7 @@ void Kobuki::updateGlobalMap(){
 }
 
 void Kobuki::sendRobotToPosition(double x, double y) {
-    GlobalPlanner gPlanner(map, robotInterface->getOdomData(), RobotPose{x, y, 0}, ROBOT_WIDTH);
+    GlobalPlanner gPlanner(map, robotInterface->getOdomData(), RobotPose{x, y, 0}, Kconfig::HW::ROBOT_WIDTH);
     list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
 
 //    list<RobotPose> waypoints = {{0,0,0}, {1000,0}, {1000,1000}, {0,0,0}};

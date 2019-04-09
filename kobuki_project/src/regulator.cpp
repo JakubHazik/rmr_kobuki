@@ -32,22 +32,22 @@ int Regulator::speedRadiusCorrection(int requiredSpeed, int radius) {
 int Regulator::speedRegulator(double error) {
     static int lastOutput = 0;
 
-    double output = error * ROBOT_REG_P;
+    double output = error * Kconfig::Regulator::PROPORTIONAL_PARAM;
 
     // saturation
-    if (output > ROBOT_MAX_SPEED_FORWARD) {
-        output = ROBOT_MAX_SPEED_FORWARD;
+    if (output > Kconfig::Regulator::MAX_SPEED) {
+        output = Kconfig::Regulator::MAX_SPEED;
 
         // ked plati tato podmienka tak robot chce zrychlovat, urobme to po rampe
         if (lastOutput < output) {
-            output = lastOutput + ROBOT_ACCELERATION * regPeriod;
-            if (output < ROBOT_MIN_SPEED_FORWARD) {
-                output = ROBOT_MIN_SPEED_FORWARD;
+            output = lastOutput + Kconfig::Regulator::ACCELERATION * regPeriod;
+            if (output < Kconfig::Regulator::MIN_SPEED) {
+                output = Kconfig::Regulator::MIN_SPEED;
             }
         }
     }
 
-//    output = output * pow(error/ROBOT_MAX_SPEED_FORWARD,0.3);
+//    output = output * pow(error/MAX_SPEED,0.3);
 
     lastOutput = int(output);
     return int(output);
@@ -64,9 +64,9 @@ int Regulator::fitRotationRadius(double rotationError) {
 
     // toto je kvoli tomu pretoze signum(0) = 0, a to je blbe
     if (rotationError == 0) {
-        radius = coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 - ROBOT_REG_RADIUS_MIN;
+        radius = coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 - Kconfig::Regulator::MIN_RADIUS;
     } else {
-        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 -ROBOT_REG_RADIUS_MIN);
+        radius = -1 * signum(rotationError) * (coef_a * exp(coef_b * fabs(rotationError)) + coef_c * exp(coef_d * fabs(rotationError)) -1 - Kconfig::Regulator::MIN_RADIUS);
     }
 
     return int(round(radius));

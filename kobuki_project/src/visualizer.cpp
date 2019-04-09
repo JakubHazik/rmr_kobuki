@@ -14,10 +14,10 @@ Visualizer::Visualizer(MapSize mapSize, int robotWidth, int mapResolution) {
 
 cv::Mat Visualizer::getImage(RobotPose robotPose) {
     Mat output = cv::Mat(mapSize.x, mapSize.y, CV_8UC3);
-    output.setTo(COLOR_BACKGROUND);         // set image to white color
+    output.setTo(Kconfig::Visualizer::COLOR_BACKGROUND);         // set image to white color
 
     if (!environmentMap.empty()) {
-        addImageMask(output, environmentMap, COLOR_BLACK);
+        addImageMask(output, environmentMap, Kconfig::Visualizer::COLOR_BLACK);
     }
 
     if (!floodFill.empty()) {
@@ -25,14 +25,14 @@ cv::Mat Visualizer::getImage(RobotPose robotPose) {
     }
 
     if (!path.empty()) {
-        addImageMask(output, path, COLOR_PATH);
+        addImageMask(output, path, Kconfig::Visualizer::COLOR_PATH);
     }
 
     if (!waypoints.empty()) {
-        addImageMask(output, waypoints, COLOR_WAYPOINTS);
+        addImageMask(output, waypoints, Kconfig::Visualizer::COLOR_WAYPOINTS);
     }
 
-    addRobot(output, robotPose, COLOR_ROBOT);
+    addRobot(output, robotPose, Kconfig::Visualizer::COLOR_ROBOT);
 
     return output;
 }
@@ -66,8 +66,8 @@ void Visualizer::addFloodFill(Mat &output, Mat &addImg) {
     bitwise_and(output, output, output_bg, mask_inv);
     bitwise_and(addImg, addImg, addImg_bg, mask);
 
-    Mat color = Mat(addImg_bg.size(), CV_8UC3, COLOR_BLACK);
-    color.setTo(COLOR_FLOOD_FILL, mask);
+    Mat color = Mat(addImg_bg.size(), CV_8UC3, Kconfig::Visualizer::COLOR_BLACK);
+    color.setTo(Kconfig::Visualizer::COLOR_FLOOD_FILL, mask);
 
     addImg_bg += color;
     output = output_bg + addImg_bg;

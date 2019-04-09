@@ -9,7 +9,6 @@
 #define DEG2RAD (M_PI/180.0)
 
 #include <vector>
-#include <string>
 
 typedef struct {
     unsigned short x;

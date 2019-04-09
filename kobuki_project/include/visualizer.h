@@ -27,18 +27,10 @@
 #ifndef KOBUKI_PROJECT_VISUALIZER_H
 #define KOBUKI_PROJECT_VISUALIZER_H
 
-#include "include/robot_map.h"
-#include "include/own_typedefs.h"
+#include "robot_map.h"
+#include "own_typedefs.h"
+#include "config_defines.h"
 #include <opencv2/opencv.hpp>
-
-
-// COLOR VALUES Scalar(Blue, Green, Red)
-#define COLOR_BACKGROUND Scalar(255,255,255)    //white
-#define COLOR_ROBOT Scalar(0,0,255)             //red
-#define COLOR_PATH Scalar(0,255,0)              //green
-#define COLOR_WAYPOINTS Scalar(255,0,0)         //blue
-#define COLOR_FLOOD_FILL Scalar(20,140,100)     //yellow
-#define COLOR_BLACK Scalar(1,1,1)
 
 class Visualizer {
 public:

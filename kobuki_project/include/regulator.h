@@ -7,13 +7,7 @@
 
 #include <math.h>
 #include "own_typedefs.h"
-
-#define ROBOT_MAX_SPEED_FORWARD 330 // [mm / s]
-#define ROBOT_MIN_SPEED_FORWARD 30  // [mm / s]
-#define ROBOT_ACCELERATION      50  // [mm / s^-2]
-#define ROBOT_REG_P 0.7
-#define ROBOT_REG_RADIUS_MIN 5
-//#define ROBOT_ARC_MOVE_RADIUS_LIMIT 32000
+#include "config_defines.h"
 
 class Regulator{
 public:

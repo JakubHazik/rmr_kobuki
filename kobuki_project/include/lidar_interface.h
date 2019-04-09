@@ -20,11 +20,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <include/own_typedefs.h>
+#include <numeric>
+#include <future>
+#include <algorithm>
 
-#include <include/robot_interface.h>
-#include <include/lidar.h>
-
+#include "robot_interface.h"
+#include "lidar.h"
+#include "own_typedefs.h"
+#include "config_defines.h"
 
 using namespace std;
 
@@ -61,8 +64,6 @@ private:
     LaserMeasurement laserData;
 
     Lidar lidar;
-
-    const std::string ipAddress = ROBOT_IP_ADDRESS;
 
     /// UDP settings
     struct sockaddr_in socket_me, socket_other, socket_send;
