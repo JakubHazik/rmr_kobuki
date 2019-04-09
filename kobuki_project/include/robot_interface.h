@@ -24,22 +24,17 @@
 #include "own_typedefs.h"
 #include <include/robot_map.h>
 #include <boost/signals2.hpp>
+#include <future>
 
 #define ROBOT_IP_ADDRESS    "192.168.1.12"
 #define ROBOT_TICK_TO_METER 0.085292090497737556558
 #define ROBOT_TICK_TO_RAD   0.002436916871363930187454
 #define ROBOT_ENCODER_MAX   0xFFFF  // max of unsigned short
-#define ROBOT_GYRO_MAX      0x7FFF  // TODO toto je zle
-
 #define ROBOT_WHEEL_RADIUS  35      // [mm]
 #define ROBOT_WHEEL_BASE    230     // [mm]
-#define ROBOT_THRESHOLD_RADIUS_GYRO_COMPUTATION 100 // [mm]
-
-#define ROBOT_REG_ACCURACY      30  // [mm] accuracy of positioning
-
+#define ROBOT_GOAL_ACCURACY      30  // [mm] accuracy of positioning
 #define ROBOT_POSE_CONTROLLER_PERIOD 0.1 // [s]
 
-typedef boost::signals2::signal<void()> ZoneSlot;
 
 class RobotInterface {
 public:
@@ -47,14 +42,9 @@ public:
 
     ~RobotInterface();
 
-//    enum RobotStates {READ_POINT, STOP, CANCEL_PIONT, MOVE, ANOTHER_CONTROL};
-//    RobotStates actualRobotState = READ_POINT;
+    std::future<void> setRequiredPose(RobotPose goalPose);
 
-    void setRequiredPose(RobotPose goalPose);
-
-    void setRequiredPoseOffset(RobotPose goalPose);
-
-    void setZoneParams(int goalZone, boost::function<void()> callbackFcn);
+    std::future<void> setZoneParams(int goalZone);
     
     void sendTranslationSpeed(int mmPerSec);
 
@@ -62,7 +52,7 @@ public:
 
     void sendArcSpeed(int mmPerSec, int mmRadius);
 
-    void resetOdom();
+    void resetOdom(double x = 0, double y = 0, double fi = 0);
 
     RobotPose getOdomData();
 
@@ -70,7 +60,6 @@ public:
 
     bool isGoalAchieved();
 
-//    void setRobotStatus(RobotStates newStatus);
 private:
     /*
     * ========================================
@@ -91,14 +80,14 @@ private:
     int rob_s, rob_recv_len;
     unsigned int rob_slen;
 
-
     Regulator poseRegulator;
     RobotPose goalPose = {0};
     std::mutex goalPose_mtx;
+    std::promise<void> goalAchieved;
 
     std::mutex zone_mtx;
     int goalZone = 0;
-    ZoneSlot zoneSlot;
+    std::promise<void> zoneAchieved;
 
     /*
      * ========================================

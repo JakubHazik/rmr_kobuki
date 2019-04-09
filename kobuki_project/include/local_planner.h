@@ -27,23 +27,20 @@ public:
 
     void processMovement();
 
-
-    void goToGoal(RobotPose goalPose);
+//    void goToGoal(RobotPose goalPose);
 
 private:
     RobotInterface *robotInterface;
     LidarInterface *lidarInterface;
 
-    mutex cv_mutex;
-    condition_variable goalAchieved;
-    RobotPose goalPose;
-
-    mutex waypoints_mtx;
+//    mutex goalAchieved_mtx;
+//    condition_variable goalAchieved;
+//    RobotPose goalPose;
+//
+//    mutex waypoints_mtx;
     list<RobotPose> waypoints;
 
-
-
-    void wayPointZoneAchieved_cbk();
+//    void wayPointZoneAchieved_cbk();
 
     list<RobotPose> computeBypass();        //TODO implement
 

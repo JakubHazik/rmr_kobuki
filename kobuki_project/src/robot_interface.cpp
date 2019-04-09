@@ -23,7 +23,7 @@ RobotInterface::RobotInterface(): poseRegulator(ROBOT_POSE_CONTROLLER_PERIOD) {
 
     // wait until arrive the first message, next we can reset odom
     usleep(1000 * 1000);
-    resetOdom();
+    resetOdom(0, 0, 0);
 }
 
 RobotInterface::~RobotInterface() {
@@ -452,14 +452,13 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
 }
 
 void RobotInterface::t_poseController() {
-    //static RobotPose poseToGo = {0};
     static RobotPose poseToGoOld;
 
     double translationError;
     RobotPose poseToGo;
     bool zoneNotified = false;
+    bool goalNotified = false;
 
-    //setRobotStatus(READ_POINT);
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (true) {
@@ -475,6 +474,7 @@ void RobotInterface::t_poseController() {
             if (zoneNotified) {
                 if (__glibc_unlikely(!(poseToGo == poseToGoOld))) {
                     zoneNotified = false;
+                    goalNotified = false;
                 }
             }
 
@@ -483,20 +483,18 @@ void RobotInterface::t_poseController() {
 
             if (__glibc_unlikely(translationError < goalZone && !zoneNotified)) {
                 // zona je dosiahnuta
-                zone_mtx.lock();
-                if (!zoneSlot.empty()) {
-                    zoneSlot();
-                }
-                zone_mtx.unlock();
+                zoneAchieved.set_value();
                 zoneNotified = true;
                 cout<<"ZONA dosiahnuta"<<endl;
             }
 
             // zistovanie ci robot dosiahol bod
-            if (__glibc_unlikely(translationError < ROBOT_REG_ACCURACY)) {
+            if (__glibc_unlikely(translationError < ROBOT_GOAL_ACCURACY &&  !goalNotified)) {
                 // bod je dosiahnuty
                 cout<<"BOD dosiahnuty"<<endl;
                 sendTranslationSpeed(0);
+                goalAchieved.set_value();
+                goalNotified = true;
                 continue;
             }
 
@@ -510,111 +508,20 @@ void RobotInterface::t_poseController() {
     }
 }
 
-//
-//void RobotInterface::t_poseController()
-//{
-//    static RobotPose currentPoseToGo = {0};
-//    double translationError = 0;
-//
-//    setRobotStatus(READ_POINT);
-//
-//    // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
-//    while (true) {
-//        auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int)(ROBOT_POSE_CONTROLLER_PERIOD*1000));
-//
-//        // TIMER
-//        {
-//            switch (actualRobotState) {
-//                case READ_POINT: {
-//                    /*
-//                     * read first point
-//                     */
-//                    robotCmdPoints_mtx.lock();
-//
-//                    if (robotCmdPoints.empty()) {
-//                        robotCmdPoints_mtx.unlock();
-//                        sendTranslationSpeed(0);
-//                        break;
-//                    }
-//
-//                    currentPoseToGo = robotCmdPoints.front();
-//
-//                    robotCmdPoints_mtx.unlock();
-//
-//                    setRobotStatus(MOVE);
-//                    break;
-//                }
-//
-//                case MOVE: {
-//                    /*
-//                     * Move the robot to a goal point
-//                     */
-//                    RobotPose odomPosition = getOdomData();
-//                    translationError = getAbsoluteDistance(odomPosition, currentPoseToGo);
-//
-//                    // zistovanie ci robot dosiahol bod
-//                    if (translationError < ROBOT_REG_ACCURACY) {
-//                        robotCmdPoints_mtx.lock();
-//                        robotCmdPoints.pop();
-//                        robotCmdPoints_mtx.unlock();
-//
-//                        setRobotStatus(READ_POINT);
-//                        break;
-//                    }
-//
-//                    auto RegulatorAction = poseRegulator.getAction(odomPosition, currentPoseToGo);
-//                    sendArcSpeed(RegulatorAction.speed, RegulatorAction.radius);
-//
-//                    break;
-//                }
-//
-//                case STOP:
-//                    /*
-//                     * Stop the robot
-//                     */
-//                    setTranslationSpeed(0);
-//                    break;
-//
-//                case ANOTHER_CONTROL:
-//                    /*
-//                     * Do nothing, another proces controll the robot
-//                     */
-//                    break;
-//
-//                case CANCEL_PIONT:
-//                    robotCmdPoints_mtx.lock();
-//                    robotCmdPoints.pop();
-//                    robotCmdPoints_mtx.unlock();
-//                    setRobotStatus(READ_POINT);
-//                    break;
-//
-//                default:
-//                    break;
-//            }
-//
-//        }   // end of TIMER
-//        std::this_thread::sleep_until(startPeriodTime);
-//    }
-//
-//}
-//void RobotInterface::setRobotStatus(RobotStates newStatus) {
-//    syslog(LOG_INFO, "Changing robot state from: %d -> %d", actualRobotState, newStatus);
-//    actualRobotState = newStatus;
-//}
-
 bool RobotInterface::isGoalAchieved() {
     goalPose_mtx.lock();
     RobotPose poseToGo = this->goalPose;
     goalPose_mtx.unlock();
     double translationError = getAbsoluteDistance(getOdomData(), poseToGo);
-    return translationError < ROBOT_REG_ACCURACY;
+    return translationError < ROBOT_GOAL_ACCURACY;
 }
 
-void RobotInterface::resetOdom() {
+void RobotInterface::resetOdom(double x, double y, double fi) {
     std::lock_guard<std::mutex> odom_lg(odom_mtx);
-    odom={};
+    odom.x = x;
+    odom.y = y;
+    odom.fi = fi;
 }
-
 
 bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
 {
@@ -626,14 +533,17 @@ bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
     return true;
 }
 
-void RobotInterface::setRequiredPose(RobotPose goalPose) {
+std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
     lock_guard<mutex> lk(goalPose_mtx);
     this->goalPose = goalPose;
+    this->goalAchieved = std::promise<void>();
+    return this->goalAchieved.get_future();
 }
 
-void RobotInterface::setZoneParams(int goalZone, boost::function<void()> callbackFcn) {
+std::future<void> RobotInterface::setZoneParams(int goalZone) {
     lock_guard<mutex> lk(zone_mtx);
     this->goalZone = goalZone;
-    this->zoneSlot.connect(callbackFcn);
+    this->zoneAchieved = std::promise<void>();
+    return this->zoneAchieved.get_future();
 }
 

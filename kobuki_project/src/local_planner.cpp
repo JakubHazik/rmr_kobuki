@@ -9,74 +9,46 @@ LocalPlanner::LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidar
     this->robotInterface = robotInterface;
     this->lidarInterface = lidarInterface;
     this->waypoints = globalWaypoints;
-
-    robotInterface->setZoneParams(GOAL_ZONE_DISTANCE, boost::bind(&LocalPlanner::wayPointZoneAchieved_cbk, this));
-}
-
-
-//void LocalPlanner::goToGoal(RobotPose goalPose) {
-//    robotInterface->setRequiredPose(goalPose);
-//
-//    // block function until goal will be achieved
-//    std::unique_lock<std::mutex> lk(cv_mutex);
-//    goalAchieved.wait(lk);
-//
-//    // TODO treba zisti ci je to vlastne v roznych vlaknach
-//    std::thread::id this_id = std::this_thread::get_id();
-//    cout<<"goToGoal "<<this_id<<endl;
-//}
-
-void LocalPlanner::wayPointZoneAchieved_cbk() {
-    /*
-     * funkcia je zavolana ked robot dosiahne zonu
-     *  - ak este existuju waypointy tak urob pop na dosiahnuty a nastav dalsi v poradi
-     */
-
-    std::thread::id this_id = std::this_thread::get_id();
-    cout<<"wayPointZoneAchieved_clb "<<this_id<<endl;
-
-    waypoints_mtx.lock();
-
-    if (!waypoints.empty()) {
-        waypoints.pop_front();
-    }
-
-    if (!waypoints.empty()) {
-        robotInterface->setRequiredPose(waypoints.front());
-    }
-    waypoints_mtx.unlock();
 }
 
 void LocalPlanner::processMovement() {
-    waypoints_mtx.lock();
     if (waypoints.empty()) {
         return;
     }
-    robotInterface->setRequiredPose(waypoints.front());
-    waypoints_mtx.unlock();
+    std::future<void> goalAchieved_fut;
+    std::future<void> zoneAchieved_fut;
+
+    goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
+    zoneAchieved_fut = robotInterface->setZoneParams(GOAL_ZONE_DISTANCE);
 
     while (true) {
-        waypoints_mtx.lock();
         if (waypoints.empty()) {
             break;
         }
-        waypoints_mtx.unlock();
 
-        if (computeBypass().empty()) {
-            usleep(1000);
-            continue;
+        auto fut_status = zoneAchieved_fut.wait_for(std::chrono::milliseconds(50));
+
+        if (fut_status == std::future_status::ready) {
+            // zone is achieved
+            waypoints.pop_front();
+            if (!waypoints.empty()) {
+                goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
+                zoneAchieved_fut = robotInterface->setZoneParams(GOAL_ZONE_DISTANCE);
+            }
+        } else {
+            // zone is not achieved yet
+            // check collisions
+            list<RobotPose> bypass_waypoints = computeBypass();
+
+            // if collision algorithm create bypass waypoints, add them to the list (front)
+            if (!bypass_waypoints.empty()) {
+                // add bypass_waypoints to waypoints list
+                waypoints.insert(waypoints.begin(), bypass_waypoints.begin(), bypass_waypoints.end());
+            }
         }
-
-
-//        std::unique_lock<std::mutex> lk(cv_mutex);
-//        goalAchieved.wait(lk);
-
     }
 
-    while (!robotInterface->isGoalAchieved()) {
-        usleep(1000);
-    }
-
+    goalAchieved_fut.wait();
     cout<<"L planner hotovo";
 }
 
