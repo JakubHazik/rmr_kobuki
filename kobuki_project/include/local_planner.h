@@ -14,6 +14,7 @@
 #include <list>
 #include <mutex>
 #include <future>
+#include <opencv2/opencv.hpp>
 
 
 using namespace std;
@@ -30,6 +31,12 @@ private:
     RobotInterface *robotInterface;
     LidarInterface *lidarInterface;
 
+    /**
+     * Compute collision on the robot way to goal position
+     * @param localMap Map of local environment
+     * @return True if way contain a collision
+     */
+    bool collisionCheck(RobotMap &localMap);
 //    mutex goalAchieved_mtx;
 //    condition_variable goalAchieved;
 //    RobotPose goalPose;
