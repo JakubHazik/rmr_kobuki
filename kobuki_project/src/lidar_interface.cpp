@@ -9,7 +9,10 @@ LidarInterface::LidarInterface(RobotPose mapSize, int mapResolution, RobotInterf
     robot = _robotInterface;
 }
 
-LidarInterface::~LidarInterface() = default;
+LidarInterface::~LidarInterface() {
+    laserDataThreadRun = false;
+    laser_thread.join();
+}
 
 void LidarInterface::t_readLaserData() {
     syslog(LOG_INFO, "readLaserData thread started");
@@ -43,7 +46,7 @@ void LidarInterface::t_readLaserData() {
         syslog(LOG_ERR, "Send empty command failed");
     }
 
-    while (1) {
+    while (laserDataThreadRun) {
         if ((received_length = recvfrom(socket_FD, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &socket_other, &socket_FD_length)) == -1) {
             continue;
         }

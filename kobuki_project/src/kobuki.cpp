@@ -14,7 +14,6 @@ Kobuki::Kobuki() : map(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOL
 Kobuki::~Kobuki() {
     delete robotInterface;
     delete lidarInterface;
-    // pozor na to vlakna vo vnutri objektov stale bezia
 }
 
 

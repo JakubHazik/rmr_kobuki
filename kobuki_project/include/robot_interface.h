@@ -56,7 +56,11 @@ private:
     * Premenne
     */
 
-    std::thread robot;
+    std::thread robotDataRecv;
+    std::atomic_bool robotDataThreadRun = {true};
+
+    std::thread poseController;
+    std::atomic_bool poseControllerThreadRun = {true};
 
     TKobukiData robotData;
 

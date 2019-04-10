@@ -60,6 +60,7 @@ private:
 //    thread callback_t;
 
     std::thread laser_thread;
+    std::atomic_bool laserDataThreadRun = {true};
     LaserMeasurement laserData;
 
     Lidar lidar;

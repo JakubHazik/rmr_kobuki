@@ -16,10 +16,10 @@ RobotPose operator+(const RobotPose &a, const RobotPose &b) {
 }
 
 RobotInterface::RobotInterface(): poseRegulator(Kconfig::PoseControl::POSE_CONTROLLER_PERIOD) {
-    robot = thread(&RobotInterface::t_readRobotData, this);
+    robotDataRecv = thread(&RobotInterface::t_readRobotData, this);
 
     // start pose controller timer thread
-    std::thread(&RobotInterface::t_poseController, this).detach();
+    poseController = thread(&RobotInterface::t_poseController, this);
 
     // wait until arrive the first message, next we can reset odom
     usleep(1000 * 1000);
@@ -27,7 +27,10 @@ RobotInterface::RobotInterface(): poseRegulator(Kconfig::PoseControl::POSE_CONTR
 }
 
 RobotInterface::~RobotInterface() {
-//    TODO kill threads
+    robotDataThreadRun = false;
+    poseControllerThreadRun = false;
+    robotDataRecv.join();
+    poseController.join();
 }
 
 
@@ -59,27 +62,17 @@ void RobotInterface::t_readRobotData() {
     sendDataToRobot(mess);
 
     unsigned char buff[50000];
-    while (1) {
+    while (robotDataThreadRun) {
         memset(buff, 0, 50000 * sizeof(char));
         if ((rob_recv_len = recvfrom(rob_s, (char *) &buff, sizeof(char) * 50000, 0, (struct sockaddr *) &rob_si_other, &rob_slen)) == -1) {
-
+            // no data received, try again
             continue;
         }
-        //tu mame data..zavolame si funkciu
-
-        //     memcpy(&sens,buff,sizeof(sens));
-        //      struct timespec t;
-        //      clock_gettime(CLOCK_REALTIME,&t);
-
-//        robotDataMutex.lock();
-        int returnval = fillData(robotData, (unsigned char *) buff);
+        // tu uz mame data..zavolame si funkciu
+        int returnval = fillData(robotData, (unsigned char *) buff);    // parse kobuki message, if message is parsed successful, it returns 0
         if (returnval == 0) {
             computeOdometry(robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
-//            cout<<float(robotData.GyroAngleRate/100.0)<<endl;
-//            processRobotData = thread(&RobotInterface::t_computeOdometry, this, robotData.EncoderRight, robotData.EncoderLeft, robotData.GyroAngle);
-//            processRobotData.join(); // TODO treba domysliet lebo ak vyjde z toho scopu tak thread je terminated
         }
-//        robotDataMutex.unlock();
     }
 }
 
@@ -461,7 +454,7 @@ void RobotInterface::t_poseController() {
 
 
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
-    while (true) {
+    while (poseControllerThreadRun) {
         auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (Kconfig::PoseControl::POSE_CONTROLLER_PERIOD * 1000));
 
         // TIMER
