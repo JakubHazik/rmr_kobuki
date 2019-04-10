@@ -18,6 +18,8 @@ namespace Kconfig {
         static const std::string ROBOT_IP_ADDRESS = "192.168.1.12";
         static const RobotPose MAP_SIZE = RobotPose{6000 * 2, 6000 * 2, 0};         // dvojnasobny rozmer mapy
         static const int MAP_RESOLUTION = 50;                                       // mm per pixel
+        static const std::string IDEAL_MAP_EXTENSION = "txt";
+        static const std::string OPENCV_MAP_EXTENSION = "yaml";
     }
 
     namespace LidarControl {

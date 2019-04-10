@@ -16,6 +16,7 @@
 
 #include <list>
 #include <opencv2/opencv.hpp>
+#include <exception>
 
 
 using namespace std;

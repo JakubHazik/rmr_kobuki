@@ -11,6 +11,7 @@
 #include <exception>
 #include <opencv2/opencv.hpp>
 #include "own_typedefs.h"
+#include "config_defines.h"
 
 #define SHOW_IMAGE_SCALE_FACTOR 2
 
@@ -25,7 +26,7 @@ public:
     /**
      * @param filename name of file from filesystem
      */
-    RobotMap(std::string filename);
+    RobotMap(std::string filename, bool idealMap = false, RobotPose robotReference = {0});
 
     RobotMap(cv::Mat dataMatrix, int resolution);
 
@@ -36,9 +37,6 @@ public:
     RobotMap(const RobotMap &robotMap);
 
     ~RobotMap();
-
-    void loadIdealMap(std::string filename, RobotPose robotReference);
-
 
     /**
      * Adding current set of measuremets from lidar and odometry to enviroment Map
@@ -139,6 +137,7 @@ private:
     int resolution;     // mapResolution of one cell in [mm]
     void printWallToMap(const std::vector<MapPoint> &corners);
     void translateMap(MapPoint direction);
+    void loadIdealMap(std::string filename);
 };
 
 

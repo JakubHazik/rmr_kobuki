@@ -67,3 +67,15 @@ cv::Mat Kobuki::getEnvironmentAsImage(bool environment, bool waypoints, bool pat
 
     return visualizer.getImage(robotInterface->getOdomData());
 }
+
+void Kobuki::loadMapFromFile(string filepath) {
+    string extension = filepath.substr(filepath.find_last_of('.') + 1);
+
+    if (extension == Kconfig::Defaults::IDEAL_MAP_EXTENSION) {
+        map = RobotMap(filepath, true);
+    } else if (extension == Kconfig::Defaults::OPENCV_MAP_EXTENSION) {
+        map = RobotMap(filepath, false);
+    } else {
+        throw std::invalid_argument("File: " + filepath + " does not match with default extensions");
+    }
+}
