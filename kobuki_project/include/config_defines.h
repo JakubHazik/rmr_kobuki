@@ -56,6 +56,7 @@ namespace Kconfig {
         static const cv::Scalar COLOR_ROBOT = cv::Scalar(0, 0, 255);                 //red
         static const cv::Scalar COLOR_PATH = cv::Scalar(0, 255, 0);                  //green
         static const cv::Scalar COLOR_WAYPOINTS = cv::Scalar(255, 0, 0);             //blue
+        static const cv::Scalar COLOR_LASER = cv::Scalar(15, 40, 160);               //wine
         static const cv::Scalar COLOR_FLOOD_FILL = cv::Scalar(20, 140, 100);         //yellow
         static const cv::Scalar COLOR_BLACK = cv::Scalar(1, 1, 1);
     }

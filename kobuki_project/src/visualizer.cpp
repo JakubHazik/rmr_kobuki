@@ -32,6 +32,10 @@ cv::Mat Visualizer::getImage(RobotPose robotPose) {
         addImageMask(output, waypoints, Kconfig::Visualizer::COLOR_WAYPOINTS);
     }
 
+    if (!laserScan.empty()) {
+        addImageMask(output, laserScan, Kconfig::Visualizer::COLOR_LASER);
+    }
+
     addRobot(output, robotPose, Kconfig::Visualizer::COLOR_ROBOT);
 
     return output;

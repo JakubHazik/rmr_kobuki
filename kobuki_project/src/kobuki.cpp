@@ -29,11 +29,41 @@ void Kobuki::sendRobotToPosition(double x, double y) {
     GlobalPlanner gPlanner(map, robotInterface->getOdomData(), RobotPose{x, y, 0}, Kconfig::HW::ROBOT_WIDTH);
     list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
 
-//    list<RobotPose> waypoints = {{0,0,0}, {1000,0}, {1000,1000}, {0,0,0}};
+    gPlannerFloodFill = gPlanner.getFloodFillImage();
+    gPlannerPath = gPlanner.getPathImage();
+    gPlannerWaypoints = gPlanner.getWayPointsImage();
+
+//    waypoints = {{1000,0}, {1000,1000}, {0,0,0}};
     LocalPlanner lPlanner(robotInterface, lidarInterface, waypoints);
     lPlanner.processMovement();
 }
 
 void Kobuki::setRobotActualPosition(double x, double y, double fi) {
     robotInterface->resetOdom(x, y, fi);
+}
+
+cv::Mat Kobuki::getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan) {
+    Visualizer visualizer(map.getSize(), Kconfig::HW::ROBOT_WIDTH, map.getResolution());
+
+    if (environment) {
+        visualizer.environmentMap = map.getCVMatMap();
+    }
+
+    if (waypoints) {
+        visualizer.waypoints = gPlannerWaypoints;
+    }
+
+    if (path) {
+        visualizer.path = gPlannerPath;
+    }
+
+    if (floodFill) {
+        visualizer.floodFill = gPlannerFloodFill;
+    }
+
+    if (laserScan) {
+        visualizer.laserScan = lidarInterface->getRobotMap().getCVMatMap();
+    }
+
+    return visualizer.getImage(robotInterface->getOdomData());
 }

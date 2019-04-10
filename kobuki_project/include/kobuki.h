@@ -15,6 +15,7 @@
 #include "config_defines.h"
 
 #include <list>
+#include <opencv2/opencv.hpp>
 
 
 using namespace std;
@@ -25,7 +26,7 @@ public:
 
     virtual ~Kobuki();
 
-    cv::Mat getEnvironmentAsImage(void *argumentyNejake); // toto bude vraciat veci z visualizera, navolim si ze co vsetko chcem mat v image
+    cv::Mat getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan); // toto bude vraciat veci z visualizera, navolim si ze co vsetko chcem mat v image
 
     void loadMapFromFile(string filepath); //argument mozno bude aj velkost mapy
 
@@ -41,6 +42,9 @@ public:
     RobotMap map;
 private:
 
+    cv::Mat gPlannerFloodFill;
+    cv::Mat gPlannerWaypoints;
+    cv::Mat gPlannerPath;
 };
 
 #endif //KOBUKI_PROJECT_KOBUKI_H

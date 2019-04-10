@@ -43,6 +43,7 @@ public:
     cv::Mat path;
     cv::Mat waypoints;
     cv::Mat floodFill;
+    cv::Mat laserScan;
 private:
     MapSize mapSize;
     int mapResolution;
