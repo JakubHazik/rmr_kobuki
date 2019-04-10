@@ -18,7 +18,6 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
-#include <boost/signals2.hpp>
 #include <future>
 
 #include "regulator.h"

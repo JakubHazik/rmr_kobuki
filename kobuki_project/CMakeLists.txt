@@ -6,7 +6,6 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5 REQUIRED COMPONENTS Gui Core Widgets)
 find_package(OpenCV REQUIRED)
-find_package(Boost 1.58.0 REQUIRED COMPONENTS signals)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -51,5 +50,4 @@ target_link_libraries(kobuki
         pthread
         Qt5::Core
         Qt5::Widgets
-        ${OpenCV_LIBS}
-        Boost::signals)
+        ${OpenCV_LIBS})
