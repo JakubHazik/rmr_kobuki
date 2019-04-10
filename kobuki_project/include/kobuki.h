@@ -29,7 +29,9 @@ public:
 
     cv::Mat getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan); // toto bude vraciat veci z visualizera, navolim si ze co vsetko chcem mat v image
 
-    void loadMapFromFile(string filepath); //argument mozno bude aj velkost mapy
+    void loadMapFromFile(string filepath);
+
+    void saveMapToFile(string filepath);
 
     void setRobotActualPosition(double x, double y, double fi);     //ked sa nacita nejaka mapa tak treba nastavit robota do takej pozicie aby bol spravne usadeny v mape
 

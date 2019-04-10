@@ -13,6 +13,7 @@ RobotMap::RobotMap(RobotPose mapSize, int resolution): resolution(resolution) {
 
 RobotMap::RobotMap(std::string filename, bool idealMap, RobotPose robotReference) {
     if (idealMap) {
+        resolution = Kconfig::Defaults::MAP_RESOLUTION;
         data = Mat::zeros(int(Kconfig::Defaults::MAP_SIZE.x / resolution), int(Kconfig::Defaults::MAP_SIZE.y / Kconfig::Defaults::MAP_RESOLUTION), CV_16UC1);  // construct matrix with unsigned short values
         loadIdealMap(filename);
     } else {

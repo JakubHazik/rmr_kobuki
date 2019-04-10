@@ -22,6 +22,10 @@ namespace Kconfig {
         static const std::string OPENCV_MAP_EXTENSION = "yaml";
     }
 
+    namespace Ui {
+        static const int CANVAS_REFRESH_RATE = 250;
+    }
+
     namespace LidarControl {
         static const int DATA_HOLD_COEFFICIENT = 100;                               // number of scans which will be keep in local RobotMap
     }

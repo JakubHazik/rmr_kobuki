@@ -14,7 +14,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
     /// Parse starting arguments
     int opt;
-    bool debug = false, gui = false;
+    bool debug = false, gui = true;
 
     while ((opt = getopt(argc, argv, "dg")) != -1) {
         switch (opt) {
@@ -41,42 +41,13 @@ int main(int argc, char *argv[]) {
 
     Kobuki kobuki;
 
-    usleep(1000*1000*2);
-
     if(gui){
         QApplication a(argc, argv);
-        MainWindow w;
-        w.setInterfaces(&kobuki);
+        MainWindow w(&kobuki);
         w.show();
 
         syslog(LOG_INFO, "Kobuki started in graphical mode!");
 
         return a.exec();
-    } else {
-        syslog(LOG_INFO, "Kobuki started in conosle mode!");
-
-        /// Endless loop!
-        while(1){};
     }
-
-
-//    auto data = robot.getOdomData();
-//
-//
-//    robot.addCommandToQueue({data.x + 1000, data.y + 0, 0 * DEG2RAD});
-    //robot.addCommandToQueue({data.x + 2000, data.y + 0, 0 * DEG2RAD});
-
-//    while(1) {
-//
-//        data = robot.getOdomData();
-//        cout<<"=================="<<endl
-//            <<"X: "<<data.x<<endl
-//            <<"Y: "<<data.y<<endl
-//            <<"Fi: "<<data.fi<<endl
-//            <<"G: "<<robot.forOdomUseGyro<<endl;
-//
-//        usleep(1000*1000*0.5);
-//    }
-
-    return 0;
 }

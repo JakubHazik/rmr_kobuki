@@ -79,3 +79,7 @@ void Kobuki::loadMapFromFile(string filepath) {
         throw std::invalid_argument("File: " + filepath + " does not match with default extensions");
     }
 }
+
+void Kobuki::saveMapToFile(string filepath) {
+    map.saveToFile(std::move(filepath));
+}
