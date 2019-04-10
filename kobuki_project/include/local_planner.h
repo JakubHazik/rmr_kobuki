@@ -15,6 +15,7 @@
 #include <mutex>
 #include <future>
 #include <opencv2/opencv.hpp>
+#include <syslog.h>
 
 
 using namespace std;

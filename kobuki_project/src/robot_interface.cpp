@@ -33,7 +33,7 @@ RobotInterface::~RobotInterface() {
 
 void RobotInterface::t_readRobotData() {
     if ((rob_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-        syslog(LOG_ERR, "Cannot create socket");
+        syslog(LOG_ERR, "[Robot Interface]: Cannot create socket");
     }
 
     char rob_broadcastene = 1;
@@ -235,7 +235,7 @@ void RobotInterface::sendTranslationSpeed(int mmPerSec) {
 //    syslog(LOG_INFO, "Setting translation speed to %d [mm/s]", mmPerSec);
     std::vector<unsigned char> mess = setTranslationSpeed(mmPerSec);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
-        syslog(LOG_ERR, "Send data to robot failed!");
+        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
         return;
     }
 }
@@ -244,7 +244,7 @@ void RobotInterface::sendRotationSpeed(int radPerSec) {
 //    syslog(LOG_INFO, "Setting rotation speed to %d [rad/s]", radPerSec);
     std::vector<unsigned char> mess = setRotationSpeed(radPerSec);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
-        syslog(LOG_ERR, "Send data to robot failed!");
+        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
         return;
     }
 }
@@ -254,12 +254,12 @@ void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
      * zaporny radius znamena ze bod otacania je napravo od robota
      */
     if (mmRadius == 0) {
-        syslog(LOG_ERR, "Radius have so low value: 0");
+        syslog(LOG_ERR, "[Robot Interface]: Radius have so low value: 0");
     }
 
     std::vector<unsigned char> mess = setArcSpeed(mmPerSec, mmRadius);
     if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
-        syslog(LOG_ERR, "Send data to robot failed!");
+        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
         return;
     }
 }
@@ -485,16 +485,16 @@ void RobotInterface::t_poseController() {
                 // zona je dosiahnuta
                 zoneAchieved.set_value();
                 zoneNotified = true;
-                cout<<"ZONA dosiahnuta"<<endl;
+                syslog(LOG_NOTICE, "[Robot Interface]: Zone achieved");
             }
 
             // zistovanie ci robot dosiahol bod
             if (__glibc_unlikely(translationError < Kconfig::PoseControl::GOAL_ACCURACY &&  !goalNotified)) {
                 // bod je dosiahnuty
-                cout<<"BOD dosiahnuty"<<endl;
                 sendTranslationSpeed(0);
                 goalAchieved.set_value();
                 goalNotified = true;
+                syslog(LOG_NOTICE, "[Robot Interface]: Goal achieved");
                 continue;
             }
 
@@ -527,7 +527,7 @@ bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
 {
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
     {
-        syslog(LOG_ERR, "Send data to robot failed!");
+        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
         return false;
     }
     return true;

@@ -13,6 +13,7 @@ LocalPlanner::LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidar
 
 void LocalPlanner::processMovement() {
     if (waypoints.empty()) {
+        syslog(LOG_WARNING, "[Local planner]: Local plan is without waypoints");
         return;
     }
     std::future<void> goalAchieved_fut;
@@ -51,7 +52,7 @@ void LocalPlanner::processMovement() {
     }
 
     goalAchieved_fut.wait();
-    cout<<"L planner hotovo";
+    syslog(LOG_NOTICE, "[Local planner]: Movement has been processed");
 }
 
 list<RobotPose> LocalPlanner::computeBypass() {
@@ -62,9 +63,9 @@ list<RobotPose> LocalPlanner::computeBypass() {
         // collision has not been found
         return list<RobotPose>();
     }
+    syslog(LOG_NOTICE, "[Local planner]: Collision detected");
 
     GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), waypoints.front(), Kconfig::HW::ROBOT_WIDTH);
-
     return globalPlanner.getRobotWayPoints();
 }
 
