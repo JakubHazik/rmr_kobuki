@@ -33,17 +33,22 @@ public:
 
     void saveMapToFile(string filepath);
 
+    void clearMap();
+
+    RobotPose getRobotPosition();
+
     void setRobotActualPosition(double x, double y, double fi);     //ked sa nacita nejaka mapa tak treba nastavit robota do takej pozicie aby bol spravne usadeny v mape
 
-    void sendRobotToPosition(double x, double y);        //nastavenie ciela robota, tu sa spustia plannery
+    void sendRobotToPosition(double x, double y, SPACE space);
 
     void updateGlobalMap();  /// todo toto je riadna ******
 
-    //TODO toto predsa nemoze byt public
+private:
+
     RobotInterface *robotInterface;
     LidarInterface *lidarInterface;
     RobotMap map;
-private:
+
 
     cv::Mat gPlannerFloodFill;
     cv::Mat gPlannerWaypoints;

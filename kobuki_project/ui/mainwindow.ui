@@ -422,7 +422,7 @@ QGroupBox::title {
            <string>Goal</string>
           </property>
           <layout class="QGridLayout" name="goal">
-           <item row="1" column="0">
+           <item row="2" column="0">
             <widget class="QLabel" name="label_6">
              <property name="text">
               <string>X:</string>
@@ -430,13 +430,6 @@ QGroupBox::title {
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QPushButton" name="button_go_to_pos">
-             <property name="text">
-              <string>GO</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
             <widget class="QLineEdit" name="edit_go_y">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -446,7 +439,21 @@ QGroupBox::title {
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Y:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QPushButton" name="button_go_to_pos">
+             <property name="text">
+              <string>GO</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
             <widget class="QLineEdit" name="edit_go_x">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -456,10 +463,47 @@ QGroupBox::title {
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_5">
+           <item row="1" column="0" colspan="2">
+            <widget class="QGroupBox" name="groupBox_2">
+             <property name="styleSheet">
+              <string notr="true">
+font: 57 italic 11pt &quot;Ubuntu&quot;;</string>
+             </property>
+             <property name="title">
+              <string>Space</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_2">
+              <item row="0" column="0">
+               <widget class="QRadioButton" name="spaceRobot">
+                <property name="text">
+                 <string>Robot</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QRadioButton" name="spaceOrigin">
+                <property name="text">
+                 <string>Origin</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QLabel" name="goalStatus">
              <property name="text">
-              <string>Y:</string>
+              <string>No goal</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>Status</string>
              </property>
             </widget>
            </item>

@@ -25,8 +25,15 @@ void Kobuki::updateGlobalMap(){
     map.addMeasurement(odometry, &laserData);
 }
 
-void Kobuki::sendRobotToPosition(double x, double y) {
-    GlobalPlanner gPlanner(map, robotInterface->getOdomData(), RobotPose{x, y, 0}, Kconfig::HW::ROBOT_WIDTH);
+void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
+    RobotPose goalPose = {x, y, 0};
+    RobotPose odom = robotInterface->getOdomData();
+
+    if (space == SPACE::ROBOT_SPACE) {
+        goalPose = RobotInterface::robot2originSpace(odom, goalPose);
+    }
+
+    GlobalPlanner gPlanner(map, odom, goalPose, Kconfig::HW::ROBOT_WIDTH);
     list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
 
     gPlannerFloodFill = gPlanner.getFloodFillImage();
@@ -82,4 +89,12 @@ void Kobuki::loadMapFromFile(string filepath) {
 
 void Kobuki::saveMapToFile(string filepath) {
     map.saveToFile(std::move(filepath));
+}
+
+void Kobuki::clearMap() {
+    map.clearMap();
+}
+
+RobotPose Kobuki::getRobotPosition() {
+    return robotInterface->getOdomData();
 }

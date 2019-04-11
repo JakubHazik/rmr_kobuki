@@ -30,7 +30,7 @@ MainWindow::~MainWindow() {
 void MainWindow::refresh() {
     syslog(LOG_INFO, "R");
 
-    RobotPose odometry = kobuki->robotInterface->getOdomData();
+    RobotPose odometry = kobuki->getRobotPosition();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
     cv::Mat mat = kobuki->getEnvironmentAsImage(true, true, true, true, true);
@@ -123,8 +123,7 @@ void MainWindow::refresh() {
 //    }
 //}
 
-void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi)
-{
+void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi) {
     ui->lineEdit_2->setText(QString::number(robotX));
     ui->lineEdit_3->setText(QString::number(robotY));
     ui->lineEdit_4->setText(QString::number(robotFi));
@@ -171,7 +170,7 @@ void MainWindow::on_button_stop_mapping_clicked(){
 
 void MainWindow::on_button_map_reset_clicked(){
     syslog(LOG_INFO, "Clearing enviroment map");
-    kobuki->map.clearMap();
+    kobuki->clearMap();
 };
 
 void MainWindow::on_button_map_save_clicked(){
@@ -202,6 +201,18 @@ void MainWindow::on_button_go_to_pos_clicked(){
     double x_to_go = ui->edit_go_x->text().toDouble();
     double y_to_go = ui->edit_go_y->text().toDouble();
     syslog(LOG_INFO, "Going x = %lf, y = %lf", x_to_go, y_to_go);
-    //TODO kobuki->robotInterface.addOffsetToQueue({x_to_go, y_to_go, 0});
+
+    SPACE space;
+    if (ui->spaceOrigin->isChecked()) {
+        space = SPACE::ORIGIN_SPACE;
+    } else if (ui->spaceRobot->isChecked()) {
+        space = SPACE::ROBOT_SPACE;
+    } else {
+        throw invalid_argument("no radio button is checked");
+    }
+
+    kobuki->sendRobotToPosition(x_to_go, y_to_go, space);
+
+    ui->goalStatus->setText("Processing");
 }
 

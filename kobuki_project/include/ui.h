@@ -34,6 +34,7 @@ private slots:
     void on_button_forward_clicked();
     void on_button_back_clicked();
     void on_button_stop_clicked();
+
     void on_button_start_mapping_clicked();
     void on_button_stop_mapping_clicked();
     void on_button_map_reset_clicked();
