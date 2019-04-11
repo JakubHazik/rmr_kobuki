@@ -83,7 +83,7 @@ void RobotInterface::computeOdometry(unsigned short encoderRight, unsigned short
     int encoderLeftDelta;
     int encoderRightDelta;
 
-//    syslog(LOG_NOTICE, "ENCODER: left: %d; right: %d; gyro: %d", encoderLeft, encoderRight, gyroAngle );
+//    syslog(LOG_INFO, "ENCODER: left: %d; right: %d; gyro: %d", encoderLeft, encoderRight, gyroAngle );
 
     // detekcia pretecenia encodera,
     if (abs(encoderLeft - encoderLeftOld) > Kconfig::HW::ENCODER_MAX / 2) {
@@ -174,7 +174,7 @@ std::vector<unsigned char> RobotInterface::setRotationSpeed(double radpersec) {
 std::vector<unsigned char> RobotInterface::setArcSpeed(int mmpersec, int radius) {
     if (radius == 0) {
 //        double result = mmpersec * 2 * M_PI / 1200;
-//        syslog(LOG_NOTICE, "rotation speed:  %f", result);
+//        syslog(LOG_INFO, "rotation speed:  %f", result);
 //        return setRotationSpeed(result);
         radius = 1; // nastavime co najmensi radius 1 mm
     }
@@ -478,7 +478,7 @@ void RobotInterface::t_poseController() {
                 // zona je dosiahnuta
                 zoneAchieved.set_value();
                 zoneNotified = true;
-                syslog(LOG_NOTICE, "[Robot Interface]: Zone achieved");
+                syslog(LOG_INFO, "[Robot Interface]: Zone achieved");
             }
 
             // zistovanie ci robot dosiahol bod
@@ -487,7 +487,7 @@ void RobotInterface::t_poseController() {
                 sendTranslationSpeed(0);
                 goalAchieved.set_value();
                 goalNotified = true;
-                syslog(LOG_NOTICE, "[Robot Interface]: Goal achieved");
+                syslog(LOG_INFO, "[Robot Interface]: Goal achieved");
                 continue;
             }
 
@@ -517,16 +517,35 @@ void RobotInterface::resetOdom(double x, double y, double fi) {
 }
 
 std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
-    lock_guard<mutex> lk(goalPose_mtx);
-    this->goalPose = goalPose;
     this->goalAchieved = std::promise<void>();
+
+    lock_guard<mutex> lk(goalPose_mtx);
+    if (goalPose == this->goalPose) {
+        // if old and new target is the same, return future which is done
+        syslog(LOG_INFO, "[Robot Interface]: goal which is set is achieved already");
+        this->goalAchieved.set_value();
+        return this->goalAchieved.get_future();
+    }
+    this->goalPose = goalPose;
     return this->goalAchieved.get_future();
 }
 
 std::future<void> RobotInterface::setZoneParams(int goalZone) {
+    this->zoneAchieved = std::promise<void>();
+
+    // chceck if robot is already in zone
+    goalPose_mtx.lock();
+    auto translationError = getAbsoluteDistance(getOdomData(), goalPose);
+    goalPose_mtx.unlock();
+
+    if (translationError < goalZone) {
+        // if robot is in zone, return future which is done
+        this->zoneAchieved.set_value();
+        return this->zoneAchieved.get_future();
+    }
+
     lock_guard<mutex> lk(zone_mtx);
     this->goalZone = goalZone;
-    this->zoneAchieved = std::promise<void>();
     return this->zoneAchieved.get_future();
 }
 
