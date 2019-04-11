@@ -18,6 +18,10 @@
 #include "kobuki.h"
 #include "config_defines.h"
 
+
+#define GO_BUTTON_TEXT "GO"
+#define BREAK_BUTTON_TEXT "BREAK"
+
 namespace Ui {
     class MainWindow;
 }

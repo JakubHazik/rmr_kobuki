@@ -5,47 +5,60 @@
 #include <include/local_planner.h>
 
 
-LocalPlanner::LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidarInterface, list<RobotPose> globalWaypoints) {
+LocalPlanner::LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidarInterface) {
     this->robotInterface = robotInterface;
     this->lidarInterface = lidarInterface;
-    this->waypoints = globalWaypoints;
 }
 
-void LocalPlanner::processMovement() {
-    if (waypoints.empty()) {
+void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
+    if (globalWaypoints.empty()) {
         syslog(LOG_WARNING, "[Local planner]: Local plan is without waypoints");
         return;
     }
+
     std::future<void> goalAchieved_fut;
     std::future<void> zoneAchieved_fut;
 
-    goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
+    // set first waypoint
+    goalAchieved_fut = robotInterface->setRequiredPose(globalWaypoints.front());
     zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
 
+    waypoints_mtx.lock();
+    this->waypoints = globalWaypoints;
+    waypoints_mtx.unlock();
+
     while (true) {
+        waypoints_mtx.lock();
         if (waypoints.empty()) {
+            waypoints_mtx.unlock();
             break;
         }
+        waypoints_mtx.unlock();
 
         if (zoneAchieved_fut.wait_for(std::chrono::milliseconds(50)) == std::future_status::ready) {
             // zone is achieved
+            waypoints_mtx.lock();
             waypoints.pop_front();
             if (!waypoints.empty()) {
                 goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
                 zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
             }
-        } else {
-            // zone is not achieved yet
-            // check collisions
-            list<RobotPose> bypass_waypoints = computeBypass();
+            waypoints_mtx.unlock();
+        }
 
-            // if collision algorithm create bypass waypoints, add them to the list (front)
-            if (!bypass_waypoints.empty()) {
-                // add bypass_waypoints to waypoints list
-                waypoints.insert(waypoints.begin(), bypass_waypoints.begin(), bypass_waypoints.end());
-                goalAchieved_fut = robotInterface->setRequiredPose(waypoints.front());
-                zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
-            }
+        // zone is not achieved yet
+        // check collisions
+        list<RobotPose> bypass_waypoints = computeBypass();
+
+        // if collision algorithm create bypass waypoints, add them to the list (front)
+        if (!bypass_waypoints.empty()) {
+            // add bypass_waypoints to waypoints list
+            waypoints_mtx.lock();
+            waypoints.insert(waypoints.begin(), bypass_waypoints.begin(), bypass_waypoints.end());
+            waypoints_mtx.unlock();
+            goalAchieved_fut = robotInterface->setRequiredPose(bypass_waypoints.front());
+            zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
+
         }
     }
 
@@ -54,25 +67,30 @@ void LocalPlanner::processMovement() {
 }
 
 list<RobotPose> LocalPlanner::computeBypass() {
+    waypoints_mtx.lock();
+    auto firstWaypoint = waypoints.front();
+    waypoints_mtx.unlock();
 
     RobotMap localMap = lidarInterface->getRobotMap();
 
-    if (!collisionCheck(localMap)) {
+    if (!collisionCheck(localMap, firstWaypoint)) {
         // collision has not been found
         return list<RobotPose>();
     }
     syslog(LOG_NOTICE, "[Local planner]: Collision detected");
 
-    GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), waypoints.front(), Kconfig::HW::ROBOT_WIDTH);
-    return globalPlanner.getRobotWayPoints();
+    GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), firstWaypoint, Kconfig::HW::ROBOT_WIDTH);
+    auto bypassPoints = globalPlanner.getRobotWayPoints();
+    bypassPoints.pop_back();    // last point is useless, I keep it in this->waypoints
+    return bypassPoints;
 }
 
-bool LocalPlanner::collisionCheck(RobotMap &localMap) {
+bool LocalPlanner::collisionCheck(RobotMap &localMap, RobotPose goalWaypoint) {
     
     auto mapSize = localMap.getSize();
     auto mapResolution = localMap.getResolution();
     MapPoint robotPoint = RobotMap::tfRealToMap(robotInterface->getOdomData(), mapSize, mapResolution);
-    MapPoint goalPoint = RobotMap::tfRealToMap(waypoints.front(), mapSize, mapResolution);
+    MapPoint goalPoint = RobotMap::tfRealToMap(goalWaypoint, mapSize, mapResolution);
 
     cv::Mat trajectoryLine = cv::Mat::zeros(cv::Size(mapSize.x, mapSize.y), CV_16UC1);
     cv::line(trajectoryLine,
@@ -109,5 +127,12 @@ bool LocalPlanner::collisionCheck(RobotMap &localMap) {
 //    cv::waitKey(0);
 
     return cv::countNonZero(collision) != 0;
+}
+
+void LocalPlanner::stopMovement() {
+    waypoints_mtx.lock();
+    waypoints.clear();
+    waypoints_mtx.unlock();
+    robotInterface->setRequiredPoseOffset(robotInterface->getOdomData(), SPACE::ORIGIN_SPACE);
 }
 

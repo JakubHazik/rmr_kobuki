@@ -22,11 +22,11 @@ using namespace std;
 
 class LocalPlanner {
 public:
-    LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidarInterface, list<RobotPose> globalWaypoints);
+    LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidarInterface);
 
-    void processMovement();
+    void processMovement(list<RobotPose> globalWaypoints);
 
-//    void goToGoal(RobotPose goalPose);
+    void stopMovement();
 
 private:
     RobotInterface *robotInterface;
@@ -37,17 +37,12 @@ private:
      * @param localMap Map of local environment
      * @return True if way contain a collision
      */
-    bool collisionCheck(RobotMap &localMap);
-//    mutex goalAchieved_mtx;
-//    condition_variable goalAchieved;
-//    RobotPose goalPose;
-//
-//    mutex waypoints_mtx;
+    bool collisionCheck(RobotMap &localMap, RobotPose goalWaypoint);
+
+    std::mutex waypoints_mtx;
     list<RobotPose> waypoints;
 
-//    void wayPointZoneAchieved_cbk();
-
-    list<RobotPose> computeBypass();        //TODO implement
+    list<RobotPose> computeBypass();
 
 };
 

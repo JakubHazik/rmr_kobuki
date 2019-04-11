@@ -205,6 +205,11 @@ void MainWindow::on_button_map_load_clicked(){
 };
 
 void MainWindow::on_btn_goToGoal_clicked(){
+    if (ui->btn_goToGoal->text() == BREAK_BUTTON_TEXT) {
+        kobuki->stopRobotMovement();
+        return;
+    }
+
     double x_to_go = ui->goalX->text().toDouble();
     double y_to_go = ui->goalY->text().toDouble();
 
@@ -217,7 +222,7 @@ void MainWindow::on_btn_goToGoal_clicked(){
         throw invalid_argument("no radio button is checked");
     }
 
-    movementDone = std::async(std::launch::async, &Kobuki::sendRobotToPosition, kobuki, x_to_go, y_to_go, space);
+    movementDone = std::async(std::launch::async, &Kobuki::moveRobotToPosition, kobuki, x_to_go, y_to_go, space);
 
     ui->goalStatus->setText("Processing");
     ui->goalStatus->setStyleSheet("QLabel { color : red }");
@@ -227,10 +232,18 @@ void MainWindow::on_btn_goToGoal_clicked(){
 
 void MainWindow::movementProcessing(bool processing) {
     ui->mapActions_box->setEnabled(!processing);
-//    ui->button_map_save->setEnabled(true);
     ui->controls_box->setEnabled(!processing);
-    ui->goal_box->setEnabled(!processing);
     ui->resetodom_box->setEnabled(!processing);
+    ui->goalSpace_box->setEnabled(!processing);
+
+    ui->goalX->setEnabled(!processing);
+    ui->goalY->setEnabled(!processing);
+
+    if (processing) {
+        ui->btn_goToGoal->setText(BREAK_BUTTON_TEXT);
+    } else {
+        ui->btn_goToGoal->setText(GO_BUTTON_TEXT);
+    }
 }
 
 void MainWindow::on_btn_reset_clicked() {

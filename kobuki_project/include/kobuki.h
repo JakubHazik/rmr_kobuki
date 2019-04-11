@@ -39,7 +39,12 @@ public:
 
     void setRobotActualPosition(double x, double y, double fi);
 
-    void sendRobotToPosition(double x, double y, SPACE space);
+    void moveRobotToPosition(double x, double y, SPACE space);
+
+    /**
+     * This also clear all waypoints in local planner
+     */
+    void stopRobotMovement();
 
 //    void updateGlobalMap();  /// todo toto je riadna ******
 
@@ -47,8 +52,9 @@ private:
 
     RobotInterface *robotInterface;
     LidarInterface *lidarInterface;
-    RobotMap map;
+    LocalPlanner *lPlanner;
 
+    RobotMap map;
 
     cv::Mat gPlannerFloodFill;
     cv::Mat gPlannerWaypoints;

@@ -445,10 +445,9 @@ double RobotInterface::getAbsoluteDistance(RobotPose posA, RobotPose posB) {
 }
 
 void RobotInterface::t_poseController() {
-    static RobotPose poseToGoOld;
-
+    RobotPose poseToGoOld = {};
+    RobotPose poseToGo = {};
     double translationError;
-    RobotPose poseToGo;
     bool zoneNotified = false;
     bool goalNotified = false;
 
@@ -458,6 +457,8 @@ void RobotInterface::t_poseController() {
 
         // TIMER
         {
+            poseToGoOld = poseToGo;
+
             // read target position
             goalPose_mtx.lock();
             poseToGo = this->goalPose;
@@ -497,15 +498,14 @@ void RobotInterface::t_poseController() {
 
                 // bod je dosiahnuty
                 sendTranslationSpeed(0);
-                poseToGoOld = poseToGo;
                 continue;
             }
 
-            RegulatorAction regulatorAction = poseRegulator.getAction(odomPosition, poseToGo);
-            //cout<<"transError: "<<translationError<<", reg: "<<regulatorAction.radius << ", "<<regulatorAction.speed<<endl;
-            sendArcSpeed(regulatorAction.speed, regulatorAction.radius);
 
-            poseToGoOld = poseToGo;
+            RegulatorAction regulatorAction = poseRegulator.getAction(odomPosition, poseToGo);
+            sendArcSpeed(regulatorAction.speed, regulatorAction.radius);
+            //cout<<"transError: "<<translationError<<", reg: "<<regulatorAction.radius << ", "<<regulatorAction.speed<<endl;
+
             std::this_thread::sleep_until(startPeriodTime);
         }
     }
@@ -572,7 +572,7 @@ std::future<void> RobotInterface::setRequiredPoseOffset(RobotPose goalPose, SPAC
         return setRequiredPose(goalPose);
     }
 
-    throw std::invalid_argument("scape has no match case");
+    throw std::invalid_argument("[Robot Interface]: scape has no match case");
 }
 
 RobotPose RobotInterface::robot2originSpace(RobotPose odom, RobotPose goal) {

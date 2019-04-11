@@ -9,6 +9,7 @@ using namespace std;
 Kobuki::Kobuki() : map(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION) {
     robotInterface = new RobotInterface();
     lidarInterface = new LidarInterface(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOLUTION, robotInterface);
+    lPlanner = new LocalPlanner(robotInterface, lidarInterface);
 }
 
 Kobuki::~Kobuki() {
@@ -25,7 +26,7 @@ Kobuki::~Kobuki() {
 //    map.addMeasurement(odometry, &laserData);
 //}
 
-void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
+void Kobuki::moveRobotToPosition(double x, double y, SPACE space) {
     RobotPose goalPose = {x, y, 0};
     RobotPose odom = robotInterface->getOdomData();
 
@@ -43,8 +44,8 @@ void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
 //    waypoints = {{1000,0}, {1000,1000}, {0,0,0}};
 
 //    list<RobotPose> waypoints = {goalPose};
-    LocalPlanner lPlanner(robotInterface, lidarInterface, waypoints);
-    lPlanner.processMovement();
+
+    lPlanner->processMovement(waypoints);
 }
 
 void Kobuki::setRobotActualPosition(double x, double y, double fi) {
@@ -100,4 +101,8 @@ void Kobuki::clearMap() {
 
 RobotPose Kobuki::getRobotPosition() {
     return robotInterface->getOdomData();
+}
+
+void Kobuki::stopRobotMovement() {
+    lPlanner->stopMovement();
 }
