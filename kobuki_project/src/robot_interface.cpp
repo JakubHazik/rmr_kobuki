@@ -533,6 +533,11 @@ std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
 std::future<void> RobotInterface::setZoneParams(int goalZone) {
     this->zoneAchieved = std::promise<void>();
 
+    // set zone
+    zone_mtx.lock();
+    this->goalZone = goalZone;
+    zone_mtx.unlock();
+
     // chceck if robot is already in zone
     goalPose_mtx.lock();
     auto translationError = getAbsoluteDistance(getOdomData(), goalPose);
@@ -545,8 +550,6 @@ std::future<void> RobotInterface::setZoneParams(int goalZone) {
         return this->zoneAchieved.get_future();
     }
 
-    lock_guard<mutex> lk(zone_mtx);
-    this->goalZone = goalZone;
     return this->zoneAchieved.get_future();
 }
 
@@ -561,8 +564,8 @@ std::future<void> RobotInterface::setRequiredPoseOffset(RobotPose goalPose, SPAC
 }
 
 RobotPose RobotInterface::robot2originSpace(RobotPose odom, RobotPose goal) {
-    double x = goal.x * cos(odom.fi * DEG2RAD) - goal.y + sin(odom.fi * DEG2RAD) + odom.x;
-    double y = goal.x * sin(odom.fi * DEG2RAD) + goal.y + cos(odom.fi * DEG2RAD) + odom.y;
+    double x = goal.x * cos(odom.fi) - goal.y + sin(odom.fi) + odom.x;
+    double y = goal.x * sin(odom.fi) + goal.y + cos(odom.fi) + odom.y;
     return {x, y, 0};
 }
 

@@ -101,13 +101,10 @@ typedef struct {
     LaserData Data[1000];
 } LaserMeasurement;
 
-/**
- * Nech je pozicia x,y v jednotkach [mm]
- */
 typedef struct {
-    double x;
-    double y;
-    double fi;
+    double x;   // mm
+    double y;   // mm
+    double fi;  // rad
 } RobotPose;
 
 typedef struct {

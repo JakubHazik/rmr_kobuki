@@ -502,15 +502,15 @@ font: 57 italic 11pt &quot;Ubuntu&quot;;</string>
                 <property name="text">
                  <string>Robot</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item row="1" column="0">
                <widget class="QRadioButton" name="spaceOrigin">
                 <property name="text">
                  <string>Origin</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
                 </property>
                </widget>
               </item>

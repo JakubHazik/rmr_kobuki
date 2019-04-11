@@ -44,8 +44,8 @@ cv::Mat Visualizer::getImage(RobotPose robotPose) {
 
 void Visualizer::addRobot(cv::Mat &inputOutput, RobotPose robotPose, cv::Scalar color) {
     double fi = robotPose.fi;
-    int x = (int)round((cos(fi*DEG2RAD)) * robotWidth/2/mapResolution);
-    int y = (int)round((sin(fi*DEG2RAD)) * robotWidth/2/mapResolution);
+    int x = (int)round((cos(fi)) * robotWidth/2/mapResolution);
+    int y = (int)round((sin(fi)) * robotWidth/2/mapResolution);
 
     MapPoint robot = RobotMap::tfRealToMap(robotPose, mapSize, mapResolution);
     circle(inputOutput, Point(robot.x, robot.y), robotWidth/2/mapResolution, color);

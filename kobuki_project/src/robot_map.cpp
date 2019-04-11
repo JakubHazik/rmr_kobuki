@@ -76,7 +76,7 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
                 MapPoint p = tfRealToMap({xp, yp, fp * RAD2DEG});
                 setPointValue(p, getPointValue(p) + _pointValue);
             } catch(...){
-                syslog(LOG_ERR, "Add point to map failed - out of range");
+//                syslog(LOG_ERR, "Add point to map failed - out of range");
             }
         }
         // else do not add measurement to map

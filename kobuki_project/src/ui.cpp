@@ -132,7 +132,7 @@ void MainWindow::refresh() {
 void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi) {
     ui->lineEdit_2->setText(QString::number(robotX));
     ui->lineEdit_3->setText(QString::number(robotY));
-    ui->lineEdit_4->setText(QString::number(robotFi));
+    ui->lineEdit_4->setText(QString::number(robotFi*RAD2DEG));
 }
 
 /**************************
@@ -222,8 +222,6 @@ void MainWindow::on_btn_goToGoal_clicked(){
 
     ui->goalStatus->setText("Processing");
     ui->goalStatus->setStyleSheet("QLabel { color : red }");
-    ui->goalX->setText("");
-    ui->goalY->setText("");
 
     movementProcessing(true);
 }
@@ -239,7 +237,7 @@ void MainWindow::movementProcessing(bool processing) {
 void MainWindow::on_btn_reset_clicked() {
     auto x = ui->resetX->text().toDouble();
     auto y = ui->resetY->text().toDouble();
-    auto fi = ui->resetRot->text().toDouble();
+    auto fi = ui->resetRot->text().toDouble() * DEG2RAD;
     kobuki->setRobotActualPosition(x, y, fi);
 }
 

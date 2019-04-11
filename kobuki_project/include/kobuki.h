@@ -41,7 +41,7 @@ public:
 
     void sendRobotToPosition(double x, double y, SPACE space);
 
-    void updateGlobalMap();  /// todo toto je riadna ******
+//    void updateGlobalMap();  /// todo toto je riadna ******
 
 private:
 

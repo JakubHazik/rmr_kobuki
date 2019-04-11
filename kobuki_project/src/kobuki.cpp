@@ -17,13 +17,13 @@ Kobuki::~Kobuki() {
 }
 
 
-void Kobuki::updateGlobalMap(){
-    LaserMeasurement laserData = lidarInterface->getLaserData();
-    RobotPose odometry = robotInterface->getOdomData();
-
-    syslog(LOG_DEBUG, "Update global map");
-    map.addMeasurement(odometry, &laserData);
-}
+//void Kobuki::updateGlobalMap(){
+//    LaserMeasurement laserData = lidarInterface->getLaserData();
+//    RobotPose odometry = robotInterface->getOdomData();
+//
+//    syslog(LOG_DEBUG, "Update global map");
+//    map.addMeasurement(odometry, &laserData);
+//}
 
 void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
     RobotPose goalPose = {x, y, 0};
@@ -33,20 +33,25 @@ void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
         goalPose = RobotInterface::robot2originSpace(odom, goalPose);
     }
 
-    GlobalPlanner gPlanner(map, odom, goalPose, Kconfig::HW::ROBOT_WIDTH);
-    list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
 
-    gPlannerFloodFill = gPlanner.getFloodFillImage();
-    gPlannerPath = gPlanner.getPathImage();
-    gPlannerWaypoints = gPlanner.getWayPointsImage();
+
+//    GlobalPlanner gPlanner(map, odom, goalPose, Kconfig::HW::ROBOT_WIDTH);
+//    list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
+//
+//    gPlannerFloodFill = gPlanner.getFloodFillImage();
+//    gPlannerPath = gPlanner.getPathImage();
+//    gPlannerWaypoints = gPlanner.getWayPointsImage();
 
 //    waypoints = {{1000,0}, {1000,1000}, {0,0,0}};
+
+    list<RobotPose> waypoints = {goalPose};
     LocalPlanner lPlanner(robotInterface, lidarInterface, waypoints);
     lPlanner.processMovement();
 }
 
 void Kobuki::setRobotActualPosition(double x, double y, double fi) {
     robotInterface->resetOdom(x, y, fi);
+    robotInterface->setRequiredPose({});    // also set goal to 0,0, because robot will want to move
 }
 
 cv::Mat Kobuki::getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan) {
