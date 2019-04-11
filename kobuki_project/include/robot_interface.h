@@ -32,21 +32,17 @@ public:
 
     ~RobotInterface();
 
+    static RobotPose robot2originSpace(RobotPose odom, RobotPose goal);
+
     std::future<void> setRequiredPose(RobotPose goalPose);
 
+    std::future<void> setRequiredPoseOffset(RobotPose goalPose, SPACE space);
+
     std::future<void> setZoneParams(int goalZone);
-    
-    void sendTranslationSpeed(int mmPerSec);
-
-    void sendRotationSpeed(int radPerSec);
-
-    void sendArcSpeed(int mmPerSec, int mmRadius);
 
     void resetOdom(double x = 0, double y = 0, double fi = 0);
 
     RobotPose getOdomData();
-
-    bool sendDataToRobot(std::vector<unsigned char> mess);
 
     bool isGoalAchieved();
 
@@ -96,6 +92,15 @@ private:
     /*
      * Communication interface
      */
+
+    void sendTranslationSpeed(int mmPerSec);
+
+    void sendRotationSpeed(int radPerSec);
+
+    void sendArcSpeed(int mmPerSec, int mmRadius);
+
+    bool sendDataToRobot(const std::vector<unsigned char> &mess);
+
 
     std::vector<unsigned char> setTranslationSpeed(int mmpersec);
 

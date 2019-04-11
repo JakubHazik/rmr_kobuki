@@ -227,19 +227,13 @@ std::vector<unsigned char> RobotInterface::setDefaultPID() {
 void RobotInterface::sendTranslationSpeed(int mmPerSec) {
 //    syslog(LOG_INFO, "Setting translation speed to %d [mm/s]", mmPerSec);
     std::vector<unsigned char> mess = setTranslationSpeed(mmPerSec);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
-        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
-        return;
-    }
+    sendDataToRobot(mess);
 }
 
 void RobotInterface::sendRotationSpeed(int radPerSec) {
 //    syslog(LOG_INFO, "Setting rotation speed to %d [rad/s]", radPerSec);
     std::vector<unsigned char> mess = setRotationSpeed(radPerSec);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
-        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
-        return;
-    }
+    sendDataToRobot(mess);
 }
 
 void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
@@ -251,10 +245,16 @@ void RobotInterface::sendArcSpeed(int mmPerSec, int mmRadius) {
     }
 
     std::vector<unsigned char> mess = setArcSpeed(mmPerSec, mmRadius);
-    if (sendto(rob_s, (char *) mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *) &rob_si_posli, rob_slen) == -1) {
+    sendDataToRobot(mess);
+}
+
+bool RobotInterface::sendDataToRobot(const std::vector<unsigned char> &mess) {
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
+    {
         syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
-        return;
+        return false;
     }
+    return true;
 }
 
 int RobotInterface::checkChecksum(unsigned char *data) {//najprv hlavicku
@@ -516,16 +516,6 @@ void RobotInterface::resetOdom(double x, double y, double fi) {
     odom.fi = fi;
 }
 
-bool RobotInterface::sendDataToRobot(std::vector<unsigned char> mess)
-{
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
-        syslog(LOG_ERR, "[Robot Interface]: Send data to robot failed!");
-        return false;
-    }
-    return true;
-}
-
 std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
     lock_guard<mutex> lk(goalPose_mtx);
     this->goalPose = goalPose;
@@ -538,5 +528,21 @@ std::future<void> RobotInterface::setZoneParams(int goalZone) {
     this->goalZone = goalZone;
     this->zoneAchieved = std::promise<void>();
     return this->zoneAchieved.get_future();
+}
+
+std::future<void> RobotInterface::setRequiredPoseOffset(RobotPose goalPose, SPACE space) {
+    if (space == ROBOT_SPACE) {
+        return setRequiredPose(robot2originSpace(getOdomData(), goalPose));
+    } else if (space == ORIGIN_SPACE) {
+        return setRequiredPose(goalPose);
+    }
+
+    throw std::invalid_argument("scape has no match case");
+}
+
+RobotPose RobotInterface::robot2originSpace(RobotPose odom, RobotPose goal) {
+    double x = goal.x * cos(odom.fi * DEG2RAD) - goal.y + sin(odom.fi * DEG2RAD) + odom.x;
+    double y = goal.x * sin(odom.fi * DEG2RAD) + goal.y + cos(odom.fi * DEG2RAD) + odom.y;
+    return {x, y, 0};
 }
 

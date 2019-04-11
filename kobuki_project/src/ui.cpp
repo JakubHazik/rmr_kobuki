@@ -136,27 +136,27 @@ void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi
 
 void MainWindow::on_button_right_clicked(){
     syslog(LOG_INFO, "Move robot right");
-    kobuki->robotInterface->sendRotationSpeed(-1);
+//    kobuki->robotInterface->sendRotationSpeed(-1);
 }
 
 void MainWindow::on_button_left_clicked(){
     syslog(LOG_INFO, "Move robot left");
-    kobuki->robotInterface->sendRotationSpeed(1);
+//    kobuki->robotInterface->sendRotationSpeed(1);
 };
 
 void MainWindow::on_button_forward_clicked(){
     syslog(LOG_INFO, "Move robot forward");
-    kobuki->robotInterface->sendTranslationSpeed(100);
+//    kobuki->robotInterface->sendTranslationSpeed(100);
 };
 
 void MainWindow::on_button_back_clicked(){
     syslog(LOG_INFO, "Move robot back");
-    kobuki->robotInterface->sendTranslationSpeed(-100);
+//    kobuki->robotInterface->sendTranslationSpeed(-100);
 };
 
 void MainWindow::on_button_stop_clicked(){
     syslog(LOG_INFO, "Stop robot");
-    kobuki->robotInterface->sendTranslationSpeed(0);
+//    kobuki->robotInterface->sendTranslationSpeed(0);
 }
 
 void MainWindow::on_button_start_mapping_clicked(){

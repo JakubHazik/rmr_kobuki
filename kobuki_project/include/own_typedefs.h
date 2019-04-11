@@ -137,4 +137,9 @@ inline MapPoint operator+(const MapPoint &p1, const MapPoint &p2)
     return {p1.x + p2.x, p1.y + p2.y};
 }
 
+enum SPACE {
+    ROBOT_SPACE,
+    ORIGIN_SPACE,
+};
+
 #endif //KOBUKI_PROJECT_OWN_TYPEDEFS_H
