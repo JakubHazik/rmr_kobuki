@@ -576,9 +576,8 @@ std::future<void> RobotInterface::setRequiredPoseOffset(RobotPose goalPose, SPAC
 }
 
 RobotPose RobotInterface::robot2originSpace(RobotPose odom, RobotPose goal) {
-    //TODO fix this pls
-    double x = goal.x * cos(odom.fi) - goal.y + sin(odom.fi) + odom.x;
-    double y = goal.x * sin(odom.fi) + goal.y + cos(odom.fi) + odom.y;
+    double x = goal.x * cos(odom.fi) - goal.y * sin(odom.fi) + odom.x;
+    double y = goal.x * sin(odom.fi) + goal.y * cos(odom.fi) + odom.y;
     return {x, y, 0};
 }
 

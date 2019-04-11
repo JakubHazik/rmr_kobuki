@@ -14,3 +14,7 @@ P1 = [
     0 0 1];
 
 result = P2 * P1 * goal
+
+
+x = goal(1) * cos(robot.fi) - goal(2) * sin(robot.fi) + robot.x
+y = goal(1) * sin(robot.fi) + goal(2) * cos(robot.fi) + robot.y
