@@ -452,7 +452,6 @@ void RobotInterface::t_poseController() {
     bool zoneNotified = false;
     bool goalNotified = false;
 
-
     // this loop is like a timer with ROBOT_POSE_CONTROLLER_PERIOD period
     while (poseControllerThreadRun) {
         auto startPeriodTime = std::chrono::steady_clock::now() + std::chrono::milliseconds((int) (Kconfig::PoseControl::POSE_CONTROLLER_PERIOD * 1000));
@@ -464,11 +463,9 @@ void RobotInterface::t_poseController() {
             poseToGo = this->goalPose;
             goalPose_mtx.unlock();
 
-            if (zoneNotified) {
-                if (__glibc_unlikely(!(poseToGo == poseToGoOld))) {
-                    zoneNotified = false;
-                    goalNotified = false;
-                }
+            if (__glibc_unlikely(!(poseToGo == poseToGoOld))) {
+                zoneNotified = false;
+                goalNotified = false;
             }
 
             RobotPose odomPosition = getOdomData();
@@ -476,18 +473,31 @@ void RobotInterface::t_poseController() {
 
             if (__glibc_unlikely(translationError < goalZone && !zoneNotified)) {
                 // zona je dosiahnuta
-                zoneAchieved.set_value();
+                try {
+                    zoneAchieved.set_value();
+                } catch (std::future_error &e) {
+
+                }
                 zoneNotified = true;
                 syslog(LOG_INFO, "[Robot Interface]: Zone achieved");
             }
 
             // zistovanie ci robot dosiahol bod
-            if (__glibc_unlikely(translationError < Kconfig::PoseControl::GOAL_ACCURACY &&  !goalNotified)) {
+            if (__glibc_unlikely(translationError < Kconfig::PoseControl::GOAL_ACCURACY)) {
+                // notifikuj ak doposil nebolo notifikovane
+                if (__glibc_unlikely(!goalNotified)) {
+                    try {
+                        goalAchieved.set_value();
+                    } catch (std::future_error &e) {
+
+                    }
+                    goalNotified = true;
+                    syslog(LOG_INFO, "[Robot Interface]: Goal achieved");
+                }
+
                 // bod je dosiahnuty
                 sendTranslationSpeed(0);
-                goalAchieved.set_value();
-                goalNotified = true;
-                syslog(LOG_INFO, "[Robot Interface]: Goal achieved");
+                poseToGoOld = poseToGo;
                 continue;
             }
 
@@ -517,6 +527,8 @@ void RobotInterface::resetOdom(double x, double y, double fi) {
 }
 
 std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
+    syslog(LOG_INFO, "[Robot Interface]: send robot to X: %f, Y: %f", goalPose.x, goalPose.y);
+
     this->goalAchieved = std::promise<void>();
 
     lock_guard<mutex> lk(goalPose_mtx);
@@ -564,6 +576,7 @@ std::future<void> RobotInterface::setRequiredPoseOffset(RobotPose goalPose, SPAC
 }
 
 RobotPose RobotInterface::robot2originSpace(RobotPose odom, RobotPose goal) {
+    //TODO fix this pls
     double x = goal.x * cos(odom.fi) - goal.y + sin(odom.fi) + odom.x;
     double y = goal.x * sin(odom.fi) + goal.y + cos(odom.fi) + odom.y;
     return {x, y, 0};

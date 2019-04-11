@@ -69,7 +69,7 @@ private:
     unsigned int rob_slen;
 
     Regulator poseRegulator;
-    RobotPose goalPose = {0};
+    RobotPose goalPose = {0,0,0};
     std::mutex goalPose_mtx;
     std::promise<void> goalAchieved;
 

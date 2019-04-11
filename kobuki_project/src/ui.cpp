@@ -207,7 +207,6 @@ void MainWindow::on_button_map_load_clicked(){
 void MainWindow::on_btn_goToGoal_clicked(){
     double x_to_go = ui->goalX->text().toDouble();
     double y_to_go = ui->goalY->text().toDouble();
-    syslog(LOG_INFO, "Going x = %lf, y = %lf", x_to_go, y_to_go);
 
     SPACE space;
     if (ui->spaceOrigin->isChecked()) {

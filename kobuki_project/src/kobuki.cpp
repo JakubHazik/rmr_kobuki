@@ -33,18 +33,16 @@ void Kobuki::sendRobotToPosition(double x, double y, SPACE space) {
         goalPose = RobotInterface::robot2originSpace(odom, goalPose);
     }
 
+    GlobalPlanner gPlanner(map, odom, goalPose, Kconfig::HW::ROBOT_WIDTH);
+    list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
 
-
-//    GlobalPlanner gPlanner(map, odom, goalPose, Kconfig::HW::ROBOT_WIDTH);
-//    list<RobotPose> waypoints = gPlanner.getRobotWayPoints();
-//
-//    gPlannerFloodFill = gPlanner.getFloodFillImage();
-//    gPlannerPath = gPlanner.getPathImage();
-//    gPlannerWaypoints = gPlanner.getWayPointsImage();
+    gPlannerFloodFill = gPlanner.getFloodFillImage();
+    gPlannerPath = gPlanner.getPathImage();
+    gPlannerWaypoints = gPlanner.getWayPointsImage();
 
 //    waypoints = {{1000,0}, {1000,1000}, {0,0,0}};
 
-    list<RobotPose> waypoints = {goalPose};
+//    list<RobotPose> waypoints = {goalPose};
     LocalPlanner lPlanner(robotInterface, lidarInterface, waypoints);
     lPlanner.processMovement();
 }

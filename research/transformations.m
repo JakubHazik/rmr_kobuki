@@ -14,5 +14,3 @@ P1 = [
     0 0 1];
 
 result = P2 * P1 * goal
-
-x = 
