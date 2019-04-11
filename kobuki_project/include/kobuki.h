@@ -27,7 +27,7 @@ public:
 
     virtual ~Kobuki();
 
-    cv::Mat getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan); // toto bude vraciat veci z visualizera, navolim si ze co vsetko chcem mat v image
+    cv::Mat getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan);
 
     void loadMapFromFile(string filepath);
 
@@ -37,7 +37,7 @@ public:
 
     RobotPose getRobotPosition();
 
-    void setRobotActualPosition(double x, double y, double fi);     //ked sa nacita nejaka mapa tak treba nastavit robota do takej pozicie aby bol spravne usadeny v mape
+    void setRobotActualPosition(double x, double y, double fi);
 
     void sendRobotToPosition(double x, double y, SPACE space);
 

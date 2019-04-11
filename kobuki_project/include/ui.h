@@ -12,6 +12,9 @@
 #include <QTimer>
 
 #include <opencv2/opencv.hpp>
+#include <future>
+#include <chrono>
+
 #include "kobuki.h"
 #include "config_defines.h"
 
@@ -40,7 +43,8 @@ private slots:
     void on_button_map_reset_clicked();
     void on_button_map_save_clicked();
     void on_button_map_load_clicked();
-    void on_button_go_to_pos_clicked();
+    void on_btn_goToGoal_clicked();
+    void on_btn_reset_clicked();
 
 private:
 
@@ -56,6 +60,10 @@ private:
 //    void paintEvent(QPaintEvent *paintEvent) {
 //        QWidget::paintEvent(paintEvent);
 //    }
+
+    void movementProcessing(bool processing);
+    void movementIsDone();
+    future<void> movementDone;
 
 public slots:
     void setOdometryGuiValues(double robotX, double robotY, double robotFi);

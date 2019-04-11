@@ -27,9 +27,7 @@ void LocalPlanner::processMovement() {
             break;
         }
 
-        auto fut_status = zoneAchieved_fut.wait_for(std::chrono::milliseconds(50));
-
-        if (fut_status == std::future_status::ready) {
+        if (zoneAchieved_fut.wait_for(std::chrono::milliseconds(50)) == std::future_status::ready) {
             // zone is achieved
             waypoints.pop_front();
             if (!waypoints.empty()) {
@@ -107,8 +105,8 @@ bool LocalPlanner::collisionCheck(RobotMap &localMap) {
 
     cv::Mat collision;
     cv::bitwise_and(envMap, trajectoryLine, collision);
-    cv::imshow("bit", collision);
-    cv::waitKey(0);
+//    cv::imshow("bit", collision);
+//    cv::waitKey(0);
 
     return cv::countNonZero(collision) != 0;
 }

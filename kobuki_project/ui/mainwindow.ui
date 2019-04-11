@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>811</width>
-    <height>810</height>
+    <width>833</width>
+    <height>831</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,12 +16,12 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="upPanel_layout">
       <property name="sizeConstraint">
        <enum>QLayout::SetFixedSize</enum>
       </property>
       <item>
-       <widget class="QGroupBox" name="controls">
+       <widget class="QGroupBox" name="controls_box">
         <property name="styleSheet">
          <string notr="true">QGroupBox {
     font: bold;
@@ -116,6 +116,9 @@ QGroupBox::title {
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>40</width>
@@ -125,7 +128,13 @@ QGroupBox::title {
        </spacer>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="visualizerOptions_box">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="styleSheet">
          <string notr="true">QGroupBox {
     font: bold;
@@ -136,7 +145,7 @@ QGroupBox::title {
 
 QGroupBox::title {
     subcontrol-origin: margin;
-
+    left: 7px;
     padding: 0px 5px 0px 5px;
 }</string>
         </property>
@@ -155,6 +164,9 @@ QGroupBox::title {
            <property name="text">
             <string>environment</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -167,6 +179,9 @@ QGroupBox::title {
            </property>
            <property name="text">
             <string>laser scan</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -181,6 +196,9 @@ QGroupBox::title {
            <property name="text">
             <string>waypoints</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -193,6 +211,9 @@ QGroupBox::title {
            </property>
            <property name="text">
             <string>path</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -220,13 +241,16 @@ QGroupBox::title {
            <property name="text">
             <string>robot</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
         </layout>
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="map">
+       <widget class="QGroupBox" name="mapActions_box">
         <property name="styleSheet">
          <string notr="true">QGroupBox {
     font: bold;
@@ -334,12 +358,12 @@ QGroupBox::title {
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="downPanel_layout">
       <property name="sizeConstraint">
        <enum>QLayout::SetFixedSize</enum>
       </property>
       <item>
-       <widget class="QGroupBox" name="visualizerbox">
+       <widget class="QGroupBox" name="visualizer_box">
         <property name="styleSheet">
          <string notr="true">QGroupBox {
     font: bold;
@@ -403,7 +427,7 @@ QGroupBox::title {
          </spacer>
         </item>
         <item>
-         <widget class="QGroupBox" name="goal_2">
+         <widget class="QGroupBox" name="goal_box">
           <property name="styleSheet">
            <string notr="true">QGroupBox {
     font: bold;
@@ -421,7 +445,7 @@ QGroupBox::title {
           <property name="title">
            <string>Goal</string>
           </property>
-          <layout class="QGridLayout" name="goal">
+          <layout class="QGridLayout" name="goals">
            <item row="2" column="0">
             <widget class="QLabel" name="label_6">
              <property name="text">
@@ -430,7 +454,7 @@ QGroupBox::title {
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QLineEdit" name="edit_go_y">
+            <widget class="QLineEdit" name="goalY">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -447,14 +471,14 @@ QGroupBox::title {
             </widget>
            </item>
            <item row="5" column="1">
-            <widget class="QPushButton" name="button_go_to_pos">
+            <widget class="QPushButton" name="btn_goToGoal">
              <property name="text">
               <string>GO</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QLineEdit" name="edit_go_x">
+            <widget class="QLineEdit" name="goalX">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -464,7 +488,7 @@ QGroupBox::title {
             </widget>
            </item>
            <item row="1" column="0" colspan="2">
-            <widget class="QGroupBox" name="groupBox_2">
+            <widget class="QGroupBox" name="goalSpace_box">
              <property name="styleSheet">
               <string notr="true">
 font: 57 italic 11pt &quot;Ubuntu&quot;;</string>
@@ -495,6 +519,11 @@ font: 57 italic 11pt &quot;Ubuntu&quot;;</string>
            </item>
            <item row="6" column="1">
             <widget class="QLabel" name="goalStatus">
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+color:  green;
+}</string>
+             </property>
              <property name="text">
               <string>No goal</string>
              </property>
@@ -511,7 +540,7 @@ font: 57 italic 11pt &quot;Ubuntu&quot;;</string>
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="resetodom">
+         <widget class="QGroupBox" name="resetodom_box">
           <property name="styleSheet">
            <string notr="true">QGroupBox {
     font: bold;
@@ -592,7 +621,7 @@ QGroupBox::title {
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="odom_2">
+         <widget class="QGroupBox" name="odom_box">
           <property name="styleSheet">
            <string notr="true">QGroupBox {
     font: bold;

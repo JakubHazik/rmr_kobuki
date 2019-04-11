@@ -522,7 +522,7 @@ std::future<void> RobotInterface::setRequiredPose(RobotPose goalPose) {
     lock_guard<mutex> lk(goalPose_mtx);
     if (goalPose == this->goalPose) {
         // if old and new target is the same, return future which is done
-        syslog(LOG_INFO, "[Robot Interface]: goal which is set is achieved already");
+        syslog(LOG_INFO, "[Robot Interface]: goal which has been set is achieved already");
         this->goalAchieved.set_value();
         return this->goalAchieved.get_future();
     }
@@ -540,6 +540,7 @@ std::future<void> RobotInterface::setZoneParams(int goalZone) {
 
     if (translationError < goalZone) {
         // if robot is in zone, return future which is done
+        syslog(LOG_INFO, "[Robot Interface]: zone which has been set is achieved already");
         this->zoneAchieved.set_value();
         return this->zoneAchieved.get_future();
     }

@@ -1,7 +1,6 @@
 //
 // Created by jakub on 13.2.2019.
 //
-
 #include "../include/ui.h"
 #include "../ui/ui_mainwindow.h"
 
@@ -28,12 +27,19 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::refresh() {
-    syslog(LOG_INFO, "R");
+//    syslog(LOG_INFO, "R");
+
+    if (movementDone.valid()) {
+        if (future_status::ready == movementDone.wait_for(std::chrono::seconds(0))) {
+            movementIsDone();
+        }
+    }
 
     RobotPose odometry = kobuki->getRobotPosition();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
-    cv::Mat mat = kobuki->getEnvironmentAsImage(true, true, true, true, true);
+    cv::Mat mat = kobuki->getEnvironmentAsImage(ui->show_env->isChecked(), ui->show_waypoins->isChecked(),
+            ui->show_path->isChecked(), ui->show_floodfill->isChecked(), ui->show_laser->isChecked());
     QPixmap pixmap = QPixmap::fromImage(QImage((unsigned char*) mat.data, mat.cols, mat.rows, QImage::Format_RGB888));
     ui->visualizer->setPixmap(pixmap.scaled(ui->visualizer->width(),ui->visualizer->height(),Qt::KeepAspectRatio));
 
@@ -156,6 +162,7 @@ void MainWindow::on_button_back_clicked(){
 void MainWindow::on_button_stop_clicked(){
     syslog(LOG_INFO, "Stop robot");
 //    kobuki->robotInterface->sendTranslationSpeed(0);
+    movementProcessing(true);
 }
 
 void MainWindow::on_button_start_mapping_clicked(){
@@ -197,9 +204,9 @@ void MainWindow::on_button_map_load_clicked(){
     }
 };
 
-void MainWindow::on_button_go_to_pos_clicked(){
-    double x_to_go = ui->edit_go_x->text().toDouble();
-    double y_to_go = ui->edit_go_y->text().toDouble();
+void MainWindow::on_btn_goToGoal_clicked(){
+    double x_to_go = ui->goalX->text().toDouble();
+    double y_to_go = ui->goalY->text().toDouble();
     syslog(LOG_INFO, "Going x = %lf, y = %lf", x_to_go, y_to_go);
 
     SPACE space;
@@ -211,8 +218,34 @@ void MainWindow::on_button_go_to_pos_clicked(){
         throw invalid_argument("no radio button is checked");
     }
 
-    kobuki->sendRobotToPosition(x_to_go, y_to_go, space);
+    movementDone = std::async(std::launch::async, &Kobuki::sendRobotToPosition, kobuki, x_to_go, y_to_go, space);
 
     ui->goalStatus->setText("Processing");
+    ui->goalStatus->setStyleSheet("QLabel { color : red }");
+    ui->goalX->setText("");
+    ui->goalY->setText("");
+
+    movementProcessing(true);
+}
+
+void MainWindow::movementProcessing(bool processing) {
+    ui->mapActions_box->setEnabled(!processing);
+//    ui->button_map_save->setEnabled(true);
+    ui->controls_box->setEnabled(!processing);
+    ui->goal_box->setEnabled(!processing);
+    ui->resetodom_box->setEnabled(!processing);
+}
+
+void MainWindow::on_btn_reset_clicked() {
+    auto x = ui->resetX->text().toDouble();
+    auto y = ui->resetY->text().toDouble();
+    auto fi = ui->resetRot->text().toDouble();
+    kobuki->setRobotActualPosition(x, y, fi);
+}
+
+void MainWindow::movementIsDone() {
+    movementProcessing(false);
+    ui->goalStatus->setText("Movement Done");
+    ui->goalStatus->setStyleSheet("QLabel { color : green }");
 }
 
