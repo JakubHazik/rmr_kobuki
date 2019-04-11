@@ -11,6 +11,7 @@
 #include "own_typedefs.h"
 #include "global_planner.h"
 #include "config_defines.h"
+
 #include <list>
 #include <mutex>
 #include <future>
@@ -28,9 +29,21 @@ public:
 
     void stopMovement();
 
+    cv::Mat getPathImage();
+    cv::Mat getWayPointsImage();
+    cv::Mat getFloodFillImage();
+
 private:
     RobotInterface *robotInterface;
     LidarInterface *lidarInterface;
+
+    std::mutex waypoints_mtx;
+    list<RobotPose> waypoints;
+
+    std::mutex images_mtx;
+    cv::Mat floodFillImage;
+    cv::Mat waypointsImage;
+    cv::Mat pathImage;
 
     /**
      * Compute collision on the robot way to goal position
@@ -39,11 +52,7 @@ private:
      */
     bool collisionCheck(RobotMap &localMap, RobotPose goalWaypoint);
 
-    std::mutex waypoints_mtx;
-    list<RobotPose> waypoints;
-
     list<RobotPose> computeBypass();
-
 };
 
 

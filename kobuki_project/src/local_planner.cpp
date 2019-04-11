@@ -80,6 +80,13 @@ list<RobotPose> LocalPlanner::computeBypass() {
     syslog(LOG_NOTICE, "[Local planner]: Collision detected");
 
     GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), firstWaypoint, Kconfig::HW::ROBOT_WIDTH);
+
+    images_mtx.lock();
+    floodFillImage = globalPlanner.getFloodFillImage();
+    waypointsImage = globalPlanner.getWayPointsImage();
+    pathImage = globalPlanner.getPathImage();
+    images_mtx.unlock();
+
     auto bypassPoints = globalPlanner.getRobotWayPoints();
     bypassPoints.pop_back();    // last point is useless, I keep it in this->waypoints
     return bypassPoints;
@@ -134,5 +141,20 @@ void LocalPlanner::stopMovement() {
     waypoints.clear();
     waypoints_mtx.unlock();
     robotInterface->setRequiredPoseOffset(robotInterface->getOdomData(), SPACE::ORIGIN_SPACE);
+}
+
+cv::Mat LocalPlanner::getPathImage() {
+    lock_guard<mutex> lk(images_mtx);
+    return pathImage;
+}
+
+cv::Mat LocalPlanner::getWayPointsImage() {
+    lock_guard<mutex> lk(images_mtx);
+    return waypointsImage;
+}
+
+cv::Mat LocalPlanner::getFloodFillImage() {
+    lock_guard<mutex> lk(images_mtx);
+    return floodFillImage;
 }
 

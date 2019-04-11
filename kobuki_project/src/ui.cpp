@@ -29,18 +29,31 @@ MainWindow::~MainWindow() {
 void MainWindow::refresh() {
 //    syslog(LOG_INFO, "R");
 
+    // unblock UI if movement is processed
     if (movementDone.valid()) {
         if (future_status::ready == movementDone.wait_for(std::chrono::seconds(0))) {
             movementIsDone();
         }
     }
 
+    // write odometry to Ui
     RobotPose odometry = kobuki->getRobotPosition();
     setOdometryGuiValues(odometry.x, odometry.y, odometry.fi);
 
-    cv::Mat mat = kobuki->getEnvironmentAsImage(ui->show_env->isChecked(), ui->show_waypoins->isChecked(),
-            ui->show_path->isChecked(), ui->show_floodfill->isChecked(), ui->show_laser->isChecked());
+    // detect which planner user want to show
+    Kobuki::PLANNER_TYPE showPlannerType;
+    bool localPlannerChecked = ui->localPlanner_rb->isChecked();
+    if (localPlannerChecked) {
+        showPlannerType = Kobuki::PLANNER_TYPE::LOCAL;
+    } else {
+        showPlannerType = Kobuki::PLANNER_TYPE::GLOBAL;
+    }
+    // convert cv::Mat to QPixmap
+    cv::Mat mat = kobuki->getEnvironmentAsImage(showPlannerType, ui->show_env->isChecked(), ui->show_waypoins->isChecked(),
+                                                ui->show_path->isChecked(), ui->show_floodfill->isChecked(),
+                                                ui->show_laser->isChecked());
     QPixmap pixmap = QPixmap::fromImage(QImage((unsigned char*) mat.data, mat.cols, mat.rows, QImage::Format_RGB888));
+    // show pixmap
     ui->visualizer->setPixmap(pixmap.scaled(ui->visualizer->width(),ui->visualizer->height(),Qt::KeepAspectRatio));
 
     update();

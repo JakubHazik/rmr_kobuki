@@ -53,27 +53,42 @@ void Kobuki::setRobotActualPosition(double x, double y, double fi) {
     robotInterface->setRequiredPose({});    // also set goal to 0,0, because robot will want to move
 }
 
-cv::Mat Kobuki::getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan) {
+cv::Mat Kobuki::getEnvironmentAsImage(PLANNER_TYPE planner, bool environment, bool waypoints, bool path, bool floodFill,
+                                      bool laserScan) {
     Visualizer visualizer(map.getSize(), Kconfig::HW::ROBOT_WIDTH, map.getResolution());
 
     if (environment) {
         visualizer.environmentMap = map.getCVMatMap();
     }
 
-    if (waypoints) {
-        visualizer.waypoints = gPlannerWaypoints;
-    }
-
-    if (path) {
-        visualizer.path = gPlannerPath;
-    }
-
-    if (floodFill) {
-        visualizer.floodFill = gPlannerFloodFill;
-    }
-
     if (laserScan) {
         visualizer.laserScan = lidarInterface->getRobotMap().getCVMatMap();
+    }
+
+    if (planner == PLANNER_TYPE::GLOBAL) {
+        if (waypoints) {
+            visualizer.waypoints = gPlannerWaypoints;
+        }
+
+        if (path) {
+            visualizer.path = gPlannerPath;
+        }
+
+        if (floodFill) {
+            visualizer.floodFill = gPlannerFloodFill;
+        }
+    } else if (planner == PLANNER_TYPE::LOCAL) {
+        if (waypoints) {
+            visualizer.waypoints = lPlanner->getWayPointsImage();
+        }
+
+        if (path) {
+            visualizer.path = lPlanner->getPathImage();
+        }
+
+        if (floodFill) {
+            visualizer.floodFill = lPlanner->getFloodFillImage();
+        }
     }
 
     return visualizer.getImage(robotInterface->getOdomData());

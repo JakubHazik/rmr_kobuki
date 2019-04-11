@@ -23,11 +23,17 @@ using namespace std;
 
 class Kobuki {
 public:
+    enum PLANNER_TYPE {
+        LOCAL,
+        GLOBAL
+    };
+
     explicit Kobuki();
 
     virtual ~Kobuki();
 
-    cv::Mat getEnvironmentAsImage(bool environment, bool waypoints, bool path, bool floodFill, bool laserScan);
+    cv::Mat getEnvironmentAsImage(PLANNER_TYPE planner, bool environment, bool waypoints, bool path, bool floodFill,
+                                      bool laserScan);
 
     void loadMapFromFile(string filepath);
 
