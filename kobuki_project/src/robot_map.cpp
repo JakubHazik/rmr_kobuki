@@ -119,11 +119,7 @@ MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
 }
 
-cv::Mat RobotMap::getCVMatMap() {        // TODO tuto necheme treshold argument
-    int threshold_value = 1;       //TODO doimplementovat
-    /// Filter proability
-    filterSpeckles(threshold_value);
-
+cv::Mat RobotMap::getCVMatMap() {
     // we have to clone cv::Mat, instead on we return only reference to cv::Mat
     return data.clone();
 }
@@ -148,7 +144,11 @@ unsigned short RobotMap::getPointValue(MapPoint point) {
     return data.at<ushort>(Point(point.x, point.y));
 }
 
-void RobotMap::filterSpeckles(int threshold_value) {
+void RobotMap::filterSpeckles() {
+    int threshold_value = 1;
+    // TODO: vyratat threshold na zaklade percent, najst napriklad priemernu hodnotu, maximalnu a filtrovat napriklad na zaklade aspon 80% vyskytu
+
+
     /// @1 - input image
     /// @2 - output image
     /// @3 - threshold value
@@ -158,10 +158,9 @@ void RobotMap::filterSpeckles(int threshold_value) {
 }
 
 RobotMap RobotMap::getRobotMap() {
-    // TODO filter map probability, return map only as 0, 1
-    // filterSpeckles()
+    filterSpeckles();
 
-    return RobotMap(data.clone(), resolution); // TODO tuto bude output.clone()
+    return RobotMap(outputMap.clone(), resolution);
 }
 
 bool RobotMap::containPoint(MapPoint point) {

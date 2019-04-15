@@ -17,15 +17,6 @@ Kobuki::~Kobuki() {
     delete lidarInterface;
 }
 
-
-//void Kobuki::updateGlobalMap(){
-//    LaserMeasurement laserData = lidarInterface->getLaserData();
-//    RobotPose odometry = robotInterface->getOdomData();
-//
-//    syslog(LOG_DEBUG, "Update global map");
-//    map.addMeasurement(odometry, &laserData);
-//}
-
 void Kobuki::moveRobotToPosition(double x, double y, SPACE space) {
     RobotPose goalPose = {x, y, 0};
     RobotPose odom = robotInterface->getOdomData();

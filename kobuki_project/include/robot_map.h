@@ -101,7 +101,7 @@ public:
      * Filter measured dataset with given threshold value
      * @param threshold_value lidar noise filter
      */
-    void filterSpeckles(int threshold_value);
+    void filterSpeckles();
 
     RobotMap getRobotMap();
 
@@ -149,7 +149,7 @@ public:
 
 private:
     cv::Mat data;
-    cv::Mat outputMap;  //TODO toto bude vystupna mapa
+    cv::Mat outputMap;
     int resolution;     // mapResolution of one cell in [mm]
     void printWallToMap(const std::vector<MapPoint> &corners);
     void translateMap(MapPoint direction);

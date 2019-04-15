@@ -54,7 +54,12 @@ public:
 private:
 
     RobotInterface *robot;
-    RobotMap localMap;  //TODO mapa ktora uchovava poslednych 100 scanov (mozne parametrizovat)
+
+    /// localMap contains (int) Kconfig::LidarControl::DATA_HOLD_COEFFICIENT of last scans
+    /// Given coefficient presents maximum number in map as well, so measurement with this value
+    /// is the newest one and every single lower value of point represents older measurement
+    /// At the end, 0 value represents no obstacle or forgotten obstacle older than DATA_HOLD_COEFFICIENT cycles
+    RobotMap localMap;
 
 //    function<void(LaserMeasurement)> laserMeasurementCallback = nullptr;
 //    thread callback_t;
@@ -75,6 +80,10 @@ private:
 
     void t_readLaserData();
 
+    /**
+     * Local map update function, adds measurement to map with forgetting factor
+     * @param laserData
+     */
     void updateLocalMap(LaserMeasurement laserData);
 };
 

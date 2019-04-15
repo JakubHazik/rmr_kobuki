@@ -52,8 +52,6 @@ public:
      */
     void stopRobotMovement();
 
-//    void updateGlobalMap();  /// todo toto je riadna ******
-
 private:
 
     RobotInterface *robotInterface;
