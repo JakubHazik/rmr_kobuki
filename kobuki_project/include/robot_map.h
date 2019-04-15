@@ -40,11 +40,27 @@ public:
 
     /**
      * Adding current set of measuremets from lidar and odometry to enviroment Map
-     * Increment points in map where obstacles were found
+     *
+     * Working with incrementation principe - increment points in map where obstacles were found
+     *
      * @param - robotPose current position from odometry
      * @param - laserMeasurement set of measurements from lidar
      */
     void addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasurement, unsigned short _pointValue = 2);
+
+    /**
+     * Adding current set of measuremets from lidar and odometry to enviroment Map
+     *
+     * Implemented with forgetting factor. _pointValue is used as maximal value of point in map and also as n.o. iterations to fully get rid off measurement from map.
+     *
+     * In each iteration is whole map decremented by 1, that means the smaller value point in map goes, the older is the measurement.
+     * Every cycle is the newest measurement written to map with given maximal value of point.
+     *
+     * @param - robotPose current position from odometry
+     * @param - laserMeasurement set of measurements from lidar
+     * @param _pointValue defined constant of maximal value for new point
+     */
+    void addMeasurementForgetting(RobotPose robotPose, LaserMeasurement *laserMeasurement, unsigned short _pointValue = 2);
 
     /**
      * Save Map class to .yaml file for future purposes

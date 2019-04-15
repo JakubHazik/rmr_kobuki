@@ -83,6 +83,38 @@ void RobotMap::addMeasurement(RobotPose robotPose, LaserMeasurement *laserMeasur
     }
 }
 
+void RobotMap::addMeasurementForgetting(RobotPose robotPose,
+                                        LaserMeasurement *laserMeasurement,
+                                        unsigned short _pointValue)
+{
+    /// Firstly, decrement whole Matrix
+    for(int i = 0; i < data.rows; i++){
+        for(int j = 0; j < data.cols; j++){
+            setPointValue({i,j}, (getPointValue({i,j}) - 1));
+        }
+    }
+
+    /// Then add all new points with maximal value
+    for(int k = 0; k < laserMeasurement->numberOfScans; k++)
+    {
+        double distance = laserMeasurement->Data[k].scanDistance;
+        if(distance > 130){
+            // lower than 13 cm - garbage
+            double fp = robotPose.fi + (360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD;
+            double xp = robotPose.x + distance * cos(fp);
+            double yp = robotPose.y + distance * sin(fp);
+
+            try{
+                MapPoint p = tfRealToMap({xp, yp, fp * RAD2DEG});
+                setPointValue(p, _pointValue);
+            } catch(...){
+//                syslog(LOG_ERR, "Add point to map failed - out of range");
+            }
+        }
+        // else do not add measurement to map
+    }
+}
+
 MapPoint RobotMap::getSize() {
     return {data.rows, data.cols};
 }

@@ -69,5 +69,5 @@ void LidarInterface::updateLocalMap(LaserMeasurement laserData){
 
     localMap.clearMap();
 
-    localMap.addMeasurement(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
+    localMap.addMeasurementForgetting(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
 }
