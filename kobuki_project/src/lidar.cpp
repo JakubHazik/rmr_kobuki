@@ -18,11 +18,11 @@ void Lidar::receiveCommandUDP()
     {
         if ((received_length = recvfrom(socket_FD, buf, 1, 0, (struct sockaddr *) &socket_other, &socket_FD_length)) == -1)
         {
-            syslog(LOG_ERR, "Receive from fd: %d failed", socket_FD);
+            syslog(LOG_ERR, "[Lidar]: Receive from fd: %d failed", socket_FD);
         }
 
-        syslog(LOG_NOTICE, "Received packet from %s:%d\n", inet_ntoa(socket_other.sin_addr), ntohs(socket_other.sin_port));
-        syslog(LOG_NOTICE, "Data: %s\n" , buf);
+        syslog(LOG_NOTICE, "[Lidar]: Received packet from %s:%d\n", inet_ntoa(socket_other.sin_addr), ntohs(socket_other.sin_port));
+        syslog(LOG_NOTICE, "[Lidar]: Data: %s\n" , buf);
     }
 }
 
@@ -31,7 +31,7 @@ int Lidar::start()
 {
     if( hCom== -1 )
     {
-        syslog(LOG_ERR, "Lidar is not connected");
+        syslog(LOG_ERR, "[Lidar]: Lidar is not connected");
         return -1;
     }
 
@@ -46,7 +46,7 @@ int Lidar::start()
     ktorePosielam=-1;
     stopMeasurement=0;
 
-    syslog(LOG_INFO, "Lidar connected, create lidar read thread");
+    syslog(LOG_INFO, "[Lidar]: Lidar connected, create lidar read thread");
 
     threadID=pthread_create(&threadHandle,nullptr,&lidarThread,(void *)this);
     return threadID;
@@ -107,7 +107,7 @@ int Lidar::measure()
 {
     Start:
     if(stopMeasurement == 1){
-        syslog(LOG_INFO, "Measure stopped by user.");
+        syslog(LOG_INFO, "[Lidar]: Measure stopped by user.");
         return -1;
     }
 
@@ -116,18 +116,18 @@ int Lidar::measure()
     ssize_t Pocet;
     usleep(100 * 1000);
     Pocet = write(hCom, &requestS, 2);
-    syslog(LOG_DEBUG, "Request sent: %zd\n", Pocet);
+    syslog(LOG_DEBUG, "[Lidar]: Request sent: %zd\n", Pocet);
     usleep(100 * 1000);
 
     /// Clear buffer again
     char vystup[2000];
     Pocet = read(hCom, &vystup, 2000);
-    syslog(LOG_DEBUG, "Cleared:  %zd\n", Pocet);
+    syslog(LOG_DEBUG, "[Lidar]: Cleared:  %zd\n", Pocet);
 
     if(Pocet == -1 || Pocet == 2000)
     {
         Pocet = read(hCom, &vystup, 2000);
-        syslog(LOG_DEBUG, "Cleared (2): %zd\n", Pocet);
+        syslog(LOG_DEBUG, "[Lidar]: Cleared (2): %zd\n", Pocet);
     }
 
     /// Send request to start measure
@@ -158,8 +158,8 @@ int Lidar::measure()
 
     if((dataR[0] != 0xa5)&&(dataR[1] != 0x5a))
     {
-        syslog(LOG_ERR, "Received %zd bytes (expected 7) - %i", Pocet, errno);
-        syslog(LOG_ERR, "nieco je zle, prve vratene byty nesuhlasia s odpovedou vo funkcii measure() %x %x %x %x %x %x %x\n",dataR[0],dataR[1],dataR[2],dataR[3],dataR[4],dataR[5],dataR[6]);
+        syslog(LOG_ERR, "[Lidar]: Received %zd bytes (expected 7) - %i", Pocet, errno);
+        syslog(LOG_ERR, "[Lidar]: nieco je zle, prve vratene byty nesuhlasia s odpovedou vo funkcii measure() %x %x %x %x %x %x %x\n",dataR[0],dataR[1],dataR[2],dataR[3],dataR[4],dataR[5],dataR[6]);
         goto Start;
     }
     usleep(50*1000);
@@ -186,7 +186,7 @@ int Lidar::measure()
                 //--podozrenie ze sa nieco dosralo a niesom uplne prvy kus merania
                 if((indexKamPisem < 15) && (ktoreZapisujem != -1) && (indexKamPisem != 0))
                 {
-                    syslog(LOG_ERR, "Something went wrong");
+                    syslog(LOG_ERR, "[Lidar]: Something went wrong");
                     goto Start;
                 }
 
@@ -203,7 +203,7 @@ int Lidar::measure()
                 //tu preposleme cele meranie na siet...
                 if (sendto(socket_FD, (char*)&localMeranie[kdeJeCele].Data, sizeof(LaserData)*localMeranie[kdeJeCele].numberOfScans, 0, (struct sockaddr*) &socket_send, socket_FD_length) == -1)
                 {
-                    syslog(LOG_ERR, "Send failed (%d)", socket_FD);
+                    syslog(LOG_ERR, "[Lidar]: Send failed (%d)", socket_FD);
                 }
             }
             unsigned char pomoc = dataR[0];

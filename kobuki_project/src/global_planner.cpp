@@ -29,7 +29,7 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
     startPoint = map.tfRealToMap(startPose);
 
     if (map.getPointValue(startPoint) == 1) {
-        string message = "GlobalPLanner: start pose is in wall or to close to wall";
+        string message = "[GlobalPLanner]: start pose is in wall or to close to wall";
         syslog(LOG_ERR, "%s", message.c_str());
         throw invalid_argument(message);
     }
@@ -38,7 +38,7 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
     goalPoint = map.tfRealToMap(goalPose);
 
     if (map.getPointValue(goalPoint) == 1) {
-        string message = "GlobalPLanner: goal pose is in wall or to close to wall";
+        string message = "[GlobalPLanner]: goal pose is in wall or to close to wall";
         syslog(LOG_ERR, "%s", message.c_str());
         throw invalid_argument(message);
     }
@@ -145,7 +145,7 @@ MapPoint GlobalPlanner::findNextDirection(const MapPoint &point, FFDirection &di
         }
     }
 
-    throw NoPathException("GlobalPlanner: findNextDirection: floodfill have no fall gradient in point: [" + to_string(point.x) + ", " + to_string(point.y) + "]");
+    throw NoPathException("[GlobalPlanner]: findNextDirection: floodfill have no fall gradient in point: [" + to_string(point.x) + ", " + to_string(point.y) + "]");
 }
 
 list<RobotPose> GlobalPlanner::getRobotWayPoints() {

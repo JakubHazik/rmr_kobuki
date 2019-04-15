@@ -53,7 +53,7 @@ void RobotMap::saveToFile(std::string filename) {
         myfile<< cv::format(data, cv::Formatter::FMT_CSV) << std::endl;
         myfile.close();
     } else {
-        throw invalid_argument("RobotMap: saveToFile: incorrect file extension");
+        throw invalid_argument("[RobotMap]: saveToFile: incorrect file extension");
     }
 }
 
@@ -134,7 +134,7 @@ int RobotMap::getResolution() {
 
 void RobotMap::setPointValue(MapPoint point, unsigned short value) {
     if (__glibc_unlikely(!containPoint(point))) {
-        throw invalid_argument("RobotMap: Set point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
+        throw invalid_argument("[RobotMap]: Set point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
         + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
     data.at<ushort>(Point(point.x, point.y)) = (value > USHRT_MAX) ? (unsigned short) USHRT_MAX : value;
@@ -142,7 +142,7 @@ void RobotMap::setPointValue(MapPoint point, unsigned short value) {
 
 unsigned short RobotMap::getPointValue(MapPoint point) {
     if (__glibc_unlikely(!containPoint(point))) {
-        throw invalid_argument("RobotMap: Get point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
+        throw invalid_argument("[RobotMap]: Get point is out of range ( " + to_string(point.x) + ", " + to_string(point.y) + "), size: ("
                                + to_string(getSize().x) + ", " + to_string(getSize().y) + ")");
     }
     return data.at<ushort>(Point(point.x, point.y));
@@ -182,7 +182,7 @@ MapPoint RobotMap::tfRealToMap(RobotPose realSpacePose) {
     mapPose.x = int(round(realSpacePose.x / resolution) + data.rows / 2);
     mapPose.y = int(data.cols / 2 - round(realSpacePose.y / resolution));
     if (__glibc_unlikely(!containPoint(mapPose))) {
-        throw invalid_argument("RobotMap: tfRealToMap: transformation result is out of map range ( " + to_string(mapPose.x) + ", " + to_string(mapPose.y) + "), size: ("
+        throw invalid_argument("[RobotMap]: tfRealToMap: transformation result is out of map range ( " + to_string(mapPose.x) + ", " + to_string(mapPose.y) + "), size: ("
                                + to_string(data.rows) + ", " + to_string(data.cols) + ")");
     }
     return mapPose;

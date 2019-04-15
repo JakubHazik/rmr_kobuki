@@ -15,12 +15,12 @@ LidarInterface::~LidarInterface() {
 }
 
 void LidarInterface::t_readLaserData() {
-    syslog(LOG_INFO, "readLaserData thread started");
+    syslog(LOG_INFO, "[LidarInterface]: ReadLaserData thread started");
     // Initialize Winsock
 
     socket_FD_length = sizeof(socket_other);
     if ((socket_FD = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-        syslog(LOG_ERR, "Create socket failed");
+        syslog(LOG_ERR, "[LidarInterface]: Create socket failed");
     }
 
     int las_broadcastene = 1;
@@ -37,13 +37,13 @@ void LidarInterface::t_readLaserData() {
     socket_send.sin_addr.s_addr = inet_addr(Kconfig::Defaults::ROBOT_IP_ADDRESS.data());//htonl(INADDR_BROADCAST);
     bind(socket_FD, (struct sockaddr *) &socket_me, sizeof(socket_me));
 
-    syslog(LOG_INFO, "Lidar sockets created, send empty command to lidar");
+    syslog(LOG_INFO, "[LidarInterface]: Lidar sockets created, send empty command to lidar");
 
     //najskor posleme prazdny prikaz
     char command = 0x00;
     if (sendto(socket_FD, &command, sizeof(command), 0, (struct sockaddr *) &socket_send, socket_FD_length) == -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
     {
-        syslog(LOG_ERR, "Send empty command failed");
+        syslog(LOG_ERR, "[LidarInterface]: Send empty command failed");
     }
 
     while (laserDataThreadRun) {
