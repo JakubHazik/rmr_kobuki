@@ -54,7 +54,8 @@ private:
      */
     bool collisionCheck(RobotMap &localMap, RobotPose goalWaypoint);
 
-    list<RobotPose> computeBypass();
+    list<RobotPose> computeBypass(RobotPose goalPoint);
+
 };
 
 
