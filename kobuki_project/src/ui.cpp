@@ -52,7 +52,7 @@ void MainWindow::refresh() {
     cv::Mat mat = kobuki->getEnvironmentAsImage(showPlannerType, ui->show_env->isChecked(), ui->show_waypoins->isChecked(),
                                                 ui->show_path->isChecked(), ui->show_floodfill->isChecked(),
                                                 ui->show_laser->isChecked());
-    QPixmap pixmap = QPixmap::fromImage(QImage((unsigned char*) mat.data, mat.cols, mat.rows, QImage::Format_RGB888));
+    QPixmap pixmap = QPixmap::fromImage(QImage((unsigned char*) mat.data, mat.cols, mat.rows, QImage::Format_RGB888).rgbSwapped());
     // show pixmap
     ui->visualizer->setPixmap(pixmap.scaled(ui->visualizer->width(),ui->visualizer->height(),Qt::KeepAspectRatio));
 
