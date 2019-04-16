@@ -31,6 +31,8 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
     if (map.getPointValue(startPoint) == 1) {
         string message = "[GlobalPLanner]: start pose is in wall or to close to wall";
         syslog(LOG_ERR, "%s", message.c_str());
+        map.setPointValue(startPoint, 255);
+        map.showMap();
         throw invalid_argument(message);
     }
 
@@ -40,6 +42,8 @@ void GlobalPlanner::setStartEndPose(RobotPose startPose, RobotPose goalPose) {
     if (map.getPointValue(goalPoint) == 1) {
         string message = "[GlobalPLanner]: goal pose is in wall or to close to wall";
         syslog(LOG_ERR, "%s", message.c_str());
+        map.setPointValue(goalPoint, 255);
+        map.showMap();
         throw invalid_argument(message);
     }
 }

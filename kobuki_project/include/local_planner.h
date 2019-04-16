@@ -47,6 +47,8 @@ private:
 
     /**
      * Compute collision on the robot way to goal position
+     * Compute time: for map resolution: 10 -> 3.4ms    image 1200x1200
+     *                                   50 -> 0.4ms    image 240x240
      * @param localMap Map of local environment
      * @return True if way contain a collision
      */

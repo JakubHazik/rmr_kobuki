@@ -171,7 +171,7 @@ void RobotMap::showMap() {
     cv::Mat output;
     data.convertTo(output, CV_8UC1);
     resize(output, output, Size(), SHOW_IMAGE_SCALE_FACTOR, SHOW_IMAGE_SCALE_FACTOR);
-    imshow("Robot map", output);
+    imshow("Robot map", output*126);
     cv::waitKey(0);
 }
 

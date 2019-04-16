@@ -2,9 +2,29 @@
 // Created by jakub on 14.3.2019.
 //
 /*
+ * Computation speed:
+ *  Measured searching goal across whole idea (map resolution=50):
+ *   -O4 : 14 ms
+ *   -O2: 14 ms
+ *   without O: 20 ms
+ *
  * Usage:
- *   GlobalPlanner gPlanner(map, RobotPose{0,0}, RobotPose{-500, 500}, 20.5);
- *   auto way = gPlanner.getRobotWayPoints();      // get queue of waypoints in robot real space coordinates
+    RobotMap map("../ideal_map.txt", true, RobotPose{500,500});
+
+    Visualizer vis(map.getSize(), Kconfig::HW::ROBOT_WIDTH, Kconfig::Defaults::MAP_RESOLUTION);
+    auto odom = RobotPose{0,0};
+    auto goal = RobotPose{4500, 3500};
+
+    GlobalPlanner gPlanner(map, odom, goal, Kconfig::HW::ROBOT_WIDTH);
+    auto way = gPlanner.getRobotWayPoints();
+
+    vis.environmentMap = map.getCVMatMap();
+    vis.waypoints = gPlanner.getWayPointsImage();
+    vis.floodFill = gPlanner.getFloodFillImage();
+    vis.path = gPlanner.getPathImage();
+    auto img = vis.getImage(odom);
+    cv::imshow("img", img);
+    cv::waitKey(0);
  */
 
 #ifndef KOBUKI_PROJECT_GLOBAL_PLANNER_H
