@@ -35,7 +35,7 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
         }
         waypoints_mtx.unlock();
 
-        if (zoneAchieved_fut.wait_for(std::chrono::milliseconds(50)) == std::future_status::ready) {
+        if (zoneAchieved_fut.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
             // zone is achieved
             waypoints_mtx.lock();
             waypoints.pop_front();
@@ -58,7 +58,6 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
             waypoints_mtx.unlock();
             goalAchieved_fut = robotInterface->setRequiredPose(bypass_waypoints.front());
             zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
-
         }
     }
 

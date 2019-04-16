@@ -87,12 +87,9 @@ void RobotMap::addMeasurementForgetting(RobotPose robotPose,
                                         LaserMeasurement *laserMeasurement,
                                         unsigned short _pointValue)
 {
-    /// Firstly, decrement whole Matrix
-    for(int i = 0; i < data.rows; i++){
-        for(int j = 0; j < data.cols; j++){
-            setPointValue({i,j}, (getPointValue({i,j}) - 1));
-        }
-    }
+    Mat mask;
+    threshold(data, mask, 1, 1, cv::THRESH_BINARY);
+    data -= mask;
 
     /// Then add all new points with maximal value
     for(int k = 0; k < laserMeasurement->numberOfScans; k++)
@@ -154,12 +151,14 @@ void RobotMap::filterSpeckles() {
     /// @3 - threshold value
     /// @4 - binary MAX (all values above threshold)
     /// @5 - mode (type) of threshold
-    threshold( data, outputMap, threshold_value, 1, cv::THRESH_BINARY );
+
+//    cv::imshow("data",  data);
+
+    threshold(data, outputMap, 1, 1, cv::THRESH_BINARY );
 }
 
 RobotMap RobotMap::getRobotMap() {
     filterSpeckles();
-
     return RobotMap(outputMap.clone(), resolution);
 }
 

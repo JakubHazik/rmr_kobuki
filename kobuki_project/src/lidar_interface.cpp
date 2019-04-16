@@ -61,13 +61,13 @@ LaserMeasurement LidarInterface::getLaserData() {
 }
 
 RobotMap LidarInterface::getRobotMap(){
-    return localMap;
+    return localMap.getRobotMap();
 }
 
 void LidarInterface::updateLocalMap(LaserMeasurement laserData){
     RobotPose odom = robot->getOdomData();
 
-    localMap.clearMap();
+//    localMap.clearMap();
 
     localMap.addMeasurementForgetting(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
 }
