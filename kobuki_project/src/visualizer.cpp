@@ -49,7 +49,7 @@ void Visualizer::addRobot(cv::Mat &inputOutput, RobotPose robotPose, cv::Scalar 
 
     MapPoint robot = RobotMap::tfRealToMap(robotPose, mapSize, mapResolution);
     circle(inputOutput, Point(robot.x, robot.y), robotWidth/2/mapResolution, color);
-    arrowedLine(inputOutput, Point(robot.x, robot.y), Point(robot.x + x, robot.y + y), color);
+    arrowedLine(inputOutput, Point(robot.x, robot.y), Point(robot.x + x, robot.y - y), color);
 }
 
 
