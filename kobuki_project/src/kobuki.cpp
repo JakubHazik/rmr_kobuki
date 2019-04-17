@@ -41,7 +41,7 @@ void Kobuki::moveRobotToPosition(double x, double y, SPACE space) {
 
 void Kobuki::setRobotActualPosition(double x, double y, double fi) {
     robotInterface->resetOdom(x, y, fi);
-    robotInterface->setRequiredPose({});    // also set goal to 0,0, because robot will want to move
+    robotInterface->setRequiredPose({x, y, fi});    // also set goal to x,y because robot will want to move
 }
 
 cv::Mat Kobuki::getEnvironmentAsImage(PLANNER_TYPE planner, bool environment, bool waypoints, bool path, bool floodFill,
