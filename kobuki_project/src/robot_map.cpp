@@ -23,13 +23,8 @@ RobotMap::RobotMap(std::string filename, bool idealMap, RobotPose robotReference
         data.convertTo(data, CV_16UC1); // convert input matrix to unsigned short values
     }
 
-    // translate map center to robot reference
-    auto translation = tfRealToMap(robotReference);
-    translateMap({data.rows/2 - translation.x, data.cols/2 - translation.y});
-
-    // rotate map around center to robot reference
-    cv::Mat rotation = cv::getRotationMatrix2D(cv::Point(data.rows/2, data.cols/2), robotReference.fi, 1);
-    warpAffine(data, data, rotation, data.size());
+    translateMap({robotReference.x, robotReference.y});
+    rotateMap(robotReference.fi, {0,0});
 }
 
 RobotMap::RobotMap(cv::Mat dataMatrix, int resolution): resolution(resolution) {
@@ -254,9 +249,22 @@ void RobotMap::printWallToMap(const std::vector<MapPoint> &corners) {
     }
 }
 
-void RobotMap::translateMap(MapPoint direction) {
-    cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, direction.x, 0, 1, direction.y);    // create transformation matrix for translate map
+void RobotMap::translateMap(RobotPose offset) {
+    // translate map center to robot reference
+    MapPoint translation = tfRealToMap(offset);
+//    translateMap({data.rows/2 - translation.x, data.cols/2 - translation.y});
+
+
+    cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, data.rows/2 - translation.x, 0, 1, data.cols/2 - translation.y);    // create transformation matrix for translate map
     cv::warpAffine(data, data, trans_mat, data.size());     // translate image
+}
+
+void RobotMap::rotateMap(double angle, RobotPose center) {
+    MapPoint center_map = tfRealToMap(center);
+
+    // rotate map around center to robot reference
+    cv::Mat rotation = cv::getRotationMatrix2D(cv::Point(center_map.x, center_map.y), angle, 1);
+    warpAffine(data, data, rotation, data.size());
 }
 
 void RobotMap::clearMap() {

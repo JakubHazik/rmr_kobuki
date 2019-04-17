@@ -61,7 +61,10 @@ LaserMeasurement LidarInterface::getLaserData() {
 }
 
 RobotMap LidarInterface::getRobotMap(){
-    return localMap.getRobotMap();
+    auto map = localMap.getRobotMap();
+    auto odom = robot->getOdomData();
+    map.rotateMap(odom.fi, odom);
+    return map;
 }
 
 void LidarInterface::updateLocalMap(LaserMeasurement laserData){

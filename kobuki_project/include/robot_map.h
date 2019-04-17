@@ -147,12 +147,16 @@ public:
      */
     static RobotPose tfMapToReal(MapPoint mapSpacePose, MapSize mapSize, int resolution);
 
+    void translateMap(RobotPose offset);
+
+    void rotateMap(double angle, RobotPose center = {});
+
 private:
     cv::Mat data;
     cv::Mat outputMap;
     int resolution;     // mapResolution of one cell in [mm]
     void printWallToMap(const std::vector<MapPoint> &corners);
-    void translateMap(MapPoint direction);
+
     void loadIdealMap(std::string filename);
 };
 
