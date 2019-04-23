@@ -92,6 +92,7 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
 //        }
     }
 
+    syslog(LOG_NOTICE, "[Local planner]: Wait for achieve last goal");
     goalAchieved_fut.wait();
     syslog(LOG_NOTICE, "[Local planner]: Movement has been processed");
 }
@@ -103,26 +104,43 @@ list<RobotPose> LocalPlanner::computeBypass(RobotPose goalPoint) {
 
     RobotMap localMap = lidarInterface->getRobotMap();
 
-    if (!collisionCheck(localMap, goalPoint)) {
+    if (!pathCollisionCheck(localMap, goalPoint)) {
         // collision has not been found
         return list<RobotPose>();
     }
-    syslog(LOG_NOTICE, "[Local planner]: Collision detected");
+    syslog(LOG_INFO, "[Local planner]: Path collision detected");
 
-    GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), goalPoint, Kconfig::HW::ROBOT_WIDTH);
+    try {
+        GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), goalPoint, Kconfig::HW::ROBOT_WIDTH);
+        images_mtx.lock();
+        floodFillImage = globalPlanner.getFloodFillImage();
+        waypointsImage = globalPlanner.getWayPointsImage();
+        pathImage = globalPlanner.getPathImage();
+        images_mtx.unlock();
 
-    images_mtx.lock();
-    floodFillImage = globalPlanner.getFloodFillImage();
-    waypointsImage = globalPlanner.getWayPointsImage();
-    pathImage = globalPlanner.getPathImage();
-    images_mtx.unlock();
+        auto bypassPoints = globalPlanner.getRobotWayPoints();
+        bypassPoints.pop_back();    // last point is useless, I keep it in this->waypoints
+        syslog(LOG_INFO, "[Local planner]: Bypass successful planned");
+        return bypassPoints;
 
-    auto bypassPoints = globalPlanner.getRobotWayPoints();
-    bypassPoints.pop_back();    // last point is useless, I keep it in this->waypoints
-    return bypassPoints;
+    } catch (NoPathException &e) {
+        syslog(LOG_WARNING, "[Local planner]: Not able to plan bypass");
+
+        floodFillImage = cv::Mat();
+        waypointsImage = cv::Mat();
+        pathImage = cv::Mat();
+
+        std::lock_guard<mutex> lk(waypoints_mtx);
+
+        waypoints.pop_front();
+
+//        RobotPose bypass
+        return list<RobotPose>();
+    }
+
 }
 
-bool LocalPlanner::collisionCheck(RobotMap &localMap, RobotPose goalWaypoint) {
+bool LocalPlanner::pathCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint) {
     auto mapSize = localMap.getSize();
     auto mapResolution = localMap.getResolution();
     MapPoint robotPoint = RobotMap::tfRealToMap(robotInterface->getOdomData(), mapSize, mapResolution);
@@ -137,7 +155,7 @@ bool LocalPlanner::collisionCheck(RobotMap &localMap, RobotPose goalWaypoint) {
 
 //    cv::imshow("s", trajectoryLine);
 //    cv::waitKey(0);
-
+    addWallBoundaries(localMap);
     cv::Mat envMap = localMap.getCVMatMap();
 
 //    //test
@@ -165,6 +183,51 @@ bool LocalPlanner::collisionCheck(RobotMap &localMap, RobotPose goalWaypoint) {
     return cv::countNonZero(collision) != 0;
 }
 
+bool LocalPlanner::pointCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint) {
+    auto mapSize = localMap.getSize();
+    auto mapResolution = localMap.getResolution();
+//    MapPoint robotPoint = RobotMap::tfRealToMap(robotInterface->getOdomData(), mapSize, mapResolution);
+    MapPoint goalPoint = RobotMap::tfRealToMap(goalWaypoint, mapSize, mapResolution);
+
+    cv::Mat trajectoryLine = cv::Mat::zeros(cv::Size(mapSize.x, mapSize.y), CV_16UC1);
+    cv::line(trajectoryLine,
+             cv::Point(goalPoint.x, goalPoint.y),
+             cv::Point(goalPoint.x, goalPoint.y),
+             cv::Scalar(1),
+             Kconfig::HW::ROBOT_WIDTH/mapResolution);
+
+//    cv::imshow("point", trajectoryLine * 30000);
+//    cv::waitKey(0);
+
+    addWallBoundaries(localMap);
+    cv::Mat envMap = localMap.getCVMatMap();
+
+//    //test
+//    robotPoint = RobotMap::tfRealToMap({100,500}, mapSize, mapResolution);
+//    goalPoint = RobotMap::tfRealToMap({-100, -500}, mapSize, mapResolution);
+//    cv::line(envMap,
+//             cv::Point(robotPoint.x, robotPoint.y),
+//             cv::Point(goalPoint.x, goalPoint.y),
+//             cv::Scalar(1),
+//             Kconfig::HW::ROBOT_WIDTH/mapResolution);
+
+//    cv::imshow("s", envMap);
+//    cv::waitKey(0);
+//
+//    cv::Mat collision = envMap + trajectoryLine;
+//
+//    cv::imshow("s", collision);
+//    cv::waitKey(0);
+
+    cv::Mat collision;
+    cv::bitwise_and(envMap, trajectoryLine, collision);
+//    cv::imshow("collision", collision*30000);
+//    cv::waitKey(0);
+
+    return cv::countNonZero(collision) != 0;
+}
+
+
 void LocalPlanner::stopMovement() {
     // todo fix
     waypoints_mtx.lock();
@@ -188,3 +251,28 @@ cv::Mat LocalPlanner::getFloodFillImage() {
     return floodFillImage;
 }
 
+void LocalPlanner::addWallBoundaries(RobotMap& map) {
+
+    int boundariesSize = static_cast<int>(ceil(Kconfig::HW::ROBOT_WIDTH / 2 / map.getResolution()));
+
+    cv::Mat referenceMap = map.getCVMatMap();
+    cv::Mat tmpMap = referenceMap.clone();
+    cv::Mat resultMap = referenceMap.clone();
+
+    for (int b = 0; b < boundariesSize; b++){
+        for (int i = 1; i < (int) directions.size(); i++) {
+            tmpMap = translateMap(referenceMap, directions[i]);
+            cv::bitwise_or(resultMap, tmpMap, resultMap);
+        }
+        referenceMap = resultMap.clone();
+    }
+
+    map = RobotMap(resultMap, map.getResolution());
+}
+
+cv::Mat LocalPlanner::translateMap(const cv::Mat &map, MapDirection direction) {
+    cv::Mat output;
+    cv::Mat trans_mat = (cv::Mat_<double>(2,3) << 1, 0, direction.x, 0, 1, direction.y);    // create transformation matrix for translate map
+    cv::warpAffine(map, output, trans_mat, map.size());     // translate image
+    return output;
+}

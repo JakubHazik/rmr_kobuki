@@ -52,10 +52,16 @@ private:
      * @param localMap Map of local environment
      * @return True if way contain a collision
      */
-    bool collisionCheck(RobotMap &localMap, RobotPose goalWaypoint);
+    bool pathCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint);
+
+    bool pointCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint);
+
+    void addWallBoundaries(RobotMap &map);
 
     list<RobotPose> computeBypass(RobotPose goalPoint);
 
+    vector<MapDirection> directions = {{0,0},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1}};
+    cv::Mat translateMap(const cv::Mat &map, MapDirection direction);
 };
 
 
