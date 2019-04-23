@@ -9,6 +9,7 @@
 #define DEG2RAD (M_PI/180.0)
 
 #include <vector>
+#include <iostream>
 
 typedef struct {
     unsigned short x;
@@ -138,5 +139,9 @@ enum SPACE {
     ROBOT_SPACE,
     ORIGIN_SPACE,
 };
+
+inline void printRobotPose(const RobotPose &p) {
+    std::cout<<"X: "<<p.x<<", Y:" << p.y << ", Fi: " << p.fi<<std::endl;
+}
 
 #endif //KOBUKI_PROJECT_OWN_TYPEDEFS_H

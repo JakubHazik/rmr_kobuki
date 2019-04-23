@@ -236,6 +236,7 @@ void MainWindow::on_btn_goToGoal_clicked(){
     }
 
     movementDone = std::async(std::launch::async, &Kobuki::moveRobotToPosition, kobuki, x_to_go, y_to_go, space);
+//    kobuki->moveRobotToPosition(x_to_go, y_to_go, space);
 
     ui->goalStatus->setText("Processing");
     ui->goalStatus->setStyleSheet("QLabel { color : red }");

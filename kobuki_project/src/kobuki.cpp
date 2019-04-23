@@ -37,6 +37,7 @@ void Kobuki::moveRobotToPosition(double x, double y, SPACE space) {
 //    list<RobotPose> waypoints = {goalPose};
 
     lPlanner->processMovement(waypoints);
+    syslog(LOG_NOTICE, "[Kobuki]: Movement done");
 }
 
 void Kobuki::setRobotActualPosition(double x, double y, double fi) {
