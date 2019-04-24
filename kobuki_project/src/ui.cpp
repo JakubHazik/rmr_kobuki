@@ -152,32 +152,6 @@ void MainWindow::setOdometryGuiValues(double robotX,double robotY,double robotFi
            SLOTS
  **************************/
 
-void MainWindow::on_button_right_clicked(){
-    syslog(LOG_INFO, "Move robot right");
-//    kobuki->robotInterface->sendRotationSpeed(-1);
-}
-
-void MainWindow::on_button_left_clicked(){
-    syslog(LOG_INFO, "Move robot left");
-//    kobuki->robotInterface->sendRotationSpeed(1);
-};
-
-void MainWindow::on_button_forward_clicked(){
-    syslog(LOG_INFO, "Move robot forward");
-//    kobuki->robotInterface->sendTranslationSpeed(100);
-};
-
-void MainWindow::on_button_back_clicked(){
-    syslog(LOG_INFO, "Move robot back");
-//    kobuki->robotInterface->sendTranslationSpeed(-100);
-};
-
-void MainWindow::on_button_stop_clicked(){
-    syslog(LOG_INFO, "Stop robot");
-//    kobuki->robotInterface->sendTranslationSpeed(0);
-    movementProcessing(true);
-}
-
 void MainWindow::on_button_start_mapping_clicked(){
     syslog(LOG_INFO, "Started mapping process");
     scanningEnviroment = true;
@@ -246,7 +220,6 @@ void MainWindow::on_btn_goToGoal_clicked(){
 
 void MainWindow::movementProcessing(bool processing) {
     ui->mapActions_box->setEnabled(!processing);
-    ui->controls_box->setEnabled(!processing);
     ui->resetodom_box->setEnabled(!processing);
     ui->goalSpace_box->setEnabled(!processing);
 
