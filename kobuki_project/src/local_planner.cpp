@@ -4,10 +4,13 @@
 
 #include <include/local_planner.h>
 
-//enum MOVEMENT_STATES {
-//    READ_G_POINT,
-//    CHECK_G_FIRST_POINT
-//};
+enum MOVEMENT_STATES {
+    READ_GLOBAL_POINT,
+    CHECK_GLOBAL_FIRST_POINT,
+    COMPUTE_BYPASS,
+    WAIT_FOR_GLOBAL_POINT,
+    WAIT_FOR_BYPASS_POINT
+};
 
 
 LocalPlanner::LocalPlanner(RobotInterface *robotInterface, LidarInterface *lidarInterface) {
@@ -25,7 +28,7 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
     std::future<void> zoneAchieved_fut;
     RobotPose goalPoint;
     list<RobotPose> bypassWaypoints;
-    int state = 0;
+    MOVEMENT_STATES state = READ_GLOBAL_POINT;
 
     this->waypoints = globalWaypoints;
 
@@ -46,17 +49,17 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
 
         switch (state) {
             // pop goal point
-            case 0: {
-                syslog(LOG_NOTICE, "[Local planner]: STATE 0");
+            case READ_GLOBAL_POINT: {
+                syslog(LOG_NOTICE, "[Local planner]: STATE READ_GLOBAL_POINT");
 
                 goalPoint = waypoints.front();
-                state = 1;
+                state = CHECK_GLOBAL_FIRST_POINT;
                 break;
             }
 
             // check goal point
-            case 1: {
-                syslog(LOG_NOTICE, "[Local planner]: STATE 1");
+            case CHECK_GLOBAL_FIRST_POINT: {
+                syslog(LOG_NOTICE, "[Local planner]: STATE CHECK_GLOBAL_FIRST_POINT");
 
                 if (pointCollisionCheck(localMap, goalPoint)) {
                     // point is in collision
@@ -66,30 +69,30 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                         syslog(LOG_NOTICE, "[Local planner]: Waypoints empty");
                         return;
                     }
-                    state = 0;
+                    state = READ_GLOBAL_POINT;
                     continue;
                 }
 
                 if (pathCollisionCheck(localMap, goalPoint)) {
                     // path is in collision
                     syslog(LOG_NOTICE, "[Local planner]: Goal path in collision, make bypass");
-                    state = 2;
+                    state = COMPUTE_BYPASS;
                     continue;
                 }
 
                 goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
                 zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
-                state = 3;
+                state = WAIT_FOR_GLOBAL_POINT;
                 break;
             }
 
             // compute bypass
-            case 2: {
-                syslog(LOG_NOTICE, "[Local planner]: STATE 2");
+            case COMPUTE_BYPASS: {
+                syslog(LOG_NOTICE, "[Local planner]: STATE COMPUTE_BYPASS");
 
                 bypassWaypoints = computeBypass(goalPoint);
                 if (bypassWaypoints.empty()) {
-                    state = 0;
+                    state = READ_GLOBAL_POINT;
                     continue;
                 }
 
@@ -108,13 +111,13 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                     }
                 }
 
-                state = 4;
+                state = WAIT_FOR_BYPASS_POINT;
                 break;
             }
 
             // wait for G point
-            case 3: {
-                syslog(LOG_NOTICE, "[Local planner]: STATE 3");
+            case WAIT_FOR_GLOBAL_POINT: {
+                syslog(LOG_NOTICE, "[Local planner]: STATE WAIT_FOR_GLOBAL_POINT");
 
                 zoneAchieved_fut.wait();
                 if (!waypoints.empty()) {
@@ -127,13 +130,13 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                     syslog(LOG_NOTICE, "[Local planner]: Movement has been processed");
                     return;
                 }
-                state = 0;
+                state = READ_GLOBAL_POINT;
                 break;
             }
 
             // wait for B point
-            case 4: {
-                syslog(LOG_NOTICE, "[Local planner]: STATE 4");
+            case WAIT_FOR_BYPASS_POINT: {
+                syslog(LOG_NOTICE, "[Local planner]: STATE WAIT_FOR_BYPASS_POINT");
 
                 zoneAchieved_fut.wait();
                 bypassWaypoints.pop_front();
@@ -145,7 +148,7 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
 //                    zoneAchieved_fut.wait();
 //                }
 
-                state = 0;
+                state = READ_GLOBAL_POINT;
                 break;
             }
 
