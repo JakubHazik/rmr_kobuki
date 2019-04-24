@@ -91,6 +91,8 @@ void Kobuki::loadMapFromFile(string filepath) {
 
     if (extension == Kconfig::Defaults::IDEAL_MAP_EXTENSION) {
         map = RobotMap(filepath, true);
+        map.translateMap(Kconfig::Defaults::IDEAL_MAP_START);
+        map.rotateMap(Kconfig::Defaults::IDEAL_MAP_START.fi, {0,0});
     } else if (extension == Kconfig::Defaults::OPENCV_MAP_EXTENSION) {
         map = RobotMap(filepath, false);
     } else {

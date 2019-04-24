@@ -20,6 +20,7 @@ namespace Kconfig {
         static const int MAP_RESOLUTION = 50;                                       // mm per pixel
         static const std::string IDEAL_MAP_EXTENSION = "txt";
         static const std::string OPENCV_MAP_EXTENSION = "yaml";
+        static const RobotPose IDEAL_MAP_START = {5150, 2470, 90};
     }
 
     namespace Ui {
