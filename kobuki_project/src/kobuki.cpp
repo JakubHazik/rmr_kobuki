@@ -13,8 +13,8 @@ Kobuki::Kobuki() : map(Kconfig::Defaults::MAP_SIZE, Kconfig::Defaults::MAP_RESOL
 }
 
 Kobuki::~Kobuki() {
-    delete robotInterface;
     delete lidarInterface;
+    delete robotInterface;
 }
 
 void Kobuki::moveRobotToPosition(double x, double y, SPACE space) {

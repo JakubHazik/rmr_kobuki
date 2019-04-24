@@ -47,9 +47,18 @@ void LidarInterface::t_readLaserData() {
     }
 
     while (laserDataThreadRun) {
+        auto start = chrono::system_clock::now();
         if ((received_length = recvfrom(socket_FD, (char *) &laserData.Data, sizeof(LaserData) * 1000, 0, (struct sockaddr *) &socket_other, &socket_FD_length)) == -1) {
             continue;
         }
+        auto end = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        long int duration = elapsed.count();
+
+        if (duration > 200) {
+            syslog(LOG_WARNING, "[LidarInterface]: Laser data not arrived %ld ms", duration);
+        }
+
         laserData.numberOfScans = received_length / sizeof(LaserData);
         updateLocalMap(laserData);
     }
@@ -61,7 +70,10 @@ LaserMeasurement LidarInterface::getLaserData() {
 }
 
 RobotMap LidarInterface::getRobotMap(){
+    localMap_mtx.lock();
     auto map = localMap.getRobotMap();
+    localMap_mtx.unlock();
+
     auto odom = robot->getOdomData();
     map.rotateMap(odom.fi, odom);
     return map;
@@ -70,7 +82,6 @@ RobotMap LidarInterface::getRobotMap(){
 void LidarInterface::updateLocalMap(LaserMeasurement laserData){
     RobotPose odom = robot->getOdomData();
 
-//    localMap.clearMap();
-
+    lock_guard<mutex> lk(localMap_mtx);
     localMap.addMeasurementForgetting(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
 }

@@ -60,6 +60,7 @@ private:
     /// is the newest one and every single lower value of point represents older measurement
     /// At the end, 0 value represents no obstacle or forgotten obstacle older than DATA_HOLD_COEFFICIENT cycles
     RobotMap localMap;
+    std::mutex localMap_mtx;
 
 //    function<void(LaserMeasurement)> laserMeasurementCallback = nullptr;
 //    thread callback_t;
