@@ -29,10 +29,6 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
 
     this->waypoints = globalWaypoints;
 
-    // set first waypoint
-//    goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
-//    zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
-
     while (true) {
         /* 1 zoberiem prvy bod z G listu
            2 ak je bod v kolizii tak ho daj prec a chod na 1
@@ -100,6 +96,18 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                 goalPoint = bypassWaypoints.front();
                 goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
                 zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
+
+                if (zoneAchieved_fut.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+                    // if first bypass waypoint zone is already achieved, go to the next
+                    bypassWaypoints.pop_front();
+
+                    if (!bypassWaypoints.empty()) {
+                        goalPoint = bypassWaypoints.front();
+                        goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
+                        zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
+                    }
+                }
+
                 state = 4;
                 break;
             }
@@ -130,12 +138,12 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                 zoneAchieved_fut.wait();
                 bypassWaypoints.pop_front();
 
-                if (!bypassWaypoints.empty()) {
-                    goalPoint = bypassWaypoints.front();
-                    goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
-                    zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
-                    zoneAchieved_fut.wait();
-                }
+//                if (!bypassWaypoints.empty()) {
+//                    goalPoint = bypassWaypoints.front();
+//                    goalAchieved_fut = robotInterface->setRequiredPose(goalPoint);
+//                    zoneAchieved_fut = robotInterface->setZoneParams(Kconfig::PoseControl::GOAL_ZONE_DISTANCE);
+//                    zoneAchieved_fut.wait();
+//                }
 
                 state = 0;
                 break;
@@ -297,7 +305,7 @@ bool LocalPlanner::pathCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint
 //    cv::imshow("laser", envMap);
 //    cv::waitKey(0);
 //
-    cv::Mat c = envMap*20000 + trajectoryLine*20000;
+    cv::Mat c = envMap*30000 + trajectoryLine*30000;
     cv::imshow("collision", c);
 
     cv::Mat collision;
