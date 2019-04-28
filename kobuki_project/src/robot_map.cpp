@@ -137,17 +137,16 @@ unsigned short RobotMap::getPointValue(MapPoint point) {
 }
 
 void RobotMap::filterSpeckles() {
-    int threshold_value = 1;
-    // TODO: vyratat threshold na zaklade percent, najst napriklad priemernu hodnotu, maximalnu a filtrovat napriklad na zaklade aspon 80% vyskytu
-
-
     /// @1 - input image
     /// @2 - output image
     /// @3 - threshold value
     /// @4 - binary MAX (all values above threshold)
     /// @5 - mode (type) of threshold
 
-//    cv::imshow("data",  data);
+    /// V ramci laserScan odstranovat sum merania, zobrat predchadzajudu a nasledujucu vzdialenost a ked rovina tych dvoch bodov je bud za, alebo
+    /// prilis vpredu, tak ho vyhodit. Napr. mam distance 10 - 1000 - 10, tak bod v strede je pravdepodobne dost naprd.
+
+    //// Rate racing (10 cm ) zistit bod, prekazku a vsetky body na spojnici robota a prekazky dekrementovat
 
     threshold(data, outputMap, 1, 1, cv::THRESH_BINARY );
 }
@@ -167,6 +166,14 @@ void RobotMap::showMap() {
     data.convertTo(output, CV_8UC1);
     resize(output, output, Size(), SHOW_IMAGE_SCALE_FACTOR, SHOW_IMAGE_SCALE_FACTOR);
     imshow("Robot map", output*126);
+    cv::waitKey(0);
+}
+
+void RobotMap::showMap(cv::Mat map_to_show, std::string label) {
+    cv::Mat output;
+    map_to_show.convertTo(output, CV_8UC1);
+    resize(output, output, Size(), SHOW_IMAGE_SCALE_FACTOR, SHOW_IMAGE_SCALE_FACTOR);
+    imshow(label, output*127);
     cv::waitKey(0);
 }
 
