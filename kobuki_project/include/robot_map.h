@@ -106,6 +106,7 @@ public:
     RobotMap getRobotMap();
 
     void showMap();
+    void showMap(cv::Mat map_to_show, std::string label);
 
     /**
      * Set whole map to zeros, clear all data for new measurement
