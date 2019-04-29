@@ -152,6 +152,8 @@ public:
 
     void rotateMap(double angle, RobotPose center = {});
 
+    bool isDistanceValid(double prev, double actual, double next);
+
 private:
     cv::Mat data;
     cv::Mat outputMap;
