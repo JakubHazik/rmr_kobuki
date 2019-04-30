@@ -59,8 +59,18 @@ void LidarInterface::t_readLaserData() {
             syslog(LOG_WARNING, "[LidarInterface]: Laser data not arrived %ld ms", duration);
         }
 
+        start = chrono::system_clock::now();
+
         laserData.numberOfScans = received_length / sizeof(LaserData);
         updateLocalMap(laserData);
+
+        end = std::chrono::system_clock::now();
+        elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        duration = elapsed.count();
+
+        if (duration > 50) {
+            syslog(LOG_WARNING, "[LidarInterface]: Update local map takes so long time: %ld ms", duration);
+        }
     }
 }
 
