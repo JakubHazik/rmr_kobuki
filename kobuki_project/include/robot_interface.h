@@ -46,6 +46,8 @@ public:
 
     bool isGoalAchieved();
 
+    double getAbsoluteDistance(RobotPose posA, RobotPose posB);
+
 private:
     /*
     * ========================================
@@ -84,8 +86,6 @@ private:
     void t_readRobotData();
 
     void computeOdometry(unsigned short encoderRight, unsigned short encoderLeft, signed short gyroAngle);
-
-    double getAbsoluteDistance(RobotPose posA, RobotPose posB);
 
     void t_poseController();
 
