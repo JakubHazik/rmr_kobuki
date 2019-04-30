@@ -29,7 +29,7 @@ namespace Kconfig {
 
     namespace LidarControl {
         static const int DATA_HOLD_COEFFICIENT = 20;                               // number of scans which will be keep in local RobotMap
-        static const int MEASUREMENT_DISTANCE_DIFF = 100;                          // [mm]
+        static const int MEASUREMENT_DISTANCE_DIFF = 700;                          // [mm]
     }
 
     namespace PoseControl {
