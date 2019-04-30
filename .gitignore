@@ -45,3 +45,5 @@ kobuki_build/CMakeFiles/3\.10\.2/
 kobuki_build/
 
 kobuki_project/CMakeLists\.txt\.user
+
+kobuki_project/cmake-build-release/
