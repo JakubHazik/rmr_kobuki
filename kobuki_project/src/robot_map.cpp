@@ -281,5 +281,5 @@ void RobotMap::clearMap() {
 }
 
 bool RobotMap::isDistanceValid(double prev, double actual, double next){
-    return (abs(prev - actual) > Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF && abs(next - actual) > Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF);
+    return (abs(prev - actual) < Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF && abs(next - actual) < Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF);
 }

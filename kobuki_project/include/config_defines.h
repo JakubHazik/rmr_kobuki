@@ -31,7 +31,7 @@ namespace Kconfig {
         static const int DATA_HOLD_COEFFICIENT = 30;                               // number of scans which will be keep in local RobotMap
         static const int UPDATE_DISTANCE = 70;      // [mm]
         static const int UPDATE_DURATION = 2;      // [s]
-        static const int MEASUREMENT_DISTANCE_DIFF = 100;                          // [mm]
+        static const int MEASUREMENT_DISTANCE_DIFF = 700;                          // [mm]
     }
 
     namespace PoseControl {
