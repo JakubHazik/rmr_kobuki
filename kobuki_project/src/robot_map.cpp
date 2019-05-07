@@ -87,23 +87,25 @@ void RobotMap::addMeasurementForgetting(RobotPose robotPose,
     data -= mask;
 
     /// Then add all new points with maximal value
-    for(int k = 0; k < laserMeasurement->numberOfScans; k++)
+    for(int k = 1; k < laserMeasurement->numberOfScans - 1; k++)
     {
-        double distance = laserMeasurement->Data[k].scanDistance;
-        if(distance > 130){
-            // lower than 13 cm - garbage
-            double fp = robotPose.fi + (360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD;
-            double xp = robotPose.x + distance * cos(fp);
-            double yp = robotPose.y + distance * sin(fp);
+        if(isDistanceValid(laserMeasurement->Data[k - 1].scanDistance, laserMeasurement->Data[k].scanDistance, laserMeasurement->Data[k + 1].scanDistance)){
+            double distance = laserMeasurement->Data[k].scanDistance;
+            if(distance > 130){
+                // lower than 13 cm - garbage
+                double fp = robotPose.fi + (360.0 - laserMeasurement->Data[k].scanAngle) * DEG2RAD;
+                double xp = robotPose.x + distance * cos(fp);
+                double yp = robotPose.y + distance * sin(fp);
 
-            try{
-                MapPoint p = tfRealToMap({xp, yp, fp * RAD2DEG});
-                setPointValue(p, _pointValue);
-            } catch(...){
+                try{
+                    MapPoint p = tfRealToMap({xp, yp, fp * RAD2DEG});
+                    setPointValue(p, _pointValue);
+                } catch(...){
 //                syslog(LOG_ERR, "Add point to map failed - out of range");
+                }
             }
+            // else do not add measurement to map
         }
-        // else do not add measurement to map
     }
 }
 
@@ -276,4 +278,8 @@ void RobotMap::rotateMap(double angle, RobotPose center) {
 
 void RobotMap::clearMap() {
     data = cv::Mat::zeros(data.size(), data.type());
+}
+
+bool RobotMap::isDistanceValid(double prev, double actual, double next){
+    return (abs(prev - actual) > Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF && abs(next - actual) > Kconfig::LidarControl::MEASUREMENT_DISTANCE_DIFF);
 }
