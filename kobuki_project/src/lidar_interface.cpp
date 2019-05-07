@@ -96,7 +96,7 @@ void LidarInterface::updateLocalMap(LaserMeasurement laserData){
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     auto duration = elapsed.count();
-    syslog(LOG_INFO, "durtion %d", duration);
+//    syslog(LOG_INFO, "durtion %d", duration);
 
     RobotPose odom = robot->getOdomData();
     auto distance = robot->getAbsoluteDistance(odom_old, odom);
@@ -110,4 +110,9 @@ void LidarInterface::updateLocalMap(LaserMeasurement laserData){
 
     lock_guard<mutex> lk(localMap_mtx);
     localMap.addMeasurementForgetting(odom, &laserData, Kconfig::LidarControl::DATA_HOLD_COEFFICIENT);
+}
+
+void LidarInterface::clearMap() {
+    lock_guard<mutex> lk(localMap_mtx);
+    localMap.clearMap();
 }

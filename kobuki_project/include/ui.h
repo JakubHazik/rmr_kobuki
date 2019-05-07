@@ -42,6 +42,7 @@ private slots:
     void on_button_map_load_clicked();
     void on_btn_goToGoal_clicked();
     void on_btn_reset_clicked();
+    void on_button_clear_scan_clicked();
 
 private:
 
@@ -51,12 +52,7 @@ private:
     Kobuki *kobuki;
     LaserMeasurement copyOfLaserData;
     bool updateEnviromentMap = false;
-
     bool scanningEnviroment = false;
-
-//    void paintEvent(QPaintEvent *paintEvent) {
-//        QWidget::paintEvent(paintEvent);
-//    }
 
     void movementProcessing(bool processing);
     void movementIsDone();

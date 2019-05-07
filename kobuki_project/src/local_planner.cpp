@@ -180,7 +180,31 @@ list<RobotPose> LocalPlanner::computeBypass(RobotPose goalPoint) {
         return bypassPoints;
 
     } catch (NoPathException &e) {
-        syslog(LOG_WARNING, "[Local planner]: Not able to plan bypass");
+        syslog(LOG_WARNING, "[Local planner]: Not able to plan bypass, try remove scan map");
+//        lidarInterface->clearMap();
+
+//        try {
+//            GlobalPlanner globalPlanner(localMap, robotInterface->getOdomData(), goalPoint, Kconfig::HW::ROBOT_WIDTH);
+//            images_mtx.lock();
+//            floodFillImage = globalPlanner.getFloodFillImage();
+//            waypointsImage = globalPlanner.getWayPointsImage();
+//            pathImage = globalPlanner.getPathImage();
+//            images_mtx.unlock();
+//
+//            auto bypassPoints = globalPlanner.getRobotWayPoints();
+//            bypassPoints.pop_back();    // last point is useless, I keep it in this->waypoints
+//            syslog(LOG_INFO, "[Local planner]: Bypass successful planned");
+//            return bypassPoints;
+//
+//        } catch (NoPathException &e) {
+//            syslog(LOG_WARNING, "[Local planner]: Really not able to plan bypass");
+//
+//            floodFillImage = cv::Mat();
+//            waypointsImage = cv::Mat();
+//            pathImage = cv::Mat();
+//
+//            return list<RobotPose>();
+//        }
 
         floodFillImage = cv::Mat();
         waypointsImage = cv::Mat();
@@ -201,32 +225,15 @@ bool LocalPlanner::pathCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint
              cv::Point(robotPoint.x, robotPoint.y),
              cv::Point(goalPoint.x, goalPoint.y),
              cv::Scalar(1),
-             Kconfig::HW::ROBOT_WIDTH/mapResolution);
+             Kconfig::HW::ROBOT_WIDTH/mapResolution + 1);
 
-//    cv::imshow("trajectory", trajectoryLine);
-//    cv::waitKey(0);
-//    addWallBoundaries(localMap);
     cv::Mat envMap = localMap.getCVMatMap();
 
-//    //test
-//    robotPoint = RobotMap::tfRealToMap({100,500}, mapSize, mapResolution);
-//    goalPoint = RobotMap::tfRealToMap({-100, -500}, mapSize, mapResolution);
-//    cv::line(envMap,
-//             cv::Point(robotPoint.x, robotPoint.y),
-//             cv::Point(goalPoint.x, goalPoint.y),
-//             cv::Scalar(1),
-//             Kconfig::HW::ROBOT_WIDTH/mapResolution);
-
-//    cv::imshow("laser", envMap);
-//    cv::waitKey(0);
-//
     cv::Mat c = envMap*30000 + trajectoryLine*30000;
-    cv::imshow("collision", c);
+    cv::imshow("collision path", c);
 
     cv::Mat collision;
     cv::bitwise_and(envMap, trajectoryLine, collision);
-//    cv::imshow("bit", collision);
-//    cv::waitKey(0);
 
     return cv::countNonZero(collision) != 0;
 }
@@ -234,7 +241,6 @@ bool LocalPlanner::pathCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint
 bool LocalPlanner::pointCollisionCheck(RobotMap& localMap, RobotPose goalWaypoint) {
     auto mapSize = localMap.getSize();
     auto mapResolution = localMap.getResolution();
-//    MapPoint robotPoint = RobotMap::tfRealToMap(robotInterface->getOdomData(), mapSize, mapResolution);
     MapPoint goalPoint = RobotMap::tfRealToMap(goalWaypoint, mapSize, mapResolution);
 
     cv::Mat trajectoryLine = cv::Mat::zeros(cv::Size(mapSize.x, mapSize.y), CV_16UC1);
@@ -244,33 +250,12 @@ bool LocalPlanner::pointCollisionCheck(RobotMap& localMap, RobotPose goalWaypoin
              cv::Scalar(1),
              Kconfig::HW::ROBOT_WIDTH/mapResolution);
 
-//    cv::imshow("point", trajectoryLine * 30000);
-//    cv::waitKey(0);
-
-//    addWallBoundaries(localMap);
     cv::Mat envMap = localMap.getCVMatMap();
 
-//    //test
-//    robotPoint = RobotMap::tfRealToMap({100,500}, mapSize, mapResolution);
-//    goalPoint = RobotMap::tfRealToMap({-100, -500}, mapSize, mapResolution);
-//    cv::line(envMap,
-//             cv::Point(robotPoint.x, robotPoint.y),
-//             cv::Point(goalPoint.x, goalPoint.y),
-//             cv::Scalar(1),
-//             Kconfig::HW::ROBOT_WIDTH/mapResolution);
-
-//    cv::imshow("s", envMap);
-//    cv::waitKey(0);
-//
-//    cv::Mat collision = envMap + trajectoryLine;
-//
-//    cv::imshow("s", collision);
-//    cv::waitKey(0);
-
+    cv::Mat c = envMap*30000 + trajectoryLine*30000;
+    cv::imshow("collision point", c);
     cv::Mat collision;
     cv::bitwise_and(envMap, trajectoryLine, collision);
-//    cv::imshow("collision", collision*30000);
-//    cv::waitKey(0);
 
     return cv::countNonZero(collision) != 0;
 }

@@ -50,6 +50,7 @@ public:
     RobotMap getRobotMap();     // vrati nejaku svoju mapu 'localMap'
 
     //void setMeasurementCallback(function<void(LaserMeasurement)> callback);
+    void clearMap();
 
 private:
 
@@ -61,9 +62,6 @@ private:
     /// At the end, 0 value represents no obstacle or forgotten obstacle older than DATA_HOLD_COEFFICIENT cycles
     RobotMap localMap;
     std::mutex localMap_mtx;
-
-//    function<void(LaserMeasurement)> laserMeasurementCallback = nullptr;
-//    thread callback_t;
 
     std::thread laser_thread;
     std::atomic_bool laserDataThreadRun = {true};

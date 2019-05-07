@@ -41,6 +41,8 @@ public:
 
     void clearMap();
 
+    void clearScan();
+
     RobotPose getRobotPosition();
 
     void setRobotActualPosition(double x, double y, double fi);

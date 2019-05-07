@@ -108,6 +108,10 @@ void Kobuki::clearMap() {
     map.clearMap();
 }
 
+void Kobuki::clearScan() {
+    lidarInterface->clearMap();
+}
+
 RobotPose Kobuki::getRobotPosition() {
     return robotInterface->getOdomData();
 }
@@ -115,3 +119,4 @@ RobotPose Kobuki::getRobotPosition() {
 void Kobuki::stopRobotMovement() {
     lPlanner->stopMovement();
 }
+
