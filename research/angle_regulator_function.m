@@ -20,9 +20,11 @@ c=f.c
 d=f.d
 
 angle_fit = 0:0.01:pi;
-result = a*exp(b*angle_fit) + c*exp(d*angle_fit) -1; % ak chceme pouzit setArcSpeed tak nehceme aby bol radius 0
+result = a*exp(b*angle_fit) + c*exp(d*angle_fit) - 1; % ak chceme pouzit setArcSpeed tak nehceme aby bol radius 0
 plot(angle_fit, result) 
-
+title('Výpočet polomeru otáčania')
+xlabel('Error angle [rad]')
+ylabel('Radius [mm]')
 
 %% jednoduche prenasobenie
 % angle = 0:180;
