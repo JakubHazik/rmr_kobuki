@@ -139,7 +139,9 @@ void LocalPlanner::processMovement(list<RobotPose> globalWaypoints) {
                 syslog(LOG_NOTICE, "[Local planner]: STATE WAIT_FOR_BYPASS_POINT");
 
                 zoneAchieved_fut.wait();
-                bypassWaypoints.pop_front();
+                if (!bypassWaypoints.empty()) {
+                    bypassWaypoints.pop_front();
+                }
 
 //                if (!bypassWaypoints.empty()) {
 //                    goalPoint = bypassWaypoints.front();
