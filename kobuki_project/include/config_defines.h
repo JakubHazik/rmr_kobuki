@@ -20,7 +20,7 @@ namespace Kconfig {
         static const int MAP_RESOLUTION = 50;                                       // mm per pixel
         static const std::string IDEAL_MAP_EXTENSION = "txt";
         static const std::string OPENCV_MAP_EXTENSION = "yaml";
-        static const RobotPose IDEAL_MAP_START = {5150, 2470, 90};
+        static const RobotPose IDEAL_MAP_START = {0, 0, 0};
     }
 
     namespace Ui {
@@ -35,8 +35,8 @@ namespace Kconfig {
     }
 
     namespace PoseControl {
-        static const int GOAL_ZONE_DISTANCE = 300;                                  // mm polomer kruhu okolo goal pozicie
-        static const int GOAL_ACCURACY = 30;                                        // [mm] accuracy of positioning
+        static const int GOAL_ZONE_DISTANCE = 270;                                  // mm polomer kruhu okolo goal pozicie
+        static const int GOAL_ACCURACY = 25;                                        // [mm] accuracy of positioning
         static const float POSE_CONTROLLER_PERIOD = 0.1;                            // [s]
     }
 
